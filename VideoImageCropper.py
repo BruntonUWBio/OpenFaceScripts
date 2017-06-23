@@ -40,7 +40,7 @@ class VideoImageCropper:
         subprocess.Popen(
             '{0} -f {1} -ov {2} -verbose -wild -multi-view 1'.format(executable,
                                                                      os.path.join(self.im_dir, 'inter_out.mp4'),
-                                                                     os.path.join(self.im_dir, 'out.avi')),
+                                                                     os.path.join(self.im_dir, 'out.mp4')),
             shell=True).wait()
 
 
