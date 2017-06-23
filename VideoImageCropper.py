@@ -4,7 +4,7 @@ import sys
 import subprocess
 
 sys.path.append("/home/gvelchuru/")
-from OpenFaceScripts import crop_image
+from OpenFaceScripts import crop_image_sequence
 
 
 class VideoImageCropper:
@@ -20,8 +20,8 @@ class VideoImageCropper:
             subprocess.Popen('ffmpeg -i "{0}" -vf fps=30 "{1}"'.format(vid, os.path.join(self.im_dir, (
                 os.path.basename(vid) + '_out%04d.png'))), shell=True).wait()
 
-        crop_image.CropImages(self.im_dir, self.crop_txt_files, self.nose_txt_files,
-                              save=True)
+        crop_image_sequence.CropImages(self.im_dir, self.crop_txt_files, self.nose_txt_files,
+                                       save=True)
 
         self.run_open_face()
 

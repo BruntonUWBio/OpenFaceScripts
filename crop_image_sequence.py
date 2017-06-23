@@ -3,6 +3,7 @@ import glob
 import os
 import numpy as np
 import cv2
+import pickle
 from scipy import misc
 
 
@@ -16,26 +17,53 @@ class CropImages:
         files = glob.glob(os.path.join(self.im_dir, '*.png'))
         files = sorted(files)
         self.read_arr_dict = {}
-        for image in files:
+        bb_arr = [0, 0, 0, 0]
+        crop_array_name = os.path.join(dir, 'cropped.txt')
+        if (os.path.lexists(crop_array_name)):
+            with open(crop_array_name, mode='rb') as f:
+                self.crop_im_arr_arr_dict = pickle.load(f)
+        else:
+            self.crop_im_arr_arr_dict = {image: self.make_crop_im_arr_arr(image) for image in files}
+            with open(crop_array_name, mode='wb') as f:
+                pickle.dump(self.crop_im_arr_arr_dict, f)
+        bb_arr = [None, None, None, None]
+        for image in self.crop_im_arr_arr_dict.keys():
+            im_crop_arr = self.crop_im_arr_arr_dict[image]
+            if im_crop_arr:
+                x_min = im_crop_arr[1]
+                y_min = im_crop_arr[2]
+                x_max = im_crop_arr[3]
+                y_max = im_crop_arr[4]
+                if bb_arr[0]:
+                    bb_arr = [min(bb_arr[0], x_min), min(bb_arr[1], y_min),
+                              max(bb_arr[2], x_max), max(bb_arr[3], y_max)]
+                else:
+                    bb_arr = [x_min, y_min, x_max, y_max]
+
+        for image in self.crop_im_arr_arr_dict.keys():
             path_name, base_name = os.path.split(image)
             if 'cropped' not in base_name:
                 split_name = os.path.splitext(base_name)
-            if save:
-                save_name = os.path.join(path_name, split_name[0] + '_cropped' + split_name[1])
-            self.crop_image(image, save_name)
+                if save:
+                    save_name = os.path.join(path_name, split_name[0] + '_cropped' + split_name[1])
+                if self.crop_im_arr_arr_dict[image] is not None:
+                    img = self.crop_im_arr_arr_dict[image][0]
+                    self.crop_image(img, save_name, bb_arr)
+                os.remove(image)
 
-    def crop_image(self, name, save_name):
+    def make_crop_im_arr_arr(self, name):
         img = misc.imread(name, mode='RGB')
-        crop_im_arr = self.crop_predictor(img, name, scaled_height=img.shape[0], scaled_width=img.shape[1])
-        if crop_im_arr:
-            crop_im = crop_im_arr[0]
-            if save_name:
-                crop_im = misc.imresize(cv2.cvtColor(crop_im, cv2.COLOR_RGB2BGR),
-                                        (crop_im.shape[0] * 5, crop_im.shape[1] * 5))
-                cv2.imwrite(save_name, crop_im)
-        os.remove(name)
+        return self.crop_predictor(img, name, scaled_height=img.shape[0], scaled_width=img.shape[1])
 
-    def crop_predictor(self, img, name, scaled_width, scaled_height):
+    def crop_image(self, img, save_name, crop_arr):
+        x_min, y_min, x_max, y_max = self.return_min_max(crop_arr)
+        crop_im = img[y_min:y_max, x_min:x_max]
+        if save_name:
+            crop_im = misc.imresize(cv2.cvtColor(crop_im, cv2.COLOR_RGB2BGR),
+                                    (crop_im.shape[0] * 5, crop_im.shape[1] * 5))
+            cv2.imwrite(save_name, crop_im)
+
+    def crop_predictor(self, img, name, scaled_width, scaled_height, make_cropped_im=False):
         print('Name: {0}'.format(name))
         base_name = os.path.basename(name)
         crop_file_path, file_num = self.find_crop_path(base_name, self.crop_txt_files)
@@ -87,9 +115,14 @@ class CropImages:
                     x_max = x_coords[1]
                     y_min = y_coords[0]
                     y_max = y_coords[1]
-                    crop_im = im[y_coords[0]:y_coords[1], x_coords[0]:x_coords[1]].copy()
-                    return [crop_im, x_min, y_min, x_max, y_max]
 
+                    # If cropping is desired, return the cropped image - else, return the original image with bounding
+                    # box for further analysis
+                    if make_cropped_im:
+                        crop_im = im[y_coords[0]:y_coords[1], x_coords[0]:x_coords[1]].copy()
+                        return [crop_im, x_min, y_min, x_max, y_max]
+                    else:
+                        return [img, x_min, y_min, x_max, y_max]
     @staticmethod
     def normalize_to_camera(coords, crop_coord, scaled_width, scaled_height):
         if sum(crop_coord) <= 0:
@@ -112,6 +145,9 @@ class CropImages:
         if pid in list(crop_txt_files.keys()):
             out_file = crop_txt_files[pid]
         return out_file, out_num
+
+    def return_min_max(self, arr):
+        return int(arr[0]), int(arr[1]), int(arr[2]), int(arr[3])
 
     def make_read_arr(self, f, num_constraint=None):
         readArr = f.readlines()
