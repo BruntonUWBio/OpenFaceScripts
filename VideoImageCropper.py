@@ -19,17 +19,29 @@ class VideoImageCropper:
             os.mkdir(self.im_dir)
             subprocess.Popen('ffmpeg -i "{0}" -vf fps=30 "{1}"'.format(vid, os.path.join(self.im_dir, (
                 os.path.basename(vid) + '_out%04d.png'))), shell=True).wait()
-        for image in glob.glob(os.path.join(self.im_dir, '*.png')):
-            path_name, base_name = os.path.split(image)
-            split_name = os.path.splitext(base_name)
-            crop_image.CropImage(image, self.crop_txt_files, self.nose_txt_files,
-                                 saveName=os.path.join(path_name, split_name[0] + '_cropped' + split_name[1]))
-            os.remove(image)
+
+        crop_image.CropImages(self.im_dir, self.crop_txt_files, self.nose_txt_files,
+                              save=True)
+
+        self.run_open_face()
 
     @staticmethod
     def find_txt_files(path):
         return {os.path.splitext(os.path.basename(v))[0]: v for v in
                 glob.iglob(os.path.join(path + '/**/*.txt'), recursive=True)}
+
+    def run_open_face(self):
+        # TODO: Change
+        executable = '/home/gvelchuru/OpenFace/build/bin/FeatureExtraction'
+        subprocess.Popen("ffmpeg -r 30 -f image2 -s 1920x1080 -pattern_type glob -i '{0}' -b 2000k {1}".format(
+            os.path.join(self.im_dir, '*.png'),
+            os.path.join(self.im_dir,
+                         'inter_out.mp4')), shell=True).wait()
+        subprocess.Popen(
+            '{0} -f {1} -ov {2} -verbose -wild -multi-view 1'.format(executable,
+                                                                     os.path.join(self.im_dir, 'inter_out.mp4'),
+                                                                     os.path.join(self.im_dir, 'out.avi')),
+            shell=True).wait()
 
 
 if __name__ == '__main__':

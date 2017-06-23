@@ -1,26 +1,39 @@
 # Requires pose, crop coordinates
-
+import glob
 import os
 import numpy as np
 import cv2
 from scipy import misc
 
 
-class CropImage:
-    def __init__(self, name, crop_txt_files, nose_txt_files, saveName=None):
+class CropImages:
+    def __init__(self, dir, crop_txt_files, nose_txt_files, save=False):
         self.fps_frac = 1
         self.crop_txt_files = crop_txt_files
         self.nose_txt_files = nose_txt_files
-        self.crop_image(name, saveName)
+        save_name = None
+        self.im_dir = dir
+        files = glob.glob(os.path.join(self.im_dir, '*.png'))
+        files = sorted(files)
+        self.read_arr_dict = {}
+        for image in files:
+            path_name, base_name = os.path.split(image)
+            if 'cropped' not in base_name:
+                split_name = os.path.splitext(base_name)
+            if save:
+                save_name = os.path.join(path_name, split_name[0] + '_cropped' + split_name[1])
+            self.crop_image(image, save_name)
 
-    def crop_image(self, name, saveName):
+    def crop_image(self, name, save_name):
         img = misc.imread(name, mode='RGB')
         crop_im_arr = self.crop_predictor(img, name, scaled_height=img.shape[0], scaled_width=img.shape[1])
         if crop_im_arr:
             crop_im = crop_im_arr[0]
-            if saveName:
-                crop_im = cv2.cvtColor(crop_im, cv2.COLOR_RGB2BGR)
-                cv2.imwrite(saveName, crop_im)
+            if save_name:
+                crop_im = misc.imresize(cv2.cvtColor(crop_im, cv2.COLOR_RGB2BGR),
+                                        (crop_im.shape[0] * 5, crop_im.shape[1] * 5))
+                cv2.imwrite(save_name, crop_im)
+        os.remove(name)
 
     def crop_predictor(self, img, name, scaled_width, scaled_height):
         print('Name: {0}'.format(name))
@@ -32,8 +45,10 @@ class CropImage:
         x_max = 0
         y_max = 0
         if crop_file_path is not None:
-            f = open(crop_file_path)
-            read_arr = self.make_read_arr(f)
+            if crop_file_path not in self.read_arr_dict.keys():
+                with open(crop_file_path) as f:
+                    self.read_arr_dict[crop_file_path] = self.make_read_arr(f)
+            read_arr = self.read_arr_dict[crop_file_path]
             i = file_num - 1
             if len(read_arr) > i:
                 curr_im_coords = read_arr[i]
@@ -45,9 +60,10 @@ class CropImage:
         nose_file_path, file_num = self.find_crop_path(base_name, self.nose_txt_files)
         print('Nose file: {0}'.format(nose_file_path))
         if nose_file_path is not None:
-            f = open(nose_file_path)
-            read_arr = self.make_read_arr(f, 3)
-
+            if nose_file_path not in self.read_arr_dict.keys():
+                with open(nose_file_path) as f:
+                    self.read_arr_dict[nose_file_path] = self.make_read_arr(f)
+            read_arr = self.read_arr_dict[nose_file_path]
             i = file_num - 1
             if len(read_arr) > i:
                 confidence = read_arr[i][2]
@@ -59,7 +75,7 @@ class CropImage:
                                                            scaled_width=scaled_width, scaled_height=scaled_height)
                     x_center = norm_coords[0][0]
                     y_center = norm_coords[0][1]
-                    bb_size = 100
+                    bb_size = 75
                     x_min = int(x_center - bb_size)
                     y_min = int(y_center - bb_size)
                     x_max = int(x_center + bb_size)
