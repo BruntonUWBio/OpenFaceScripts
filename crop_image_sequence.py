@@ -8,18 +8,17 @@ from scipy import misc
 
 
 class CropImages:
-    def __init__(self, dir, crop_txt_files, nose_txt_files, save=False):
-        self.fps_frac = 1
+    def __init__(self, directory, crop_txt_files, nose_txt_files, save=False):
+        self.fps_fraction = 1
         self.crop_txt_files = crop_txt_files
         self.nose_txt_files = nose_txt_files
         save_name = None
-        self.im_dir = dir
+        self.im_dir = directory
         files = glob.glob(os.path.join(self.im_dir, '*.png'))
         files = sorted(files)
         self.read_arr_dict = {}
-        bb_arr = [0, 0, 0, 0]
-        crop_array_name = os.path.join(dir, 'cropped.txt')
-        if (os.path.lexists(crop_array_name)):
+        crop_array_name = os.path.join(directory, 'cropped.txt')
+        if os.path.lexists(crop_array_name):
             with open(crop_array_name, mode='rb') as f:
                 self.crop_im_arr_arr_dict = pickle.load(f)
         else:
@@ -40,6 +39,7 @@ class CropImages:
                 else:
                     bb_arr = [x_min, y_min, x_max, y_max]
 
+        self.write_arr(bb_arr, 'bb_arr')
         for image in self.crop_im_arr_arr_dict.keys():
             path_name, base_name = os.path.split(image)
             if 'cropped' not in base_name:
@@ -63,15 +63,20 @@ class CropImages:
                                     (crop_im.shape[0] * 5, crop_im.shape[1] * 5))
             cv2.imwrite(save_name, crop_im)
 
+    def write_arr(self, arr, name):
+        with open(os.path.join(self.im_dir, (name + '.txt')), mode='w') as f:
+            for element in arr:
+                f.write(str(element) + '\n')
+
     def crop_predictor(self, img, name, scaled_width, scaled_height, make_cropped_im=False):
         print('Name: {0}'.format(name))
         base_name = os.path.basename(name)
         crop_file_path, file_num = self.find_crop_path(base_name, self.crop_txt_files)
         print('Crop file: {0}'.format(crop_file_path))
-        x_min = 0
-        y_min = 0
-        x_max = 0
-        y_max = 0
+        x_min = None
+        y_min = None
+        x_max = None
+        y_max = None
         if crop_file_path is not None:
             if crop_file_path not in self.read_arr_dict.keys():
                 with open(crop_file_path) as f:
@@ -88,11 +93,11 @@ class CropImages:
         nose_file_path, file_num = self.find_crop_path(base_name, self.nose_txt_files)
         print('Nose file: {0}'.format(nose_file_path))
         if nose_file_path is not None:
+            i = file_num - 1
             if nose_file_path not in self.read_arr_dict.keys():
                 with open(nose_file_path) as f:
                     self.read_arr_dict[nose_file_path] = self.make_read_arr(f)
             read_arr = self.read_arr_dict[nose_file_path]
-            i = file_num - 1
             if len(read_arr) > i:
                 confidence = read_arr[i][2]
                 print('Crop Confidence: {0}'.format(confidence))
@@ -103,7 +108,9 @@ class CropImages:
                                                            scaled_width=scaled_width, scaled_height=scaled_height)
                     x_center = norm_coords[0][0]
                     y_center = norm_coords[0][1]
-                    bb_size = 75
+                    bb_size = 75  # Change as desired, based on size of face
+
+                    # We want only face, not whole body
                     x_min = int(x_center - bb_size)
                     y_min = int(y_center - bb_size)
                     x_max = int(x_center + bb_size)
@@ -123,6 +130,7 @@ class CropImages:
                         return [crop_im, x_min, y_min, x_max, y_max]
                     else:
                         return [img, x_min, y_min, x_max, y_max]
+
     @staticmethod
     def normalize_to_camera(coords, crop_coord, scaled_width, scaled_height):
         if sum(crop_coord) <= 0:
@@ -134,11 +142,12 @@ class CropImages:
             for coord in coords]
         return np.array(norm_coords)
 
-    def find_crop_path(self, file, crop_txt_files):
+    @staticmethod
+    def find_crop_path(file, crop_txt_files):
         parts = file.split('.')
         pid = parts[0]
         try:
-            out_num = int(''.join(parts[1][parts[1].index('out') + 3: parts[1].index('out') + 6]))
+            out_num = int(''.join(parts[1][parts[1].index('out') + 3: len(parts[1])]))
         except ValueError:
             return None, None
         out_file = None
@@ -146,19 +155,20 @@ class CropImages:
             out_file = crop_txt_files[pid]
         return out_file, out_num
 
-    def return_min_max(self, arr):
+    @staticmethod
+    def return_min_max(arr):
         return int(arr[0]), int(arr[1]), int(arr[2]), int(arr[3])
 
     def make_read_arr(self, f, num_constraint=None):
-        readArr = f.readlines()
+        read_arr = f.readlines()
         if num_constraint is not None:
-            readArr = [readArr[i].split(',')[0:num_constraint] for i in range(0, len(readArr), self.fps_frac)]
+            read_arr = [read_arr[i].split(',')[0:num_constraint] for i in range(0, len(read_arr), self.fps_fraction)]
         else:
-            readArr = [readArr[i].split(',') for i in range(0, len(readArr), self.fps_frac)]
-        for index, num in enumerate(readArr):
+            read_arr = [read_arr[i].split(',') for i in range(0, len(read_arr), self.fps_fraction)]
+        for index, num in enumerate(read_arr):
             for val_index, val in enumerate(num):
-                readArr[index][val_index] = val.replace('(', '')
-                val = readArr[index][val_index]
-                readArr[index][val_index] = val.replace(')', '')
-        readArr = [[float(k) for k in i] for i in readArr]
-        return readArr
+                read_arr[index][val_index] = val.replace('(', '')
+                val = read_arr[index][val_index]
+                read_arr[index][val_index] = val.replace(')', '')
+        read_arr = [[float(k) for k in i] for i in read_arr]
+        return read_arr
