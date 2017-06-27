@@ -1,14 +1,15 @@
 # Requires pose, crop coordinates
 import glob
 import os
-import numpy as np
-import cv2
 import pickle
+
+import numpy as np
 from scipy import misc
 
 
 class CropImages:
     def __init__(self, directory, crop_txt_files, nose_txt_files, save=False):
+        self.resize_factor = 5
         self.fps_fraction = 1
         self.crop_txt_files = crop_txt_files
         self.nose_txt_files = nose_txt_files
@@ -39,7 +40,7 @@ class CropImages:
                 else:
                     bb_arr = [x_min, y_min, x_max, y_max]
 
-        self.write_arr(bb_arr, 'bb_arr')
+        self.write_arr(bb_arr, 'bb_arr', extra=True)
         for image in self.crop_im_arr_arr_dict.keys():
             path_name, base_name = os.path.split(image)
             if 'cropped' not in base_name:
@@ -59,14 +60,26 @@ class CropImages:
         x_min, y_min, x_max, y_max = self.return_min_max(crop_arr)
         crop_im = img[y_min:y_max, x_min:x_max]
         if save_name:
-            crop_im = misc.imresize(cv2.cvtColor(crop_im, cv2.COLOR_RGB2BGR),
-                                    (crop_im.shape[0] * 5, crop_im.shape[1] * 5))
-            cv2.imwrite(save_name, crop_im)
+            # crop_im = cv2.cvtColor(crop_im, cv2.COLOR_RGB2BGR)
 
-    def write_arr(self, arr, name):
+            # Resize image for better detection and presentation
+            crop_im = misc.imresize(crop_im,
+                                    (crop_im.shape[0] * self.resize_factor, crop_im.shape[1] * self.resize_factor))
+
+            # cv2.imwrite(save_name, crop_im)
+            misc.imsave(save_name, crop_im)
+
+    def lower_im_size(self, name):
+        im = misc.imread(name)
+        im = misc.imresize(im, (im.shape[0] / self.resize_factor, im.shape[1] / self.resize_factor))
+        misc.imsave(name, im)
+
+    def write_arr(self, arr, name, extra=False):
         with open(os.path.join(self.im_dir, (name + '.txt')), mode='w') as f:
             for element in arr:
                 f.write(str(element) + '\n')
+            if extra:
+                f.write('Rescaling factor: ' + '\n' + str(self.resize_factor) + '\n')
 
     def crop_predictor(self, img, name, scaled_width, scaled_height, make_cropped_im=False):
         print('Name: {0}'.format(name))
