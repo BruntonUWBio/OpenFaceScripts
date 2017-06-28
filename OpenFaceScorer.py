@@ -59,10 +59,11 @@ class OpenFaceScorer:
         with open('av_score.txt', mode='w') as f:
             print('Detected percentage: ' + str(detectedPercentage))
             f.write(str(detectedPercentage))
-            for part in scores_list.keys():
+            for part in sorted(scores_list.keys()):
                 score_string = part + " = " + str(scores_list[part])
                 print(score_string)
                 f.write(score_string)
+                f.write('\n')
 
     @staticmethod
     def find_im_files(path):

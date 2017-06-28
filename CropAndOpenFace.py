@@ -46,7 +46,7 @@ class VideoImageCropper:
 
         # Remove q if visualization desired, inserted for performance
         subprocess.Popen(
-            '{0} -f {1} -ov {2} -of {3} -verbose -wild -q -multi-view 1'.format(executable,
+            '{0} -f {1} -ov {2} -of {3} -q -verbose -wild -multi-view 1'.format(executable,
                                                                                 os.path.join(self.im_dir,
                                                                                              'inter_out.mp4'),
                                                                                 os.path.join(self.im_dir, 'out.mp4'),
