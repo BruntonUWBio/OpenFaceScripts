@@ -16,8 +16,8 @@ class OpenFaceScorer:
         au_file = 'au.txt'  # Replace with name of action units file
         with open(au_file, mode='r') as f:
             self.au_arr = f.readlines()
-        self.au_arr = [i.split(',') for i in self.au_arr]
-        self.au_dict = {label.strip(): ind for ind, label in enumerate(self.au_arr[0])}
+        self.au_arr = [i.split(', ') for i in self.au_arr]
+        self.au_dict = {label: ind for ind, label in enumerate(self.au_arr[0])}
         self.ref_dict = self.csv_reader(csv)  # Open coordinates file for reference
         self.original_file_names = sorted(self.ref_dict.keys())
         self.im_files = self.find_im_files(dir)
@@ -29,22 +29,56 @@ class OpenFaceScorer:
             self.rescale_factor = int(f_arr[5])
         self.normalize_au_coords()
         all_frame_nums = [i for i in self.coords_dict.keys()]
+        self.part_arr = [
+            "Left Eye",
+            "Right Eye",
+            "Left Eyebrow",
+            "Right Eyebrow",
+            "Nose",
+            "Mouth",
+            "Jaw"
+        ]
         cut_frames = [self.coords_dict[i] for i in range(min(all_frame_nums), max(all_frame_nums), 30)]
-        scores_list = [self.find_score_diffs(i, [self.ref_dict[self.original_file_names[index]][j] for j in
-                                                 self.ref_dict[self.original_file_names[index]].keys()]) for index, i in
-                       enumerate(cut_frames)]
-        av_score = np.average(scores_list)
-        print('Average score difference = ' + av_score)
+        scores_list = defaultdict()
+        for part in self.part_arr:
+            scores_list[part] = []
+        detectedNum = 0
+        totalNum = 0
+        for index, i in enumerate(cut_frames):
+            totalNum += 1
+            if np.count_nonzero(i):
+                detectedNum += 1
+                arr1 = i
+                arr2 = [self.ref_dict[self.original_file_names[index]][j] for j in
+                        self.ref_dict[self.original_file_names[index]].keys()]
+                curr_scores_dict = self.find_score_diffs(arr1, arr2)
+                for part, score in curr_scores_dict.items():
+                    scores_list[part].append(score)
+        detectedPercentage = detectedNum/totalNum
+        scores_list = self.reduce_to_averages(scores_list)
         with open('av_score.txt', mode='w') as f:
-            f.write(str(av_score))
+            print('Detected percentage: ' + str(detectedPercentage))
+            f.write(str(detectedPercentage))
+            for part in scores_list.keys():
+                score_string = part + " = " + str(scores_list[part])
+                print(score_string)
+                f.write(score_string)
 
     @staticmethod
     def find_im_files(path):
         return sorted(
             glob.glob(os.path.join(path + '/**/*.png'), recursive=True))  # Sort, because order of images matters
 
+    @staticmethod
+    def reduce_to_averages(arr):
+        for part in arr.keys():
+            arr[part] = np.average(arr[part])
+        return arr
+
     def find_score_diffs(self, arr1, arr2):
-        dist_arr = []
+        dist_arr = defaultdict()
+        for part in self.part_arr:
+            dist_arr[part] = []
         for index, coord_arr1 in enumerate(arr1):
             if index in range(len(arr2)):
                 coord_arr2 = arr2[index]
@@ -53,8 +87,22 @@ class OpenFaceScorer:
                 y1 = coord_arr1[1]
                 y2 = coord_arr2[1]
                 if x1 and x2 and y1 and y2:  # Check if any nones
-                    dist_arr.append(self.find_distance(x1, x2, y1, y2))
-        return np.average(dist_arr)
+                    if index in range(1, 18):
+                        part = "Jaw"
+                    elif index in range(18, 23):
+                        part = "Right Eyebrow"
+                    elif index in range(23, 28):
+                        part = "Left Eyebrow"
+                    elif index in range(28, 37):
+                        part = "Nose"
+                    elif index in range(37, 43):
+                        part = "Right Eye"
+                    elif index in range(43, 49):
+                        part = "Left Eye"
+                    else:
+                        part = "Mouth"
+                    dist_arr[part].append(self.find_distance(x1, x2, y1, y2))
+        return self.reduce_to_averages(dist_arr)
 
     @staticmethod
     def find_distance(x1, x2, y1, y2):
@@ -67,14 +115,18 @@ class OpenFaceScorer:
         for frame_index in range(1, len(self.au_arr)):
             self.coords_dict[frame_index] = []
             for face_coord in range(0, 68):
-                x_coord = float(self.au_arr[frame_index][self.au_dict['x_' + str(face_coord)]])
-                y_coord = float(self.au_arr[frame_index][self.au_dict['y_' + str(face_coord)]])
+                if self.au_arr[frame_index][self.au_dict['success']] == '0':
+                    x_coord = 0
+                    y_coord = 0
+                else:
+                    x_coord = float(self.au_arr[frame_index][self.au_dict['x_' + str(face_coord)]])
+                    y_coord = float(self.au_arr[frame_index][self.au_dict['y_' + str(face_coord)]])
 
-                # Adjust coordinates to where they would have been on the original video
-                x_coord /= self.rescale_factor
-                y_coord /= self.rescale_factor
-                x_coord += xmin
-                y_coord += ymin
+                    # Adjust coordinates to where they would have been on the original video
+                    x_coord /= self.rescale_factor
+                    y_coord /= self.rescale_factor
+                    x_coord += xmin
+                    y_coord += ymin
                 self.coords_dict[frame_index].append([x_coord, y_coord])
 
     # From XMLTransformer

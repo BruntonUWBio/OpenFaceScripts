@@ -68,6 +68,7 @@ class CropImages:
 
             # cv2.imwrite(save_name, crop_im)
             misc.imsave(save_name, crop_im)
+            print("Saving " + save_name)
 
     def lower_im_size(self, name):
         im = misc.imread(name)
