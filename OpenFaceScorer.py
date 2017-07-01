@@ -10,14 +10,10 @@ import numpy as np
 class OpenFaceScorer:
     def __init__(self, dir, csv):
         os.chdir(dir)
-        self.include_guess = True  # Change deppending on desired behavior
-        self.landmark_map = defaultdict()
-        self.make_landmark_map()
+        self.include_guess = True  # Change depending on desired behavior
+        self.landmark_map = self.make_landmark_map()
         au_file = 'au.txt'  # Replace with name of action units file
-        with open(au_file, mode='r') as f:
-            self.au_arr = f.readlines()
-        self.au_arr = [i.split(', ') for i in self.au_arr]
-        self.au_dict = {label: ind for ind, label in enumerate(self.au_arr[0])}
+        self.au_arr, self.au_dict = self.make_au_parts(au_file)
         self.ref_dict = self.csv_reader(csv)  # Open coordinates file for reference
         self.original_file_names = sorted(self.ref_dict.keys())
         self.im_files = self.find_im_files(dir)
@@ -71,10 +67,10 @@ class OpenFaceScorer:
             glob.glob(os.path.join(path + '/**/*.png'), recursive=True))  # Sort, because order of images matters
 
     @staticmethod
-    def reduce_to_averages(arr):
-        for part in arr.keys():
-            arr[part] = np.average(arr[part])
-        return arr
+    def reduce_to_averages(dict):
+        for part in dict.keys():
+            dict[part] = np.average(dict[part])
+        return dict
 
     def find_score_diffs(self, arr1, arr2):
         dist_arr = defaultdict()
@@ -113,7 +109,7 @@ class OpenFaceScorer:
         xmin = self.bbox[0]
         ymin = self.bbox[1]
         min_arr = [xmin, ymin]
-        for frame_index in range(1, len(self.au_arr)):
+        for frame_index in range(len(self.au_arr)):
             self.coords_dict[frame_index] = []
             for face_coord in range(0, 68):
                 if self.au_arr[frame_index][self.au_dict['success']] == '0':
@@ -132,42 +128,56 @@ class OpenFaceScorer:
 
     # From XMLTransformer
     def make_landmark_map(self):
+        landmark_map = defaultdict()
         for i in range(0, 17):
-            self.landmark_map[i] = 'J' + str(i + 1)
-        self.landmark_map[17] = 'E10'
-        self.landmark_map[18] = 'E9'
-        self.landmark_map[19] = 'E8'
-        self.landmark_map[20] = 'E7'
-        self.landmark_map[21] = 'E6'
+            landmark_map[i] = 'J' + str(i + 1)
+        landmark_map[17] = 'E10'
+        landmark_map[18] = 'E9'
+        landmark_map[19] = 'E8'
+        landmark_map[20] = 'E7'
+        landmark_map[21] = 'E6'
         for i in range(22, 27):
-            self.landmark_map[i] = 'E' + str(i - 21)
+            landmark_map[i] = 'E' + str(i - 21)
         for i in range(27, 36):
-            self.landmark_map[i] = 'N' + str(i - 26)
+            landmark_map[i] = 'N' + str(i - 26)
         for i in range(36, 39):
-            self.landmark_map[i] = 'RE' + str(i - 35)
-        self.landmark_map[39] = 'RE6'
-        self.landmark_map[40] = 'RE5'
-        self.landmark_map[41] = 'RE4'
+            landmark_map[i] = 'RE' + str(i - 35)
+        landmark_map[39] = 'RE6'
+        landmark_map[40] = 'RE5'
+        landmark_map[41] = 'RE4'
         for i in range(42, 45):
-            self.landmark_map[i] = 'LE' + str(i - 41)
-        self.landmark_map[45] = 'LE6'
-        self.landmark_map[46] = 'LE5'
-        self.landmark_map[47] = 'LE4'
+            landmark_map[i] = 'LE' + str(i - 41)
+        landmark_map[45] = 'LE6'
+        landmark_map[46] = 'LE5'
+        landmark_map[47] = 'LE4'
         for i in range(48, 55):
-            self.landmark_map[i] = 'M' + str(i - 47)
-        self.landmark_map[55] = 'M6'
-        self.landmark_map[56] = 'M7'
-        self.landmark_map[57] = 'M8'
-        self.landmark_map[58] = 'M9'
-        self.landmark_map[59] = 'M10'
-        self.landmark_map[60] = 'M11'
-        self.landmark_map[61] = 'M12'
-        self.landmark_map[62] = 'M13'
-        self.landmark_map[63] = 'M14'
-        self.landmark_map[64] = 'M15'
-        self.landmark_map[65] = 'M19'
-        self.landmark_map[66] = 'M18'
-        self.landmark_map[67] = 'M17'
+            landmark_map[i] = 'M' + str(i - 47)
+        landmark_map[55] = 'M6'
+        landmark_map[56] = 'M7'
+        landmark_map[57] = 'M8'
+        landmark_map[58] = 'M9'
+        landmark_map[59] = 'M10'
+        landmark_map[60] = 'M11'
+        landmark_map[61] = 'M12'
+        landmark_map[62] = 'M13'
+        landmark_map[63] = 'M14'
+        landmark_map[64] = 'M15'
+        landmark_map[65] = 'M19'
+        landmark_map[66] = 'M18'
+        landmark_map[67] = 'M17'
+        return landmark_map
+
+    @staticmethod
+    def make_au_parts(au_file):
+        with open(au_file, mode='r') as f:
+            au_arr = f.readlines()
+        au_arr = [au_arr[i].replace('\n', '').split(', ') for i in range(0, len(au_arr))]
+        au_dict = {label: ind for ind, label in enumerate(au_arr[0])}
+        au_arr = au_arr[1: len(au_arr)]
+        for frame in range(len(au_arr)):
+            for i in range(len(au_arr[frame])):
+                au_arr[frame][i] = float(au_arr[frame][i])
+        return au_arr, au_dict
 
     # csv_reader, from XMLTransformer
     def csv_reader(self, csv_path):
