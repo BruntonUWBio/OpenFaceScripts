@@ -30,6 +30,12 @@ class VideoImageCropper:
                                            save=True)
         if not self.already_detected:
             self.run_open_face()
+        frame_direc = os.path.join(self.im_dir, 'labeled_frames/')
+        if not os.path.exists(frame_direc):
+            os.mkdir(os.path.join(self.im_dir, 'labeled_frames/'))
+        subprocess.Popen(
+            'ffmpeg -i "{0}" -vf fps=30 "{1}"'.format(os.path.join(self.im_dir, 'out.mp4'), os.path.join(frame_direc, (
+                os.path.basename(self.im_dir) + '_out%04d.png'))), shell=True).wait()
         OpenFaceScorer.OpenFaceScorer(self.im_dir, self.csv_path)
 
     @staticmethod
@@ -38,7 +44,7 @@ class VideoImageCropper:
                 glob.iglob(os.path.join(path + '/**/*.txt'), recursive=True)}
 
     def run_open_face(self):
-        executable = '/home/gvelchuru/OpenFace/build/bin/FeatureExtraction' #Change to location of OpenFace
+        executable = '/home/gvelchuru/OpenFace/build/bin/FeatureExtraction'  # Change to location of OpenFace
         subprocess.Popen("ffmpeg -r 30 -f image2 -s 1920x1080 -pattern_type glob -i '{0}' -b:v 2000k {1}".format(
             os.path.join(self.im_dir, '*.png'),
             os.path.join(self.im_dir,

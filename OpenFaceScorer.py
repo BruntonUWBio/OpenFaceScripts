@@ -61,10 +61,11 @@ class OpenFaceScorer:
                 f.write(score_string)
                 f.write('\n')
 
+    # Returns png files within the path specified, non-recursively
     @staticmethod
     def find_im_files(path):
         return sorted(
-            glob.glob(os.path.join(path + '/**/*.png'), recursive=True))  # Sort, because order of images matters
+            glob.glob(os.path.join(path + '/*.png')))  # Sort, because order of images matters
 
     @staticmethod
     def reduce_to_averages(dict):
