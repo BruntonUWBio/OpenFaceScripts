@@ -13,7 +13,7 @@ from OpenFaceScripts import AUScorer, OpenFaceScorer
 
 class AUGui(wx.Frame):
     def __init__(self, parent, ID, name, directory, include_eyebrows=False):
-        self.reverse_dict = None
+        self.prominent_images = None
         self.skipping_index = 1
         wx.Frame.__init__(self, parent, ID, name)
         os.chdir(directory)
@@ -27,6 +27,7 @@ class AUGui(wx.Frame):
 
         self.curr_emotions = []
         self.emotional_pictures = [self.images[i] for i in self.scorer.emotions.keys()]
+        self.AU_choices = copy.deepcopy(self.emotional_pictures)
         self.reverse_emotions = defaultdict()
         for frame in self.scorer.emotions:
             self.reverse_emotions[frame] = {}
@@ -100,7 +101,7 @@ class AUGui(wx.Frame):
         return images, imageIndex
 
     def click_on_pic(self, event):
-        self.imageIndex = self.images.index(self.emotional_pictures[event.GetInt()])
+        self.imageIndex = self.images.index(self.AU_choices[event.GetInt()])
         self.update_all()
 
     def show_landmarks(self, event):
@@ -118,7 +119,7 @@ class AUGui(wx.Frame):
 
     def show_im(self):
         if self.landmarks_shown:
-            image = self.landmark_images[self.original_images.index(self.images[self.imageIndex])]
+            image = self.landmark_images[self.imageIndex]
         else:
             image = self.images[self.imageIndex]
         self.Canvas.InitAll()
@@ -128,29 +129,23 @@ class AUGui(wx.Frame):
         self.redraw()
 
     def order_by_index(self, event):
-        curr_image = self.emotional_pictures[self.imageIndex]
-        self.emotional_pictures = sorted(self.emotional_pictures)
-        self.imageIndex = self.emotional_pictures.index(curr_image)
-        self.AU_box.Set(self.emotional_pictures)
+        self.AU_choices = self.emotional_pictures
+        self.AU_box.Set(self.AU_choices)
 
     def order_by_pro(self, event):
-        new_emotional_pics = []
-        curr_image = self.images[self.imageIndex]
-        if not self.reverse_dict:
-            self.reverse_dict = {
+        if not self.prominent_images:
+            new_emotional_pics = []
+            reverse_dict = {
                 i: [] for i in range(6)
             }
             for frame, frame_dict in self.scorer.emotions.items():
-                self.reverse_dict[max(frame_dict.values())].append(frame)
-        for max_value in sorted(self.reverse_dict.keys(), reverse=True):
-            for pic_num in self.reverse_dict[max_value]:
-                try:
+                reverse_dict[max(frame_dict.values())].append(frame)
+            for max_value in sorted(reverse_dict.keys(), reverse=True):
+                for pic_num in reverse_dict[max_value]:
                     new_emotional_pics.append(self.images[pic_num])
-                except IndexError:
-                    print('what')
-        self.emotional_pictures = new_emotional_pics
-        self.imageIndex = self.images.index(curr_image)
-        self.pic_box.Set(self.emotional_pictures)
+            self.prominent_images = new_emotional_pics
+        self.AU_choices = self.prominent_images
+        self.pic_box.Set(self.AU_choices)
 
     def rewrite_text(self):
         label = 'CurrIm = ' + self.images[self.imageIndex] + '\n\n' + 'AUs' + '\n'
