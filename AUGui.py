@@ -1,8 +1,7 @@
-import copy
+import csv
 import glob
 import os
 import sys
-from collections import defaultdict
 
 import wx
 from wx.lib.floatcanvas import NavCanvas
@@ -12,34 +11,40 @@ from OpenFaceScripts import AUScorer, OpenFaceScorer
 
 
 class AUGui(wx.Frame):
-    def __init__(self, parent, ID, name, directory, include_eyebrows=False):
+    def __init__(self, parent, frame_id, name, curr_directory, incl_eyebrows=False, path_to_csv=None):
+        self.path_to_csv = path_to_csv
         self.prominent_images = None
         self.skipping_index = 1
-        wx.Frame.__init__(self, parent, ID, name)
-        os.chdir(directory)
-        self.images, self.imageIndex = self.make_images()
-        self.original_images = copy.deepcopy(self.images)
-        self.AU_threshold = 0
-        self.scorer = AUScorer.AUScorer(directory, self.AU_threshold, include_eyebrows)
+        wx.Frame.__init__(self, parent, frame_id, name)
+        os.chdir(curr_directory)
+        self.images, self.imageIndex = make_images()
+
+        self.image_map = None
+        self.annotated_map = None
+        self.all_shown = True
+        if self.path_to_csv:
+            self.image_map = csv_emotion_reader(path_to_csv)
+            self.annotated_map = {self.images[index * 30]: emotion for index, emotion in
+                                  enumerate(sorted(self.image_map.values())) if
+                                  (index * 30) < len(self.images)}  # Relies on image map only having one item per image
+
+        self.AU_threshold = 1
+        self.scorer = AUScorer.AUScorer(curr_directory, self.AU_threshold, incl_eyebrows)
 
         n_c = NavCanvas.NavCanvas(self, Debug=0, BackgroundColor="BLACK")
         self.Canvas = n_c.Canvas
 
         self.curr_emotions = []
-        self.emotional_pictures = [self.images[i] for i in self.scorer.emotions.keys()]
-        self.AU_choices = copy.deepcopy(self.emotional_pictures)
-        self.reverse_emotions = defaultdict()
-        for frame in self.scorer.emotions:
-            self.reverse_emotions[frame] = {}
-            for emotion, value in self.scorer.emotions[frame].items():
-                if value not in self.reverse_emotions[frame].keys():
-                    self.reverse_emotions[frame][value] = [emotion]
-                else:
-                    self.reverse_emotions[frame][value].append(emotion)
-        self.AU_box = wx.ListBox(self, wx.NewId(), style=wx.LC_REPORT | wx.SUNKEN_BORDER, name='List of Emotions',
-                                 choices=self.curr_emotions)
+        self.AU_choices = self.make_full_au_choices()
+        self.AU_box = wx.BoxSizer(wx.VERTICAL)
+        self.AU_List = wx.ListBox(self, wx.NewId(), style=wx.LC_REPORT | wx.SUNKEN_BORDER, name='List of Emotions',
+                                  choices=self.curr_emotions)
+        self.AU_box.Add(self.AU_List, 3, wx.EXPAND)
+        if self.path_to_csv:
+            self.annotation_box = wx.TextCtrl(self, wx.NewId(), value='N/A', style=wx.TE_READONLY | wx.TE_MULTILINE)
+            self.AU_box.Add(self.annotation_box, 1, wx.EXPAND)
         self.pic_box = wx.ListBox(self, wx.NewId(), style=wx.LC_REPORT | wx.SUNKEN_BORDER, name='Pictures',
-                                  choices=self.emotional_pictures)
+                                  choices=self.AU_choices)
 
         box = wx.BoxSizer(wx.HORIZONTAL)
         box.Add(self.pic_box, 1, wx.EXPAND)
@@ -47,25 +52,27 @@ class AUGui(wx.Frame):
         box.Add(self.AU_box, 1, wx.EXPAND)
 
         botBox = wx.BoxSizer(wx.HORIZONTAL)
-        orderByIndexButton = wx.Button(self, wx.NewId(), label='Order By Index')
-        orderByProButton = wx.Button(self, wx.NewId(), label='Order By Prominence')
+        self.order = 'Index'
+        self.order_button = wx.Button(self, wx.NewId(), label='Order By Prominence')
         show_landmarksButton = wx.Button(self, wx.NewId(), label='Show/Hide Landmarks')
-        self.au_text = wx.StaticText(self, wx.NewId(), label='N/A')
+        self.au_text = wx.TextCtrl(self, wx.NewId(), value='N/A', style=wx.VSCROLL | wx.TE_READONLY | wx.TE_MULTILINE)
 
-        botBox.Add(orderByIndexButton, 1, wx.EXPAND)
-        botBox.Add(orderByProButton, 1, wx.EXPAND)
+        botBox.Add(self.order_button, 1, wx.EXPAND)
         botBox.Add(show_landmarksButton, 1, wx.EXPAND)
+        if self.path_to_csv:
+            self.show_annotations_button = wx.Button(self, wx.NewId(), label='Show Annotated Frames')
+            botBox.Add(self.show_annotations_button, 1, wx.EXPAND)
+            self.Bind(wx.EVT_BUTTON, self.show_hide_annotations, id=self.show_annotations_button.GetId())
         botBox.Add(self.au_text, 4, wx.EXPAND)
 
         self.allBox = wx.BoxSizer(wx.VERTICAL)
-        self.allBox.Add(box, 3, wx.EXPAND)
+        self.allBox.Add(box, 4, wx.EXPAND)
         self.allBox.Add(botBox, 1, wx.EXPAND)
 
         # -- Make Bindings --
         self.Bind(wx.EVT_LISTBOX, self.click_on_pic, id=self.pic_box.GetId())
-        self.Bind(wx.EVT_LISTBOX, self.click_on_emotion, id=self.AU_box.GetId())
-        self.Bind(wx.EVT_BUTTON, self.order_by_index, id=orderByIndexButton.GetId())
-        self.Bind(wx.EVT_BUTTON, self.order_by_pro, id=orderByProButton.GetId())
+        self.Bind(wx.EVT_LISTBOX, self.click_on_emotion, id=self.AU_List.GetId())
+        self.Bind(wx.EVT_BUTTON, self.evt_reorder_pics, id=self.order_button.GetId())
         self.Bind(wx.EVT_BUTTON, self.show_landmarks, id=show_landmarksButton.GetId())
 
         self.SetSizer(self.allBox)
@@ -75,7 +82,7 @@ class AUGui(wx.Frame):
         # Landmark stuff
         self.landmarks_exist = False
         self.landmarks_shown = False
-        marked_pics_dir = os.path.join(directory, 'labeled_frames/')
+        marked_pics_dir = os.path.join(curr_directory, 'labeled_frames/')
         if os.path.exists(marked_pics_dir):
             self.landmark_images = OpenFaceScorer.OpenFaceScorer.find_im_files(marked_pics_dir)
             if self.landmark_images:
@@ -92,13 +99,7 @@ class AUGui(wx.Frame):
         for emote in sorted(emote_template.keys()):
             label += '{0} : {1} \n'.format(emote, str(emote_template[emote]))
         self.pop_dialog('Emotion Templates', label)
-        self.AU_box.Deselect(self.AU_box.GetSelection())
-
-    @staticmethod
-    def make_images():
-        images = sorted(glob.glob('*.png'))
-        imageIndex = 0
-        return images, imageIndex
+        self.AU_List.Deselect(self.AU_List.GetSelection())
 
     def click_on_pic(self, event):
         self.imageIndex = self.images.index(self.AU_choices[event.GetInt()])
@@ -128,43 +129,41 @@ class AUGui(wx.Frame):
         self.Canvas.AddScaledBitmap(bm, XY=(0, 0), Height=500, Position='tl')
         self.redraw()
 
-    def order_by_index(self, event):
-        self.AU_choices = self.emotional_pictures
-        self.AU_box.Set(self.AU_choices)
+    # Event handling wrapper for reordering pictures
+    def evt_reorder_pics(self, event):
+        if self.order == 'Index':
+            self.reorder_pics('Prominence')
+        else:
+            self.reorder_pics('Index')
 
-    def order_by_pro(self, event):
-        if not self.prominent_images:
-            new_emotional_pics = []
-            reverse_dict = {
-                i: [] for i in range(6)
-            }
-            for frame, frame_dict in self.scorer.emotions.items():
-                reverse_dict[max(frame_dict.values())].append(frame)
-            for max_value in sorted(reverse_dict.keys(), reverse=True):
-                for pic_num in reverse_dict[max_value]:
-                    new_emotional_pics.append(self.images[pic_num])
-            self.prominent_images = new_emotional_pics
-        self.AU_choices = self.prominent_images
+    def reorder_pics(self, order_type):
+        if order_type == 'Index':
+            self.AU_choices.sort()
+            self.order_button.SetLabel('Order by Prominence')
+        elif order_type == 'Prominence':
+            self.AU_choices.sort(key=lambda pic: (
+                max(self.scorer.emotions[self.images.index(pic)].values()) if self.images.index(
+                    pic) in self.scorer.emotions.keys() else 0),
+                                 reverse=True)
+            self.order_button.SetLabel('Order by Index')
+        else:
+            raise ValueError('Unknown order type')
+        self.order = order_type
         self.pic_box.Set(self.AU_choices)
 
     def rewrite_text(self):
-        label = 'CurrIm = ' + self.images[self.imageIndex] + '\n\n' + 'AUs' + '\n'
-        presences = self.scorer.presence_dict
-        name_dict = self.au_name_dict()
-        if presences[self.imageIndex]:
-            au_dict = presences[self.imageIndex]
+        label = 'Current Image = ' + self.images[self.imageIndex] + '\n\n' + 'AUs' + '\n'
+        name_dict = au_name_dict()
+        if self.scorer.presence_dict[self.imageIndex]:
+            au_dict = self.scorer.presence_dict[self.imageIndex]
             au_dict_keys = sorted(au_dict.keys())
             for au in au_dict_keys:
                 if 'c' in au:
                     r_label = au.replace('c', 'r')
-                    if r_label in au_dict_keys:
-                        val = str(au_dict[r_label])
-                    else:
-                        val = 'Present'
                     au_int = AUScorer.AUScorer.return_num(au)
-                    label += '{0} ({1}) = {2} \n'.format(str(au_int), name_dict[au_int], val)
-
-        self.au_text.SetLabel(label)
+                    label += '{0} ({1}) = {2} \n'.format(str(au_int), name_dict[au_int], str(
+                        au_dict[r_label]) if r_label in au_dict_keys else 'Present')
+        self.au_text.SetValue(label)
 
     def redraw(self):
         self.Canvas.Draw()
@@ -181,50 +180,92 @@ class AUGui(wx.Frame):
                 self.imageIndex -= self.skipping_index
                 self.update_all()
 
+    def update_annotation_box(self):
+        # Outer scope checks for csv path but not if image num in list of numbers
+        curr_im = self.images[self.imageIndex]
+        self.annotation_box.SetValue(
+            'Ground Truth \n' + (self.annotated_map[curr_im] if curr_im in self.annotated_map.keys() else 'None'))
+
+    def show_hide_annotations(self, event):
+        if self.all_shown:
+            annotation_dlg = wx.SingleChoiceDialog(self, message='Choose', caption='Choose',
+                                                   choices=self.scorer.emotion_list())
+            if annotation_dlg.ShowModal() == wx.ID_OK:
+                self.show_annotations(annotation_type=annotation_dlg.GetStringSelection())
+                self.all_shown = not self.all_shown
+        else:
+            self.AU_choices = self.make_full_au_choices()
+            self.reorder_pics('Index')
+            self.show_annotations_button.SetLabel('Show Only Annotated Frames')
+            self.all_shown = not self.all_shown
+
+    def show_annotations(self, annotation_type=None):
+        if not annotation_type:
+            self.AU_choices = list(self.annotated_map.keys())
+        else:
+            self.AU_choices = [i for i, val in self.annotated_map.items() if val == annotation_type]
+        self.reorder_pics('Index')
+        self.show_annotations_button.SetLabel('Show All Frames')
+
     def update_all(self):
         self.show_im()
         self.update_au_list()
         self.rewrite_text()
-
-    def au_name_dict(self):
-        return {
-            1: 'Inner Brow Raiser',
-            2: 'Outer Brow Raiser',
-            4: 'Brow Lowerer',
-            5: 'Upper Lid Raiser',
-            6: 'Cheek Raiser',
-            7: 'Lid Tightener',
-            9: 'Nose Wrinkler',
-            10: 'Upper Lip Raiser',
-            12: 'Lip Corner Puller',
-            14: 'Dimpler',
-            15: 'Lip Corner Depressor',
-            17: 'Chin Raiser',
-            20: 'Lip Stretcher',
-            23: 'Lip Tightener',
-            25: 'Lips Part',
-            26: 'Jaw Drop',
-            28: 'Lip Suck',
-            45: 'Blink'
-        }
+        if self.path_to_csv:
+            self.update_annotation_box()
 
     def update_au_list(self):
-        if self.imageIndex in self.reverse_emotions.keys():
-            total_arr = ['Scores']
-            for value, emotions in sorted(self.reverse_emotions[self.imageIndex].items(), reverse=True):
-                for emotion in emotions:
-                    total_arr.append(emotion + ' = ' + str(value))
-            self.AU_box.Set(total_arr)
-        else:
-            self.AU_box.Set(['None'])
+        self.AU_List.Set(['Scores'] + ([emotion + ' = ' + str(value) for emotion, value in
+                                        sorted(self.scorer.emotions[self.imageIndex].items(), key=lambda item: item[1],
+                                               reverse=True)] if self.imageIndex in self.scorer.emotions.keys() else [
+            'None']))
+
+    def make_full_au_choices(self):
+        return [self.images[i] for i in self.scorer.emotions.keys()]
+
+
+def make_images():
+    images = sorted(glob.glob('*.png'))
+    imageIndex = 0
+    return images, imageIndex
+
+
+# csv_reader, from XMLTransformer
+def csv_emotion_reader(csv_path):
+    with open(csv_path, 'rt') as csv_file:
+        image_map = {index - 1: row[1] for index, row in enumerate(csv.reader(csv_file)) if
+                     index != 0}  # index -1 to compensate for first row offset
+    return image_map
+
+
+def au_name_dict():
+    return {
+        1: 'Inner Brow Raiser',
+        2: 'Outer Brow Raiser',
+        4: 'Brow Lowerer',
+        5: 'Upper Lid Raiser',
+        6: 'Cheek Raiser',
+        7: 'Lid Tightener',
+        9: 'Nose Wrinkler',
+        10: 'Upper Lip Raiser',
+        12: 'Lip Corner Puller',
+        14: 'Dimpler',
+        15: 'Lip Corner Depressor',
+        17: 'Chin Raiser',
+        20: 'Lip Stretcher',
+        23: 'Lip Tightener',
+        25: 'Lips Part',
+        26: 'Jaw Drop',
+        28: 'Lip Suck',
+        45: 'Blink'
+    }
 
 
 if __name__ == '__main__':
-    include_eyebrows = False
-    if '-eb' in sys.argv:
-        include_eyebrows = str(sys.argv[sys.argv.index('eb') + 1]) == '1'
+    include_eyebrows = str(sys.argv[sys.argv.index('-eb') + 1]) == '1' if '-eb' in sys.argv else False
+    csv_path = str(sys.argv[sys.argv.index('-csv') + 1]) if '-csv' in sys.argv else None
     directory = sys.argv[sys.argv.index('-d') + 1]
     app = wx.App(False)
-    score = AUGui(None, wx.ID_ANY, "AuGUI", directory)
+    score = AUGui(None, wx.ID_ANY, "AuGUI", directory, include_eyebrows, csv_path)
     score.Show(True)
     app.MainLoop()
