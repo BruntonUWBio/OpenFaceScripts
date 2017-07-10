@@ -239,8 +239,9 @@ class AUGui(wx.Frame):
             prevalence_score = 0
         else:
             prevalence_score = (
-            (max_value ** 2) / np.sum([x * len(reverse_emotions[x]) for x in reverse_emotions.keys()]))
+                (max_value ** 2) / np.sum([x * len(reverse_emotions[x]) for x in reverse_emotions.keys()]))
         return prevalence_score
+
 
 def make_images():
     images = sorted(glob.glob('*.png'))
