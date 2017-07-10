@@ -3,6 +3,7 @@ import glob
 import os
 import sys
 
+import numpy as np
 import wx
 from wx.lib.floatcanvas import NavCanvas
 
@@ -28,7 +29,7 @@ class AUGui(wx.Frame):
                                   enumerate(sorted(self.image_map.values())) if
                                   (index * 30) < len(self.images)}  # Relies on image map only having one item per image
 
-        self.AU_threshold = 1
+        self.AU_threshold = 0
         self.scorer = AUScorer.AUScorer(curr_directory, self.AU_threshold, incl_eyebrows)
 
         n_c = NavCanvas.NavCanvas(self, Debug=0, BackgroundColor="BLACK")
@@ -142,7 +143,7 @@ class AUGui(wx.Frame):
             self.order_button.SetLabel('Order by Prominence')
         elif order_type == 'Prominence':
             self.AU_choices.sort(key=lambda pic: (
-                max(self.scorer.emotions[self.images.index(pic)].values()) if self.images.index(
+                self.prevalence_score(self.scorer.get_emotions(self.images.index(pic))) if self.images.index(
                     pic) in self.scorer.emotions.keys() else 0),
                                  reverse=True)
             self.order_button.SetLabel('Order by Index')
@@ -215,14 +216,31 @@ class AUGui(wx.Frame):
             self.update_annotation_box()
 
     def update_au_list(self):
-        self.AU_List.Set(['Scores'] + ([emotion + ' = ' + str(value) for emotion, value in
-                                        sorted(self.scorer.emotions[self.imageIndex].items(), key=lambda item: item[1],
-                                               reverse=True)] if self.imageIndex in self.scorer.emotions.keys() else [
-            'None']))
+        emotionDict = self.scorer.get_emotions(self.imageIndex)
+        if emotionDict:
+            emotionList = sorted(emotionDict.items(), key=lambda item: item[1],
+                                 reverse=True)
+
+            self.AU_List.Set(['Scores'] + ([emotion + ' = ' + str(value) for emotion, value in
+                                            emotionList]) + ['Prevalence Score'] + [
+                                 str(self.prevalence_score(emotionDict))])
+        else:
+            self.AU_List.Set(['None'])
 
     def make_full_au_choices(self):
         return [self.images[i] for i in self.scorer.emotions.keys()]
 
+    @staticmethod
+    def prevalence_score(emotionDict):
+        reverse_emotions = {value: [x for x in emotionDict.keys() if emotionDict[x] == value] for value in
+                            emotionDict.values()}
+        max_value = max(reverse_emotions.keys())
+        if len(reverse_emotions[max_value]) > 1:
+            prevalence_score = 0
+        else:
+            prevalence_score = (
+            (max_value ** 2) / np.sum([x * len(reverse_emotions[x]) for x in reverse_emotions.keys()]))
+        return prevalence_score
 
 def make_images():
     images = sorted(glob.glob('*.png'))

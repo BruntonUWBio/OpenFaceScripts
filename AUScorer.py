@@ -3,6 +3,8 @@ import re
 import sys
 from collections import defaultdict
 
+import numpy as np
+
 sys.path.append('/home/gvelchuru/')
 from OpenFaceScripts import OpenFaceScorer
 
@@ -60,11 +62,11 @@ class AUScorer:
             'Disgust': [[9, 7, 4, 17, 6]]
         }
         if self.include_similar:
-            self.similar_arr = [
+            similar_arr = [
                 [12, 20, 23, 15]
             ]
             for emotion, au_list_arr in emotion_templates.items():
-                for similar in self.similar_arr:
+                for similar in similar_arr:
                     for num in similar:
                         if num in au_list_arr[0]:
                             for other_num in [x for x in similar if x is not num]:
@@ -74,23 +76,52 @@ class AUScorer:
 
         return emotion_templates
 
-    def replace(self, arr, num, other_num):
+    @staticmethod
+    def replace(arr, num, other_num):
         small_arr = [x for x in arr if x is not num]
         small_arr.append(other_num)
         large_set = set(small_arr)
         return list(large_set)
+
+    def get_emotions(self, index):
+        return self.emotions[index] if index in self.emotions else None
 
     def make_frame_emotions(self, presence_dict):
         frame_emotion_dict = {
             frame: self.find_all_lcs(sorted([self.return_num(au) for au in au_dict.keys() if 'c' in au]))
             for frame, au_dict in presence_dict.items()}
 
+        for frame, emotion_dict in frame_emotion_dict.items():
+            for emotion in emotion_dict.keys():
+                emotion_dict[emotion] = [x for x in emotion_dict[emotion] if x]  # remove empties
+                for index, arr in enumerate(emotion_dict[emotion]):
+                    emotion_dict[emotion][index] = self.convert_aus_to_scores(arr, frame, presence_dict)
+                if len(emotion_dict[emotion]):
+                    emotion_dict[emotion] = max([x for x in emotion_dict[emotion]])
+                else:
+                    emotion_dict[emotion] = None
+            frame_emotion_dict[frame] = {k: v for k, v in emotion_dict.items() if v}
+
         return frame_emotion_dict
 
     def find_all_lcs(self, aus):
         emote_template = self.emotion_templates()
-        return {emotion: max([self.lcs_length(template, aus) for template in template_arr]) for emotion, template_arr in
-                emote_template.items()}
+        return {
+            emotion: [back_track(LCS(template, aus), template, aus, len(template), len(aus)) for template in
+                      template_arr]
+            for emotion, template_arr in emote_template.items()}
+
+    def convert_aus_to_scores(self, arr, frame, presence_dict):
+        frame_presence = presence_dict[frame]
+        scores = []
+        for au in frame_presence.keys():
+            if 'c' in au and self.return_num(au) in arr:
+                r_label = au.replace('c', 'r')
+                if r_label in frame_presence.keys():
+                    scores.append(frame_presence[r_label] / 5)  # divide by 5 to normalize
+                else:
+                    scores.append(1.0 / 5)  # divide by 5 to normalizes
+        return np.sum(scores)
 
     @staticmethod
     def return_num(string):
@@ -105,6 +136,32 @@ class AUScorer:
                     table[i - 1][j - 1] + 1 if ca == cb else
                     max(table[i][j - 1], table[i - 1][j]))
         return table[-1][-1]
+
+
+def back_track(C, X, Y, i, j):
+    if i == 0 or j == 0:
+        return []
+    elif X[i - 1] == Y[j - 1]:
+        return back_track(C, X, Y, i - 1, j - 1) + [X[i - 1]]
+    else:
+        if C[i][j - 1] > C[i - 1][j]:
+            return back_track(C, X, Y, i, j - 1)
+        else:
+            return back_track(C, X, Y, i - 1, j)
+
+
+def LCS(X, Y):
+    m = len(X)
+    n = len(Y)
+    # An (m+1) times (n+1) matrix
+    C = [[0] * (n + 1) for _ in range(m + 1)]
+    for i in range(1, m + 1):
+        for j in range(1, n + 1):
+            if X[i - 1] == Y[j - 1]:
+                C[i][j] = C[i - 1][j - 1] + 1
+            else:
+                C[i][j] = max(C[i][j - 1], C[i - 1][j])
+    return C
 
 
 if __name__ == '__main__':
