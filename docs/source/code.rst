@@ -2,6 +2,6 @@ Documentation for Code
 **********************
 
 .. automodule:: AUGui
-:members:
+    :members:
 .. automodule:: AUScorer
-:members:
+    :members:
