@@ -1,3 +1,8 @@
+"""
+.. module:: AUScorer
+    :synopsis: An action unit scorer
+"""
+
 import os
 import re
 import sys
