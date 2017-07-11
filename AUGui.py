@@ -7,9 +7,11 @@ import csv
 import glob
 import os
 import sys
-
+import shutil
 import numpy as np
+import subprocess
 import wx
+from wx import media
 from wx.lib.floatcanvas import NavCanvas
 
 sys.path.append('/home/gvelchuru/')
@@ -20,6 +22,7 @@ class AUGui(wx.Frame):
     """
     Main GUI
     """
+
     def __init__(self, parent, frame_id, name, curr_directory, incl_eyebrows=False, path_to_csv=None):
         """
         Default constructor, creates a new AUGui
@@ -114,6 +117,11 @@ class AUGui(wx.Frame):
         self.update_all()
 
     def bind_to_canvas(self):
+        """
+        Binds necessary events to canvas.
+
+        :return: None.
+        """
         self.Canvas.Bind(wx.EVT_KEY_DOWN, self.on_key_press)
 
     def click_on_emotion(self, event):
@@ -185,7 +193,29 @@ class AUGui(wx.Frame):
         self.redraw()
 
     def show_video(self, event):
-        pass
+        """
+        Displays media window with video with second before and after frame
+
+        :param event: Unused
+        :return: None
+
+        .. note::Requires current working directory to be set to location of images
+        """
+        prev_next_frames = [self.images[i] for i in range(self.imageIndex - 30, self.imageIndex + 30) if
+                            i in range(len(self.images))]
+        tmp_dir = 'tmp_video'
+        if not os.path.exists(tmp_dir):
+            os.mkdir(tmp_dir)
+        for frame in prev_next_frames:
+            shutil.copy(frame, tmp_dir)
+        out_movie = os.path.join(tmp_dir, 'tmp_out.mp4')
+        subprocess.Popen("ffmpeg -r 30 -f image2 -s 1920x1080 -pattern_type glob -i '{0}' -b:v 2000k {1}".format(
+            os.path.join(tmp_dir, '*.png'),
+            out_movie), shell=True).wait()
+        mediaDlg = wx.Dialog(self, wx.NewId())
+        ctrl = media.MediaCtrl(parent=mediaDlg, id = wx.NewId(), fileName=out_movie)
+        ctrl.Play()
+        shutil.rmtree(tmp_dir)
 
     def evt_reorder_pics(self, event):
         """Event handling wrapper for reordering pictures. If pictures are currently ordered by index, orders by
@@ -210,7 +240,7 @@ class AUGui(wx.Frame):
             self.order_button.SetLabel('Order by Prominence')
         elif order_type == 'Prominence':
             self.AU_choices.sort(key=lambda pic: (
-                self.prevalence_score(self.scorer.get_emotions(self.images.index(pic))) if self.images.index(
+                prevalence_score(self.scorer.get_emotions(self.images.index(pic))) if self.images.index(
                     pic) in self.scorer.emotions.keys() else 0),
                                  reverse=True)
             self.order_button.SetLabel('Order by Index')
@@ -295,30 +325,30 @@ class AUGui(wx.Frame):
 
             self.AU_List.Set(['Scores'] + ([emotion + ' = ' + str(value) for emotion, value in
                                             emotionList]) + ['Prevalence Score'] + [
-                                 str(self.prevalence_score(emotionDict))])
+                                 str(prevalence_score(emotionDict))])
         else:
             self.AU_List.Set(['None'])
 
     def make_full_au_choices(self):
         return [self.images[i] for i in self.scorer.emotions.keys()]
 
-    @staticmethod
-    def prevalence_score(emotionDict):
-        """
-        Calculate a prevalence score for the max emotion in a emotion dictionary
 
-        :param emotionDict: Dictionary mapping one of the basic emotions to its corresponding score (calculated by AUScorer)
-        :return: Score calculated using both value of highest value emotion as well as how prevalent that emotion is
-        """
-        reverse_emotions = {value: [x for x in emotionDict.keys() if emotionDict[x] == value] for value in
-                            emotionDict.values()}
-        max_value = max(reverse_emotions.keys())
-        if len(reverse_emotions[max_value]) > 1:
-            prevalence_score = 0
-        else:
-            prevalence_score = (
-                (max_value ** 2) / np.sum([x * len(reverse_emotions[x]) for x in reverse_emotions.keys()]))
-        return prevalence_score
+def prevalence_score(emotionDict):
+    """
+    Calculate a prevalence score for the max emotion in a emotion dictionary
+
+    :param emotionDict: Dictionary mapping one of the basic emotions to its corresponding score (calculated by AUScorer)
+    :return: Score calculated using both value of highest value emotion as well as how prevalent that emotion is
+    """
+    reverse_emotions = {value: [x for x in emotionDict.keys() if emotionDict[x] == value] for value in
+                        emotionDict.values()}
+    max_value = max(reverse_emotions.keys())
+    if len(reverse_emotions[max_value]) > 1:
+        score = 0
+    else:
+        score = (
+            (max_value ** 2) / np.sum([x * len(reverse_emotions[x]) for x in reverse_emotions.keys()]))
+    return score
 
 
 def make_images():

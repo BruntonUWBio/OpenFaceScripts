@@ -18,7 +18,15 @@ class AUScorer:
     """
     Main scorer
     """
+
     def __init__(self, dir, au_thresh=0, include_eyebrows=True):
+        """
+        Default constructor.
+
+        :param dir: Directory with au files to score
+        :param au_thresh: Minimum threshold (0-5) for considering AUs to be present
+        :param include_eyebrows: Whether eyebrows should be considered
+        """
         self.include_eyebrows = include_eyebrows
         self.include_similar = False
         os.chdir(dir)
@@ -45,8 +53,6 @@ class AUScorer:
                             self.presence_dict[frame][r_label] = curr_frame[r_label]
 
         frame_emotions = self.make_frame_emotions(self.presence_dict)
-        # self.exact_emotions = {frame: frame_dict for frame, frame_dict in frame_emotions.items() if
-        #                       frame_dict['Exact Match']}
         self.emotions = {frame: frame_dict for frame, frame_dict in frame_emotions.items() if
                          not all(v is 0 for v in frame_dict.values())}
 
@@ -139,16 +145,6 @@ class AUScorer:
     @staticmethod
     def return_num(string):
         return int(re.findall("\d+", string)[0])
-
-    @staticmethod
-    def lcs_length(a, b):
-        table = [[0] * (len(b) + 1) for _ in range(len(a) + 1)]
-        for i, ca in enumerate(a, 1):
-            for j, cb in enumerate(b, 1):
-                table[i][j] = (
-                    table[i - 1][j - 1] + 1 if ca == cb else
-                    max(table[i][j - 1], table[i - 1][j]))
-        return table[-1][-1]
 
 
 def back_track(C, X, Y, i, j):
