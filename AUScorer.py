@@ -52,6 +52,11 @@ class AUScorer:
 
     @staticmethod
     def emotion_list():
+        """
+        Create standard emotion list.
+
+        :return: List with the emotions Angry, Fear, Sad, Happy, Surprise, and Disgust.
+        """
         return ['Angry', 'Fear', 'Sad', 'Happy', 'Surprise', 'Disgust']
 
     def is_eyebrow(self, label):
