@@ -1,3 +1,8 @@
+"""
+.. module:: AUGui
+    :synopsis: A GUI for viewing a picture and the associated action units and emotion prediction.
+"""
+
 import csv
 import glob
 import os
@@ -12,6 +17,9 @@ from OpenFaceScripts import AUScorer, OpenFaceScorer
 
 
 class AUGui(wx.Frame):
+    """
+    Main GUI
+    """
     def __init__(self, parent, frame_id, name, curr_directory, incl_eyebrows=False, path_to_csv=None):
         self.path_to_csv = path_to_csv
         self.prominent_images = None
@@ -58,12 +66,15 @@ class AUGui(wx.Frame):
         show_landmarksButton = wx.Button(self, wx.NewId(), label='Show/Hide Landmarks')
         self.au_text = wx.TextCtrl(self, wx.NewId(), value='N/A', style=wx.VSCROLL | wx.TE_READONLY | wx.TE_MULTILINE)
 
+        show_vidButton = wx.Button(self, wx.NewId(), label='Show Video Around Frame')
+
         botBox.Add(self.order_button, 1, wx.EXPAND)
         botBox.Add(show_landmarksButton, 1, wx.EXPAND)
         if self.path_to_csv:
             self.show_annotations_button = wx.Button(self, wx.NewId(), label='Show Annotated Frames')
             botBox.Add(self.show_annotations_button, 1, wx.EXPAND)
             self.Bind(wx.EVT_BUTTON, self.show_hide_annotations, id=self.show_annotations_button.GetId())
+        botBox.Add(show_vidButton, 1, wx.EXPAND)
         botBox.Add(self.au_text, 4, wx.EXPAND)
 
         self.allBox = wx.BoxSizer(wx.VERTICAL)
@@ -75,6 +86,7 @@ class AUGui(wx.Frame):
         self.Bind(wx.EVT_LISTBOX, self.click_on_emotion, id=self.AU_List.GetId())
         self.Bind(wx.EVT_BUTTON, self.evt_reorder_pics, id=self.order_button.GetId())
         self.Bind(wx.EVT_BUTTON, self.show_landmarks, id=show_landmarksButton.GetId())
+        self.Bind(wx.EVT_BUTTON, self.show_video, id=show_vidButton.GetId())
 
         self.SetSizer(self.allBox)
         self.Layout()
@@ -114,12 +126,20 @@ class AUGui(wx.Frame):
             self.pop_dialog('Landmark Error', 'No Landmarks Found!')
 
     def pop_dialog(self, name, string):
+        """Shows a new text dialog with name equal to name and text equal to string
+        :param name: Name of dialog
+        :param string: Text to display
+        :return: None
+        """
         dialog = wx.Dialog(self, wx.NewId(), name)
         textSizer = dialog.CreateTextSizer(string)
         dialog.SetSizer(textSizer)
         dialog.Show(True)
 
     def show_im(self):
+        """Shows current image
+        :return:None
+        """
         if self.landmarks_shown:
             image = self.landmark_images[self.imageIndex]
         else:
@@ -129,6 +149,9 @@ class AUGui(wx.Frame):
         bm = curr_im.ConvertToBitmap()
         self.Canvas.AddScaledBitmap(bm, XY=(0, 0), Height=500, Position='tl')
         self.redraw()
+
+    def show_video(self, event):
+        pass
 
     # Event handling wrapper for reordering pictures
     def evt_reorder_pics(self, event):
