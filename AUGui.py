@@ -127,6 +127,7 @@ class AUGui(wx.Frame):
 
     def pop_dialog(self, name, string):
         """Shows a new text dialog with name equal to name and text equal to string
+
         :param name: Name of dialog
         :param string: Text to display
         :return: None
@@ -138,6 +139,7 @@ class AUGui(wx.Frame):
 
     def show_im(self):
         """Shows current image
+
         :return:None
         """
         if self.landmarks_shown:

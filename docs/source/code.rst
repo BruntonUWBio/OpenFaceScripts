@@ -1,5 +1,5 @@
-Documentation for Code
-**********************
+Module Documentation
+********************
 
 .. automodule:: AUGui
     :members:
