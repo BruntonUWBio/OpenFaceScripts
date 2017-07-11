@@ -126,10 +126,10 @@ class AUGui(wx.Frame):
             self.pop_dialog('Landmark Error', 'No Landmarks Found!')
 
     def pop_dialog(self, name, string):
-        """Shows a new text dialog with name equal to name and text equal to string
+        """Shows a new text dialog with name equal to name and text equal to string.
 
-        :param name: Name of dialog
-        :param string: Text to display
+        :param name: Name of dialog.
+        :param string: Text to display.
         :return: None
         """
         dialog = wx.Dialog(self, wx.NewId(), name)
@@ -138,7 +138,7 @@ class AUGui(wx.Frame):
         dialog.Show(True)
 
     def show_im(self):
-        """Shows current image
+        """Shows current image.
 
         :return:None
         """
