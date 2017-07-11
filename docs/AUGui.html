@@ -214,6 +214,137 @@ information.</p>
 
 </dd></dl>
 
+<dl class="class">
+<dt id="AUGui.VidPanel">
+<em class="property">class </em><code class="descclassname">AUGui.</code><code class="descname">VidPanel</code><span class="sig-paren">(</span><em>parent</em>, <em>id</em><span class="sig-paren">)</span><a class="headerlink" href="#AUGui.VidPanel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Panel for showing video.
+Code originally from <a class="reference external" href="https://www.daniweb.com/programming/software-development/code/216704/wxpython-plays-audio-and-video-files">https://www.daniweb.com/programming/software-development/code/216704/wxpython-plays-audio-and-video-files</a>.</p>
+<dl class="method">
+<dt id="AUGui.VidPanel.onLoadFile">
+<code class="descname">onLoadFile</code><span class="sig-paren">(</span><em>evt</em><span class="sig-paren">)</span><a class="headerlink" href="#AUGui.VidPanel.onLoadFile" title="Permalink to this definition">¶</a></dt>
+<dd><p>Event handler for loading a file. Launches a dialog for picking a file to load.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>evt</strong> – Unused.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="AUGui.VidPanel.onPause">
+<code class="descname">onPause</code><span class="sig-paren">(</span><em>evt</em><span class="sig-paren">)</span><a class="headerlink" href="#AUGui.VidPanel.onPause" title="Permalink to this definition">¶</a></dt>
+<dd><p>Event handler for pausing a video.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>evt</strong> – Unused.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">None</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="AUGui.VidPanel.onPlay">
+<code class="descname">onPlay</code><span class="sig-paren">(</span><em>evt</em><span class="sig-paren">)</span><a class="headerlink" href="#AUGui.VidPanel.onPlay" title="Permalink to this definition">¶</a></dt>
+<dd><p>Event handler for playing a video.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>evt</strong> – Unused.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">None</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="AUGui.VidPanel.onSeek">
+<code class="descname">onSeek</code><span class="sig-paren">(</span><em>evt</em><span class="sig-paren">)</span><a class="headerlink" href="#AUGui.VidPanel.onSeek" title="Permalink to this definition">¶</a></dt>
+<dd><p>Event handler for seeking a video.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>evt</strong> – Unused.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">None</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="AUGui.VidPanel.onStop">
+<code class="descname">onStop</code><span class="sig-paren">(</span><em>evt</em><span class="sig-paren">)</span><a class="headerlink" href="#AUGui.VidPanel.onStop" title="Permalink to this definition">¶</a></dt>
+<dd><p>Event handler for stopping a video.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>evt</strong> – Unused.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">None</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="AUGui.VidPanel.onTimer">
+<code class="descname">onTimer</code><span class="sig-paren">(</span><em>evt</em><span class="sig-paren">)</span><a class="headerlink" href="#AUGui.VidPanel.onTimer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Event handler for updating timers.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>evt</strong> – Unused.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">None</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="AUGui.au_name_dict">
+<code class="descclassname">AUGui.</code><code class="descname">au_name_dict</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#AUGui.au_name_dict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a mapping between Action Unit numbers and the associated names</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">Dictionary with mapping</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="AUGui.csv_emotion_reader">
+<code class="descclassname">AUGui.</code><code class="descname">csv_emotion_reader</code><span class="sig-paren">(</span><em>csv_path</em><span class="sig-paren">)</span><a class="headerlink" href="#AUGui.csv_emotion_reader" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reads emotions from csv file.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>csv_path</strong> – Path to csv file.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">Dictionary mapping filenames (from csv) to emotions labelled in filename.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
 <dl class="function">
 <dt id="AUGui.make_images">
 <code class="descclassname">AUGui.</code><code class="descname">make_images</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#AUGui.make_images" title="Permalink to this definition">¶</a></dt>

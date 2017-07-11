@@ -10,6 +10,7 @@ import sys
 import shutil
 import numpy as np
 import subprocess
+
 import wx
 from wx import media
 from wx.lib.floatcanvas import NavCanvas
@@ -37,6 +38,7 @@ class AUGui(wx.Frame):
         self.path_to_csv = path_to_csv
         self.prominent_images = None
         self.skipping_index = 1
+        self.fps_frac = 30  # Frames per second of video
         wx.Frame.__init__(self, parent, frame_id, name)
         os.chdir(curr_directory)
         self.images, self.imageIndex = make_images()
@@ -46,9 +48,10 @@ class AUGui(wx.Frame):
         self.all_shown = True
         if self.path_to_csv:
             self.image_map = csv_emotion_reader(path_to_csv)
-            self.annotated_map = {self.images[index * 30]: emotion for index, emotion in
+            self.annotated_map = {self.images[index * self.fps_frac]: emotion for index, emotion in
                                   enumerate(sorted(self.image_map.values())) if
-                                  (index * 30) < len(self.images)}  # Relies on image map only having one item per image
+                                  (index * self.fps_frac) < len(
+                                      self.images)}  # Relies on image map only having one item per image
 
         self.AU_threshold = 0
         self.scorer = AUScorer.AUScorer(curr_directory, self.AU_threshold, incl_eyebrows)
@@ -201,21 +204,28 @@ class AUGui(wx.Frame):
 
         .. note::Requires current working directory to be set to location of images
         """
-        prev_next_frames = [self.images[i] for i in range(self.imageIndex - 30, self.imageIndex + 30) if
+        prev_next_frames = [self.images[i] for i in
+                            range(self.imageIndex - int(.5 * self.fps_frac), self.imageIndex +  int(.5 * self.fps_frac)) if
                             i in range(len(self.images))]
-        tmp_dir = 'tmp_video'
-        if not os.path.exists(tmp_dir):
-            os.mkdir(tmp_dir)
+        self.tmp_dir = 'tmp_video'
+        if os.path.exists(self.tmp_dir):
+            self.rm_dir(self.tmp_dir)
+        os.mkdir(self.tmp_dir)
         for frame in prev_next_frames:
-            shutil.copy(frame, tmp_dir)
-        out_movie = os.path.join(tmp_dir, 'tmp_out.mp4')
-        subprocess.Popen("ffmpeg -r 30 -f image2 -s 1920x1080 -pattern_type glob -i '{0}' -b:v 2000k {1}".format(
-            os.path.join(tmp_dir, '*.png'),
-            out_movie), shell=True).wait()
-        mediaDlg = wx.Dialog(self, wx.NewId())
-        ctrl = media.MediaCtrl(parent=mediaDlg, id = wx.NewId(), fileName=out_movie)
-        ctrl.Play()
-        shutil.rmtree(tmp_dir)
+            shutil.copy(frame, self.tmp_dir)
+        out_movie = os.path.join(self.tmp_dir, 'tmp_out.mp4')
+        subprocess.Popen("ffmpeg -r {2} -f image2 -s 1920x1080 -pattern_type glob -i '{0}' -b:v 2000k {1}".format(
+            os.path.join(self.tmp_dir, '*.png'),
+            out_movie, str(self.fps_frac)), shell=True).wait()
+
+        frame = wx.Frame(None, wx.NewId(), "play audio and video files")
+        panel1 = VidPanel(frame, wx.NewId())
+        frame.Show(True)
+        panel1.do_load_file(out_movie)
+        frame.Bind(wx.EVT_WINDOW_DESTROY, self.rm_dir)
+
+    def rm_dir(self, event):
+        shutil.rmtree(self.tmp_dir)
 
     def evt_reorder_pics(self, event):
         """Event handling wrapper for reordering pictures. If pictures are currently ordered by index, orders by
@@ -333,6 +343,139 @@ class AUGui(wx.Frame):
         return [self.images[i] for i in self.scorer.emotions.keys()]
 
 
+class VidPanel(wx.Panel):
+    """
+    Panel for showing video.
+    Code originally from https://www.daniweb.com/programming/software-development/code/216704/wxpython-plays-audio-and-video-files.
+    """
+    def __init__(self, parent, id):
+        """
+        Default constructor.
+
+        :param parent: wx.Frame object.
+        :param id: ID
+        """
+        # self.log = log
+        wx.Panel.__init__(self, parent, -1, style=wx.TAB_TRAVERSAL | wx.CLIP_CHILDREN)
+        # Create some controls
+        try:
+            self.mc = wx.media.MediaCtrl(self, style=wx.SIMPLE_BORDER)
+        except NotImplementedError:
+            self.Destroy()
+            raise
+        self.parent = parent
+        loadButton = wx.Button(self, -1, "Load File")
+        self.Bind(wx.EVT_BUTTON, self.onLoadFile, loadButton)
+
+        playButton = wx.Button(self, -1, "Play")
+        self.Bind(wx.EVT_BUTTON, self.onPlay, playButton)
+
+        pauseButton = wx.Button(self, -1, "Pause")
+        self.Bind(wx.EVT_BUTTON, self.onPause, pauseButton)
+
+        stopButton = wx.Button(self, -1, "Stop")
+        self.Bind(wx.EVT_BUTTON, self.onStop, stopButton)
+        slider = wx.Slider(self, -1, 0, 0, 0, size=wx.Size(300, -1))
+        self.slider = slider
+        self.Bind(wx.EVT_SLIDER, self.onSeek, slider)
+
+        self.st_file = wx.StaticText(self, -1, ".mid .mp3 .wav .au .avi .mpg", size=(200, -1))
+        self.st_size = wx.StaticText(self, -1, size=(100, -1))
+        self.st_len = wx.StaticText(self, -1, size=(100, -1))
+        self.st_pos = wx.StaticText(self, -1, size=(100, -1))
+
+        # setup the button/label layout using a sizer
+        sizer = wx.GridBagSizer(5, 5)
+        sizer.Add(loadButton, (1, 1))
+        sizer.Add(playButton, (2, 1))
+        sizer.Add(pauseButton, (3, 1))
+        sizer.Add(stopButton, (4, 1))
+        sizer.Add(self.st_file, (1, 2))
+        sizer.Add(self.st_size, (2, 2))
+        sizer.Add(self.st_len, (3, 2))
+        sizer.Add(self.st_pos, (4, 2))
+        sizer.Add(self.mc, (5, 1), span=(5, 4))  # for .avi .mpg video files
+        self.SetSizer(sizer)
+        self.timer = wx.Timer(self)
+        self.Bind(wx.EVT_TIMER, self.onTimer)
+        self.timer.Start(100)
+
+    def onLoadFile(self, evt):
+        """
+        Event handler for loading a file. Launches a dialog for picking a file to load.
+
+        :param evt: Unused.
+        """
+        dlg = wx.FileDialog(self, message="Choose a media file",
+                            defaultDir=os.getcwd(), defaultFile="",
+                            style=wx.FD_OPEN | wx.FD_CHANGE_DIR)
+        if dlg.ShowModal() == wx.ID_OK:
+            path = dlg.GetPath()
+            self.do_load_file(path)
+        dlg.Destroy()
+
+    def do_load_file(self, path):
+        if not self.mc.Load(path):
+            wx.MessageBox("Unable to load %s: Unsupported format?" % path, "ERROR", wx.ICON_ERROR | wx.OK)
+        else:
+            folder, filename = os.path.split(path)
+            self.st_file.SetLabel('%s' % filename)
+            self.parent.SetSize(self.mc.GetBestSize())
+            self.GetSizer().Layout()
+            self.slider.SetRange(0, self.mc.Length())
+            self.mc.Play()
+
+    def onPlay(self, evt):
+        """
+        Event handler for playing a video.
+
+        :param evt: Unused.
+        :return: None
+        """
+        self.mc.Play()
+
+    def onPause(self, evt):
+        """
+        Event handler for pausing a video.
+
+        :param evt: Unused.
+        :return: None
+        """
+        self.mc.Pause()
+
+    def onStop(self, evt):
+        """
+        Event handler for stopping a video.
+
+        :param evt: Unused.
+        :return: None
+        """
+        self.mc.Stop()
+
+    def onSeek(self, evt):
+        """
+        Event handler for seeking a video.
+
+        :param evt: Unused.
+        :return: None
+        """
+        offset = self.slider.GetValue()
+        self.mc.Seek(offset)
+
+    def onTimer(self, evt):
+        """
+        Event handler for updating timers.
+
+        :param evt: Unused.
+        :return: None
+        """
+        offset = self.mc.Tell()
+        self.slider.SetValue(offset)
+        self.st_size.SetLabel('size: %s ms' % self.mc.Length())
+        self.st_len.SetLabel('( %d seconds )' % (self.mc.Length() / 1000))
+        self.st_pos.SetLabel('position: %d ms' % offset)
+
+
 def prevalence_score(emotionDict):
     """
     Calculate a prevalence score for the max emotion in a emotion dictionary
@@ -366,6 +509,12 @@ def make_images():
 
 # csv_reader, from XMLTransformer
 def csv_emotion_reader(csv_path):
+    """
+    Reads emotions from csv file.
+
+    :param csv_path: Path to csv file.
+    :return: Dictionary mapping filenames (from csv) to emotions labelled in filename.
+    """
     with open(csv_path, 'rt') as csv_file:
         image_map = {index - 1: row[1] for index, row in enumerate(csv.reader(csv_file)) if
                      index != 0}  # index -1 to compensate for first row offset
@@ -373,6 +522,11 @@ def csv_emotion_reader(csv_path):
 
 
 def au_name_dict():
+    """
+    Creates a mapping between Action Unit numbers and the associated names
+
+    :return: Dictionary with mapping
+    """
     return {
         1: 'Inner Brow Raiser',
         2: 'Outer Brow Raiser',
