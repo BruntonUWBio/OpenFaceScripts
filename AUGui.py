@@ -138,9 +138,9 @@ class AUGui(wx.Frame):
         dialog.Show(True)
 
     def show_im(self):
-        """Shows current image.
+        """Changes currently displayed image to the image at self.imageIndex
 
-        :return:None
+        :return: None
         """
         if self.landmarks_shown:
             image = self.landmark_images[self.imageIndex]
@@ -155,14 +155,24 @@ class AUGui(wx.Frame):
     def show_video(self, event):
         pass
 
-    # Event handling wrapper for reordering pictures
     def evt_reorder_pics(self, event):
+        """Event handling wrapper for reordering pictures. If pictures are currently ordered by index, orders by
+        prominence and vice versa.
+
+        :param event: Unused.
+        :return: None
+        """
         if self.order == 'Index':
             self.reorder_pics('Prominence')
         else:
             self.reorder_pics('Index')
 
     def reorder_pics(self, order_type):
+        """Reorders pictures according to the specified order type.
+
+        :param order_type: Either 'Index' or 'Prominence'.
+        :return: None
+        """
         if order_type == 'Index':
             self.AU_choices.sort()
             self.order_button.SetLabel('Order by Prominence')
@@ -192,6 +202,11 @@ class AUGui(wx.Frame):
         self.au_text.SetValue(label)
 
     def redraw(self):
+        """
+        Redraws canvas, zooms.
+
+        :return: None
+        """
         self.Canvas.Draw()
         self.Canvas.ZoomToBB()
 
@@ -269,6 +284,12 @@ class AUGui(wx.Frame):
 
 
 def make_images():
+    """
+    Finds all png images in given directory.
+    .. note:: Current working directory must be set before calling this function.
+
+    :return: sorted list of png images, 0
+    """
     images = sorted(glob.glob('*.png'))
     imageIndex = 0
     return images, imageIndex

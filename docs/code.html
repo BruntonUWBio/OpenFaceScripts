@@ -46,6 +46,23 @@
 <em class="property">class </em><code class="descclassname">AUGui.</code><code class="descname">AUGui</code><span class="sig-paren">(</span><em>parent</em>, <em>frame_id</em>, <em>name</em>, <em>curr_directory</em>, <em>incl_eyebrows=False</em>, <em>path_to_csv=None</em><span class="sig-paren">)</span><a class="headerlink" href="#AUGui.AUGui" title="Permalink to this definition">¶</a></dt>
 <dd><p>Main GUI</p>
 <dl class="method">
+<dt id="AUGui.AUGui.evt_reorder_pics">
+<code class="descname">evt_reorder_pics</code><span class="sig-paren">(</span><em>event</em><span class="sig-paren">)</span><a class="headerlink" href="#AUGui.AUGui.evt_reorder_pics" title="Permalink to this definition">¶</a></dt>
+<dd><p>Event handling wrapper for reordering pictures. If pictures are currently ordered by index, orders by
+prominence and vice versa.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>event</strong> – Unused.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">None</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
 <dt id="AUGui.AUGui.pop_dialog">
 <code class="descname">pop_dialog</code><span class="sig-paren">(</span><em>name</em>, <em>string</em><span class="sig-paren">)</span><a class="headerlink" href="#AUGui.AUGui.pop_dialog" title="Permalink to this definition">¶</a></dt>
 <dd><p>Shows a new text dialog with name equal to name and text equal to string.</p>
@@ -67,12 +84,64 @@
 </dd></dl>
 
 <dl class="method">
-<dt id="AUGui.AUGui.show_im">
-<code class="descname">show_im</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#AUGui.AUGui.show_im" title="Permalink to this definition">¶</a></dt>
-<dd><p>Shows current image.</p>
-<p>:return:None</p>
+<dt id="AUGui.AUGui.redraw">
+<code class="descname">redraw</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#AUGui.AUGui.redraw" title="Permalink to this definition">¶</a></dt>
+<dd><p>Redraws canvas, zooms.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">None</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
+<dl class="method">
+<dt id="AUGui.AUGui.reorder_pics">
+<code class="descname">reorder_pics</code><span class="sig-paren">(</span><em>order_type</em><span class="sig-paren">)</span><a class="headerlink" href="#AUGui.AUGui.reorder_pics" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reorders pictures according to the specified order type.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>order_type</strong> – Either ‘Index’ or ‘Prominence’.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">None</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="AUGui.AUGui.show_im">
+<code class="descname">show_im</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#AUGui.AUGui.show_im" title="Permalink to this definition">¶</a></dt>
+<dd><p>Changes currently displayed image to the image at self.imageIndex</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">None</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="AUGui.make_images">
+<code class="descclassname">AUGui.</code><code class="descname">make_images</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#AUGui.make_images" title="Permalink to this definition">¶</a></dt>
+<dd><p>Finds all png images in given directory.
+.. note:: Current working directory must be set before calling this function.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">sorted list of png images, 0</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <span class="target" id="module-AUScorer"></span><span class="target" id="module-AUScorer"></span></div>
