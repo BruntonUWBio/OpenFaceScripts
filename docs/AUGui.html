@@ -47,6 +47,42 @@
 <em class="property">class </em><code class="descclassname">AUGui.</code><code class="descname">AUGui</code><span class="sig-paren">(</span><em>parent</em>, <em>frame_id</em>, <em>name</em>, <em>curr_directory</em>, <em>incl_eyebrows=False</em>, <em>path_to_csv=None</em><span class="sig-paren">)</span><a class="headerlink" href="#AUGui.AUGui" title="Permalink to this definition">¶</a></dt>
 <dd><p>Main GUI</p>
 <dl class="method">
+<dt id="AUGui.AUGui.click_on_emotion">
+<code class="descname">click_on_emotion</code><span class="sig-paren">(</span><em>event</em><span class="sig-paren">)</span><a class="headerlink" href="#AUGui.AUGui.click_on_emotion" title="Permalink to this definition">¶</a></dt>
+<dd><p>Event handler for when an emotion is chosen from the list of emotions. Shows emotion templates.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>event</strong> – Unused</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Effects:</th><td class="field-body">Launches a <code class="xref py py-mod docutils literal"><span class="pre">wx.Dialog</span></code> with the emotion templates.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">None.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="AUGui.AUGui.click_on_pic">
+<code class="descname">click_on_pic</code><span class="sig-paren">(</span><em>event</em><span class="sig-paren">)</span><a class="headerlink" href="#AUGui.AUGui.click_on_pic" title="Permalink to this definition">¶</a></dt>
+<dd><p>Event handler for when an image is chosen from the list of images. Updates so clicked pic is shown.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Modifies:</th><td class="field-body">self.imageIndex to the index of the current image.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Parameters:</th><td class="field-body"><strong>event</strong> – Provides the name of the picture chosen.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">None.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
 <dt id="AUGui.AUGui.evt_reorder_pics">
 <code class="descname">evt_reorder_pics</code><span class="sig-paren">(</span><em>event</em><span class="sig-paren">)</span><a class="headerlink" href="#AUGui.AUGui.evt_reorder_pics" title="Permalink to this definition">¶</a></dt>
 <dd><p>Event handling wrapper for reordering pictures. If pictures are currently ordered by index, orders by
@@ -79,6 +115,22 @@ prominence and vice versa.</p>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">None</p>
 </td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="AUGui.AUGui.prevalence_score">
+<em class="property">static </em><code class="descname">prevalence_score</code><span class="sig-paren">(</span><em>emotionDict</em><span class="sig-paren">)</span><a class="headerlink" href="#AUGui.AUGui.prevalence_score" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate a prevalence score for the max emotion in a emotion dictionary</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>emotionDict</strong> – Dictionary mapping one of the basic emotions to its corresponding score (calculated by AUScorer)</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">Score calculated using both value of highest value emotion as well as how prevalent that emotion is</td>
 </tr>
 </tbody>
 </table>
@@ -117,12 +169,30 @@ prominence and vice versa.</p>
 <dl class="method">
 <dt id="AUGui.AUGui.show_im">
 <code class="descname">show_im</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#AUGui.AUGui.show_im" title="Permalink to this definition">¶</a></dt>
-<dd><p>Changes currently displayed image to the image at self.imageIndex</p>
+<dd><p>Changes currently displayed image to the image at self.imageIndex.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">None</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="AUGui.AUGui.show_landmarks">
+<code class="descname">show_landmarks</code><span class="sig-paren">(</span><em>event</em><span class="sig-paren">)</span><a class="headerlink" href="#AUGui.AUGui.show_landmarks" title="Permalink to this definition">¶</a></dt>
+<dd><p>If landmarks are available, either shows or hides face landmarks based on whether or not they are currently
+present: if shown, hides them and vice versa. If landmarks are unavailable, shows a dialog with that
+information.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>event</strong> – Unused.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">None</td>
 </tr>
 </tbody>
 </table>
