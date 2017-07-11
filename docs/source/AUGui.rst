@@ -1,0 +1,5 @@
+AUGui
+*****
+
+.. automodule:: AUGui
+    :members:

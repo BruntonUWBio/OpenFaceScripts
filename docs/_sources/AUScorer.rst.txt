@@ -1,0 +1,5 @@
+AUScorer
+********
+
+.. automodule:: AUScorer
+    :members:
