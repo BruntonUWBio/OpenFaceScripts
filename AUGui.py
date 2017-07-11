@@ -286,9 +286,10 @@ class AUGui(wx.Frame):
 def make_images():
     """
     Finds all png images in given directory.
+
     .. note:: Current working directory must be set before calling this function.
 
-    :return: sorted list of png images, 0
+    :return: Sorted list of png images, 0
     """
     images = sorted(glob.glob('*.png'))
     imageIndex = 0
