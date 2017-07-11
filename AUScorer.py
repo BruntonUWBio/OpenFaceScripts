@@ -15,6 +15,9 @@ from OpenFaceScripts import OpenFaceScorer
 
 
 class AUScorer:
+    """
+    Main scorer
+    """
     def __init__(self, dir, au_thresh=0, include_eyebrows=True):
         self.include_eyebrows = include_eyebrows
         self.include_similar = False
