@@ -98,7 +98,7 @@
 
 <dl class="method">
 <dt id="AUGui.AUGui.evt_reorder_pics">
-<code class="descname">evt_reorder_pics</code><span class="sig-paren">(</span><em>event</em><span class="sig-paren">)</span><a class="headerlink" href="#AUGui.AUGui.evt_reorder_pics" title="Permalink to this definition">¶</a></dt>
+<code class="descname">evt_reorder_pics</code><span class="sig-paren">(</span><em>event=None</em><span class="sig-paren">)</span><a class="headerlink" href="#AUGui.AUGui.evt_reorder_pics" title="Permalink to this definition">¶</a></dt>
 <dd><p>Event handling wrapper for reordering pictures. If pictures are currently ordered by index, orders by
 prominence and vice versa.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -108,6 +108,22 @@ prominence and vice versa.</p>
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>event</strong> – Unused.</td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">None</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="AUGui.AUGui.on_key_press">
+<code class="descname">on_key_press</code><span class="sig-paren">(</span><em>event</em><span class="sig-paren">)</span><a class="headerlink" href="#AUGui.AUGui.on_key_press" title="Permalink to this definition">¶</a></dt>
+<dd><p>Event handler for key press. If the right arrow key is pressed, displays the next image in the directory (in
+lexicographically sorted order). If the left arrow key is pressed, displays the previous image in the
+directory.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>event</strong> (<em>wx.Event</em>) – Keypress.</td>
 </tr>
 </tbody>
 </table>
@@ -165,6 +181,24 @@ prominence and vice versa.</p>
 </dd></dl>
 
 <dl class="method">
+<dt id="AUGui.AUGui.show_entire_video">
+<code class="descname">show_entire_video</code><span class="sig-paren">(</span><em>landmarks</em><span class="sig-paren">)</span><a class="headerlink" href="#AUGui.AUGui.show_entire_video" title="Permalink to this definition">¶</a></dt>
+<dd><p>Shows entire video, with or without landmarks based on params.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Requires:</th><td class="field-body">Cropped video saved as ‘inter_out.mp4’ in cwd and cropped video with landmarks saved as ‘out.mp4’ in cwd (both from CropAndOpenFace).</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Parameters:</th><td class="field-body"><strong>landmarks</strong> (<em>bool.</em>) – Whether landmarks should be displayed.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">None</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
 <dt id="AUGui.AUGui.show_im">
 <code class="descname">show_im</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#AUGui.AUGui.show_im" title="Permalink to this definition">¶</a></dt>
 <dd><p>Changes currently displayed image to the image at self.imageIndex.</p>
@@ -197,16 +231,14 @@ information.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="AUGui.AUGui.show_video">
-<code class="descname">show_video</code><span class="sig-paren">(</span><em>event</em><span class="sig-paren">)</span><a class="headerlink" href="#AUGui.AUGui.show_video" title="Permalink to this definition">¶</a></dt>
-<dd><p>Displays media window with video with second before and after frame</p>
+<dt id="AUGui.AUGui.show_video_around_frames">
+<code class="descname">show_video_around_frames</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#AUGui.AUGui.show_video_around_frames" title="Permalink to this definition">¶</a></dt>
+<dd><p>Displays media window with video with second before and after frame.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>event</strong> – Unused</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">None</td>
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">None</td>
 </tr>
 </tbody>
 </table>
@@ -216,9 +248,9 @@ information.</p>
 
 <dl class="class">
 <dt id="AUGui.VidPanel">
-<em class="property">class </em><code class="descclassname">AUGui.</code><code class="descname">VidPanel</code><span class="sig-paren">(</span><em>parent</em>, <em>id</em><span class="sig-paren">)</span><a class="headerlink" href="#AUGui.VidPanel" title="Permalink to this definition">¶</a></dt>
-<dd><p>Panel for showing video.
-Code originally from <a class="reference external" href="https://www.daniweb.com/programming/software-development/code/216704/wxpython-plays-audio-and-video-files">https://www.daniweb.com/programming/software-development/code/216704/wxpython-plays-audio-and-video-files</a>.</p>
+<em class="property">class </em><code class="descclassname">AUGui.</code><code class="descname">VidPanel</code><span class="sig-paren">(</span><em>parent</em>, <em>id</em>, <em>scorer</em><span class="sig-paren">)</span><a class="headerlink" href="#AUGui.VidPanel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Panel for showing video. Code originally from
+<a class="reference external" href="https://www.daniweb.com/programming/software-development/code/216704/wxpython-plays-audio-and-video-files">https://www.daniweb.com/programming/software-development/code/216704/wxpython-plays-audio-and-video-files</a>.</p>
 <dl class="method">
 <dt id="AUGui.VidPanel.onLoadFile">
 <code class="descname">onLoadFile</code><span class="sig-paren">(</span><em>evt</em><span class="sig-paren">)</span><a class="headerlink" href="#AUGui.VidPanel.onLoadFile" title="Permalink to this definition">¶</a></dt>
@@ -377,6 +409,18 @@ Code originally from <a class="reference external" href="https://www.daniweb.com
 </tr>
 </tbody>
 </table>
+</dd></dl>
+
+<dl class="function">
+<dt id="AUGui.update_emotion_list">
+<code class="descclassname">AUGui.</code><code class="descname">update_emotion_list</code><span class="sig-paren">(</span><em>scorer</em>, <em>emotion_list</em>, <em>index</em><span class="sig-paren">)</span><a class="headerlink" href="#AUGui.update_emotion_list" title="Permalink to this definition">¶</a></dt>
+<dd><p>Updates list of emotions
+:param scorer: AU scorer
+:type scorer: AUScorer.AUScorer
+:param emotion_list: List of emotions to update
+:type emotion_list: wx.ListBox
+:param index: image index
+:return: None</p>
 </dd></dl>
 
 </div>

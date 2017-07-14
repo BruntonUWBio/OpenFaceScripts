@@ -53,8 +53,7 @@ class AUScorer:
                             self.presence_dict[frame][r_label] = curr_frame[r_label]
 
         frame_emotions = self.make_frame_emotions(self.presence_dict)
-        self.emotions = {frame: frame_dict for frame, frame_dict in frame_emotions.items() if
-                         not all(v is 0 for v in frame_dict.values())}
+        self.emotions = {frame: frame_dict for frame, frame_dict in frame_emotions.items()}
 
     @staticmethod
     def emotion_list():
