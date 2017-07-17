@@ -255,7 +255,13 @@ class AUGui(wx.Frame):
         frame.Bind(wx.EVT_WINDOW_DESTROY, self.rm_dir)
 
     def rm_dir(self, event=None):
-        shutil.rmtree(self.tmp_dir)
+        """
+        Removes the temporary directory created by this, if it exists.
+        :param event: Unused.
+        :return: None
+        """
+        if os.path.exists(self.tmp_dir):
+            shutil.rmtree(self.tmp_dir)
 
     def evt_reorder_pics(self, event=None):
         """Event handling wrapper for reordering pictures. If pictures are currently ordered by index, orders by
@@ -549,8 +555,7 @@ def prevalence_score(emotionDict):
     :param emotionDict: Dictionary mapping one of the basic emotions to its corresponding score (calculated by AUScorer)
     :return: Score calculated using both value of highest value emotion as well as how prevalent that emotion is
     """
-    reverse_emotions = {value: [x for x in emotionDict.keys() if emotionDict[x] == value] for value in
-                        emotionDict.values()}
+    reverse_emotions = AUScorer.reverse_emotions(emotionDict)
     if reverse_emotions:
         max_value = max(reverse_emotions.keys())
         if len(reverse_emotions[max_value]) > 1:
@@ -649,8 +654,7 @@ if __name__ == '__main__':
     app = wx.App(False)
     if '-d' in sys.argv:
         dir_dlg = wx.DirDialog(None, message='Please select a directory')
-        dir_dlg.ShowModal()
-        directory = dir_dlg.GetPath()
+        directory = dir_dlg.GetPath() if dir_dlg.ShouldPreventAppExit() == wx.ID_OK else None
     if '-csv' in sys.argv:
         csv_dialog = wx.FileDialog(None, message="Please select a csv file.")
         csv_path = csv_dialog.GetPath() if csv_dialog.ShowModal() == wx.ID_OK else None

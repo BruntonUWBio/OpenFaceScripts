@@ -18,14 +18,7 @@ class CropImages:
         files = glob.glob(os.path.join(self.im_dir, '*.png'))
         files = sorted(files)
         self.read_arr_dict = {}
-        crop_array_name = os.path.join(directory, 'cropped.txt')
-        if os.path.lexists(crop_array_name):
-            with open(crop_array_name, mode='rb') as f:
-                self.crop_im_arr_arr_dict = pickle.load(f)
-        else:
-            self.crop_im_arr_arr_dict = {image: self.make_crop_im_arr_arr(image) for image in files}
-            with open(crop_array_name, mode='wb') as f:
-                pickle.dump(self.crop_im_arr_arr_dict, f)
+        self.crop_im_arr_arr_dict = {image: self.make_crop_im_arr_arr(image) for image in files}
         bb_arr = [None, None, None, None]
         for image in self.crop_im_arr_arr_dict.keys():
             im_crop_arr = self.crop_im_arr_arr_dict[image]
@@ -50,11 +43,17 @@ class CropImages:
                 if self.crop_im_arr_arr_dict[image] is not None:
                     img = self.crop_im_arr_arr_dict[image][0]
                     self.crop_image(img, save_name, bb_arr)
-                os.remove(image)
+                try:
+                    os.remove(image)
+                except FileNotFoundError:
+                    continue
 
     def make_crop_im_arr_arr(self, name):
         img = misc.imread(name, mode='RGB')
-        return self.crop_predictor(img, name, scaled_height=img.shape[0], scaled_width=img.shape[1])
+        try:
+            return self.crop_predictor(img, name, scaled_height=img.shape[0], scaled_width=img.shape[1])
+        except IndexError:
+            return None
 
     def crop_image(self, img, save_name, crop_arr):
         x_min, y_min, x_max, y_max = self.return_min_max(crop_arr)

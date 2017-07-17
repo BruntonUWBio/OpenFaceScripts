@@ -36,18 +36,19 @@ class VideoImageCropper:
             self.nose_txt_files = self.find_txt_files(self.nose_path)
             if not os.path.lexists(self.im_dir):
                 os.mkdir(self.im_dir)
-                subprocess.Popen('ffmpeg -i "{0}" -vf fps=30 "{1}"'.format(vid, os.path.join(self.im_dir, (
-                    os.path.basename(vid) + '_out%04d.png'))), shell=True).wait()
+            subprocess.Popen('ffmpeg -i "{0}" -vf fps=30 "{1}"'.format(vid, os.path.join(self.im_dir, (
+                os.path.basename(vid) + '_out%04d.png'))), shell=True).wait()
             crop_image_sequence.CropImages(self.im_dir, self.crop_txt_files, self.nose_txt_files,
                                            save=True)
-        if not self.already_detected:
-            run_open_face(self.im_dir)
-        frame_direc = os.path.join(self.im_dir, 'labeled_frames/')
-        if not os.path.exists(frame_direc):
-            os.mkdir(os.path.join(self.im_dir, 'labeled_frames/'))
-        subprocess.Popen(
-            'ffmpeg -i "{0}" -vf fps=30 "{1}"'.format(os.path.join(self.im_dir, 'out.mp4'), os.path.join(frame_direc, (
-                os.path.basename(self.im_dir) + '_out%04d.png'))), shell=True).wait()
+        if len(glob.glob(os.path.join(self.im_dir, '*.png'))) > 0:
+            if not self.already_detected:
+                run_open_face(self.im_dir)
+            frame_direc = os.path.join(self.im_dir, 'labeled_frames/')
+            if not os.path.exists(frame_direc):
+                os.mkdir(os.path.join(self.im_dir, 'labeled_frames/'))
+            subprocess.Popen(
+                'ffmpeg -i "{0}" -vf fps=30 "{1}"'.format(os.path.join(self.im_dir, 'out.mp4'), os.path.join(frame_direc, (
+                    os.path.basename(self.im_dir) + '_out%04d.png'))), shell=True).wait()
 
     @staticmethod
     def find_txt_files(path):

@@ -24,13 +24,20 @@ class AUScorer:
         Default constructor.
 
         :param dir: Directory with au files to score
+        :type dir: str
         :param au_thresh: Minimum threshold (0-5) for considering AUs to be present
+        :type au_thresh: float
         :param include_eyebrows: Whether eyebrows should be considered
+        :type include_eyebrows: bool
         """
         self.include_eyebrows = include_eyebrows
         self.include_similar = False
+        original_dir = os.getcwd()
         os.chdir(dir)
         au_file = 'au.txt'  # Replace with name of action units file
+        if not os.path.exists('au.txt'):
+            os.chdir(original_dir)
+            raise FileNotFoundError("{0} does not exist!".format(os.path.join(dir, au_file)))
         open_face_arr, open_face_dict = OpenFaceScorer.OpenFaceScorer.make_au_parts(au_file)
 
         # Creates a dictionary mapping each frame in the video to a dictionary containing the frame's action units
@@ -54,6 +61,7 @@ class AUScorer:
 
         frame_emotions = self.make_frame_emotions(self.presence_dict)
         self.emotions = {frame: frame_dict for frame, frame_dict in frame_emotions.items()}
+        os.chdir(original_dir)
 
     @staticmethod
     def emotion_list():
@@ -170,6 +178,18 @@ def LCS(X, Y):
             else:
                 C[i][j] = max(C[i][j - 1], C[i - 1][j])
     return C
+
+
+def reverse_emotions(emotionDict):
+    """
+    Creates a dictionary mapping between the values of emotions and all the emotions with that value.
+
+    :param emotionDict: Mapping between emotions and their scores
+    :type emotionDict: dict
+    :return: Reverse mapped dictionary
+    """
+    return {value: [x for x in emotionDict.keys() if emotionDict[x] == value] for value in
+            emotionDict.values()}
 
 
 if __name__ == '__main__':

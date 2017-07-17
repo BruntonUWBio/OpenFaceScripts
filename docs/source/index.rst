@@ -8,6 +8,7 @@ Contents:
 
     AUGui
     AUScorer
+    MultiPrevalenceScorer
 
 
 
