@@ -9,6 +9,7 @@ Contents:
     AUGui
     AUScorer
     MultiPrevalenceScorer
+    ImageCropper
 
 
 

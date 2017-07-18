@@ -1,0 +1,5 @@
+ImageCropper
+************
+
+.. automodule:: ImageCropper
+    :members:

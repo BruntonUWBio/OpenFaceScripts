@@ -3,12 +3,12 @@ import os
 import subprocess
 import sys
 
-from OpenFaceScripts import crop_image_sequence
+from OpenFaceScripts import ImageCropper
 
 
 def run_open_face(im_dir):
     executable = '/home/gvelchuru/OpenFace/build/bin/FeatureExtraction'  # Change to location of OpenFace
-    subprocess.Popen("ffmpeg -r 30 -f image2 -s 1920x1080 -pattern_type glob -i '{0}' -b:v 2000k {1}".format(
+    subprocess.Popen("ffmpeg -y -r 30 -f image2 -s 1920x1080 -pattern_type glob -i '{0}' -b:v 2000k {1}".format(
         os.path.join(im_dir, '*.png'),
         os.path.join(im_dir,
                      'inter_out.mp4')), shell=True).wait()
@@ -36,9 +36,9 @@ class VideoImageCropper:
             self.nose_txt_files = self.find_txt_files(self.nose_path)
             if not os.path.lexists(self.im_dir):
                 os.mkdir(self.im_dir)
-            subprocess.Popen('ffmpeg -i "{0}" -vf fps=30 "{1}"'.format(vid, os.path.join(self.im_dir, (
+            subprocess.Popen('ffmpeg -y -i "{0}" -vf fps=30 "{1}"'.format(vid, os.path.join(self.im_dir, (
                 os.path.basename(vid) + '_out%04d.png'))), shell=True).wait()
-            crop_image_sequence.CropImages(self.im_dir, self.crop_txt_files, self.nose_txt_files,
+            ImageCropper.CropImages(self.im_dir, self.crop_txt_files, self.nose_txt_files,
                                            save=True)
         if len(glob.glob(os.path.join(self.im_dir, '*.png'))) > 0:
             if not self.already_detected:
@@ -47,7 +47,7 @@ class VideoImageCropper:
             if not os.path.exists(frame_direc):
                 os.mkdir(os.path.join(self.im_dir, 'labeled_frames/'))
             subprocess.Popen(
-                'ffmpeg -i "{0}" -vf fps=30 "{1}"'.format(os.path.join(self.im_dir, 'out.mp4'), os.path.join(frame_direc, (
+                'ffmpeg -y -i "{0}" -vf fps=30 "{1}"'.format(os.path.join(self.im_dir, 'out.mp4'), os.path.join(frame_direc, (
                     os.path.basename(self.im_dir) + '_out%04d.png'))), shell=True).wait()
 
     @staticmethod

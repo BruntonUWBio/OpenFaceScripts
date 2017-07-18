@@ -1,4 +1,7 @@
-# Requires pose, crop coordinates
+"""
+.. module:: ImageCropper
+    :synopsis: A class for cropping a series of images given bounding boxes and center-of-nose coordinates.
+"""
 import glob
 import os
 import pickle
@@ -8,7 +11,22 @@ from scipy import misc
 
 
 class CropImages:
+    """
+    Main cropper class.
+
+    """
     def __init__(self, directory, crop_txt_files, nose_txt_files, save=False):
+        """
+        Default constructor.
+
+        :param directory: Location of images.
+        :type directory: str.
+        :param crop_txt_files: Location of bounding box crop files.
+        :type crop_txt_files: str.
+        :param nose_txt_files: Location of center-of-nose files.
+        :type nose_txt_files: str.
+        :param save: Unused.
+        """
         self.resize_factor = 5
         self.fps_fraction = 1
         self.crop_txt_files = crop_txt_files
@@ -18,7 +36,8 @@ class CropImages:
         files = glob.glob(os.path.join(self.im_dir, '*.png'))
         files = sorted(files)
         self.read_arr_dict = {}
-        self.crop_im_arr_arr_dict = {image: self.make_crop_im_arr_arr(image) for image in files}
+        self.crop_im_arr_arr_dict = {image: self.make_crop_im_arr_arr(image) for image in files if
+                                     'cropped' not in image}
         bb_arr = [None, None, None, None]
         for image in self.crop_im_arr_arr_dict.keys():
             im_crop_arr = self.crop_im_arr_arr_dict[image]
