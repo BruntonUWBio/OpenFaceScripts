@@ -19,7 +19,9 @@ from multiprocessing import Pool
 def crop_image(i):
     vid = vids[i]
     im_dir = os.path.splitext(vid)[0] + '_cropped'
-    CropAndOpenFace.VideoImageCropper(vid=vid, im_dir=im_dir, crop_path=crop_path, nose_path=nose_path, crop_txt_files=crop_txt_files, nose_txt_files=nose_txt_files)
+    CropAndOpenFace.VideoImageCropper(vid=vid, im_dir=im_dir, crop_path=crop_path, nose_path=nose_path,
+                                      crop_txt_files=crop_txt_files, nose_txt_files=nose_txt_files)
+
 
 if __name__ == '__main__':
     path = sys.argv[sys.argv.index('-id') + 1]
