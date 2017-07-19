@@ -10,6 +10,7 @@ Contents:
     AUScorer
     MultiPrevalenceScorer
     ImageCropper
+    MultiCropper
 
 
 

@@ -5,6 +5,7 @@
 import glob
 import os
 import pickle
+from collections import OrderedDict
 
 import numpy as np
 from scipy import misc
@@ -15,7 +16,8 @@ class CropImages:
     Main cropper class.
 
     """
-    def __init__(self, directory, crop_txt_files, nose_txt_files, save=False):
+
+    def __init__(self, directory, crop_txt_files, nose_txt_files, save=False, same_crop_file=True):
         """
         Default constructor.
 
@@ -30,18 +32,21 @@ class CropImages:
         self.resize_factor = 5
         self.fps_fraction = 1
         self.crop_txt_files = crop_txt_files
+        self.same_crop_file = same_crop_file
+        if self.same_crop_file:
+            self.crop_file_path = None  # Used when all images have the same crop file to improve performance
+            self.nose_file_path = None
         self.nose_txt_files = nose_txt_files
         save_name = None
         self.im_dir = directory
-        files = glob.glob(os.path.join(self.im_dir, '*.png'))
-        files = sorted(files)
+        files = glob.iglob(os.path.join(self.im_dir, '*.png'))
         self.read_arr_dict = {}
-        self.crop_im_arr_arr_dict = {image: self.make_crop_im_arr_arr(image) for image in files if
-                                     'cropped' not in image}
+        self.un_cropped_ims = []
+        self.crop_im_arr_arr_dict = {image: self.make_crop_im_arr_arr(image) for image in files if 'cropped' not in os.path.basename(image)}
         bb_arr = [None, None, None, None]
         for image in self.crop_im_arr_arr_dict.keys():
             im_crop_arr = self.crop_im_arr_arr_dict[image]
-            if im_crop_arr:
+            if im_crop_arr and image not in self.un_cropped_ims:
                 x_min = im_crop_arr[1]
                 y_min = im_crop_arr[2]
                 x_max = im_crop_arr[3]
@@ -54,18 +59,18 @@ class CropImages:
 
         self.write_arr(bb_arr, 'bb_arr', extra=True)
         for image in self.crop_im_arr_arr_dict.keys():
+            # Guaranteed to only be non-cropped images
             path_name, base_name = os.path.split(image)
-            if 'cropped' not in base_name:
-                split_name = os.path.splitext(base_name)
-                if save:
-                    save_name = os.path.join(path_name, split_name[0] + '_cropped' + split_name[1])
-                if self.crop_im_arr_arr_dict[image] is not None:
-                    img = self.crop_im_arr_arr_dict[image][0]
-                    self.crop_image(img, save_name, bb_arr)
-                try:
-                    os.remove(image)
-                except FileNotFoundError:
-                    continue
+            split_name = os.path.splitext(base_name)
+            if save:
+                save_name = os.path.join(path_name, split_name[0] + '_cropped' + split_name[1])
+            if self.crop_im_arr_arr_dict[image] is not None:
+                img = self.crop_im_arr_arr_dict[image][0]
+                self.crop_image(img, save_name, bb_arr)
+            try:
+                os.remove(image)
+            except FileNotFoundError:
+                continue
 
     def make_crop_im_arr_arr(self, name):
         img = misc.imread(name, mode='RGB')
@@ -75,16 +80,15 @@ class CropImages:
             return None
 
     def crop_image(self, img, save_name, crop_arr):
-        x_min, y_min, x_max, y_max = self.return_min_max(crop_arr)
-        crop_im = img[y_min:y_max, x_min:x_max]
+        if all(crop_arr):
+            x_min, y_min, x_max, y_max = self.return_min_max(crop_arr)
+            crop_im = img[y_min:y_max, x_min:x_max]
+        else:
+            crop_im = img
         if save_name:
-            # crop_im = cv2.cvtColor(crop_im, cv2.COLOR_RGB2BGR)
-
             # Resize image for better detection and presentation
             crop_im = misc.imresize(crop_im,
                                     (crop_im.shape[0] * self.resize_factor, crop_im.shape[1] * self.resize_factor))
-
-            # cv2.imwrite(save_name, crop_im)
             misc.imsave(save_name, crop_im)
             print("Saving " + save_name)
 
@@ -103,7 +107,13 @@ class CropImages:
     def crop_predictor(self, img, name, scaled_width, scaled_height, make_cropped_im=False):
         print('Name: {0}'.format(name))
         base_name = os.path.basename(name)
-        crop_file_path, file_num = self.find_crop_path(base_name, self.crop_txt_files)
+        if self.same_crop_file and self.crop_file_path:
+            crop_file_path = self.crop_file_path
+            file_num = self.out_num(base_name)
+        else:
+            crop_file_path, file_num = self.find_crop_path(base_name, self.crop_txt_files)
+            if self.same_crop_file:
+                self.crop_file_path = crop_file_path
         print('Crop file: {0}'.format(crop_file_path))
         x_min = None
         y_min = None
@@ -121,8 +131,13 @@ class CropImages:
                 y_min = curr_im_coords[2] * scaled_height / 480
                 x_max = curr_im_coords[1] * scaled_width / 640
                 y_max = curr_im_coords[3] * scaled_height / 480
-
-        nose_file_path, file_num = self.find_crop_path(base_name, self.nose_txt_files)
+        if self.same_crop_file and self.nose_file_path:
+            nose_file_path = self.nose_file_path
+            file_num = self.out_num(base_name)
+        else:
+            nose_file_path, file_num = self.find_crop_path(base_name, self.nose_txt_files)
+            if self.same_crop_file:
+                self.nose_file_path = nose_file_path
         print('Nose file: {0}'.format(nose_file_path))
         if nose_file_path is not None:
             i = file_num - 1
@@ -162,6 +177,9 @@ class CropImages:
                         return [crop_im, x_min, y_min, x_max, y_max]
                     else:
                         return [img, x_min, y_min, x_max, y_max]
+                else:
+                    self.un_cropped_ims.append(name)
+                    return [img, x_min, y_min, x_max, y_max]
 
     @staticmethod
     def normalize_to_camera(coords, crop_coord, scaled_width, scaled_height):
@@ -174,18 +192,24 @@ class CropImages:
             for coord in coords]
         return np.array(norm_coords)
 
-    @staticmethod
-    def find_crop_path(file, crop_txt_files):
+    def find_crop_path(self, file, crop_txt_files):
         parts = file.split('.')
         pid = parts[0]
-        try:
-            out_num = int(''.join(parts[1][parts[1].index('out') + 3: len(parts[1])]))
-        except ValueError:
-            return None, None
+        out_num = self.out_num(file)
         out_file = None
-        if pid in list(crop_txt_files.keys()):
+        if pid in crop_txt_files.keys():
             out_file = crop_txt_files[pid]
         return out_file, out_num
+
+    @staticmethod
+    def out_num(file):
+        parts = file.split('.')
+        try:
+            out_num = int(''.join(parts[1][parts[1].index('out') + 3: len(parts[1])]))
+            return out_num
+        except ValueError:
+            return None
+
 
     @staticmethod
     def return_min_max(arr):

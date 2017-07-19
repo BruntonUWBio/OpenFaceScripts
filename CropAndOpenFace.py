@@ -1,7 +1,9 @@
 import glob
+import json
 import os
 import subprocess
 import sys
+import numpy as np
 
 from OpenFaceScripts import ImageCropper
 
@@ -25,15 +27,27 @@ def run_open_face(im_dir):
 
 class VideoImageCropper:
     def __init__(self, vid=None, im_dir=None, crop_path=None, nose_path=None, already_cropped=None,
-                 already_detected=None):
+                 already_detected=None, crop_txt_files=None, nose_txt_files = None):
         self.already_cropped = already_cropped
         self.already_detected = already_detected
         self.im_dir = im_dir
         self.crop_path = crop_path
         self.nose_path = nose_path
         if not self.already_cropped and not self.already_detected:
-            self.crop_txt_files = self.find_txt_files(self.crop_path)
-            self.nose_txt_files = self.find_txt_files(self.nose_path)
+            if crop_txt_files:
+                self.crop_txt_files = crop_txt_files
+            else:
+                try:
+                    self.crop_txt_files = json.load(open(os.path.join(os.path.dirname(vid), 'crop_files_list.txt'), mode='r'))
+                except IOError:
+                    self.crop_txt_files = find_txt_files(crop_path)
+            if nose_txt_files:
+                self.nose_txt_files = nose_txt_files
+            else:
+                try:
+                    self.nose_txt_files = json.load(open(os.path.join(os.path.dirname(vid), 'nose_files_list.txt'), mode='r'))
+                except IOError:
+                    self.nose_txt_files = find_txt_files(nose_path)
             if not os.path.lexists(self.im_dir):
                 os.mkdir(self.im_dir)
             subprocess.Popen('ffmpeg -y -i "{0}" -vf fps=30 "{1}"'.format(vid, os.path.join(self.im_dir, (
@@ -50,10 +64,10 @@ class VideoImageCropper:
                 'ffmpeg -y -i "{0}" -vf fps=30 "{1}"'.format(os.path.join(self.im_dir, 'out.mp4'), os.path.join(frame_direc, (
                     os.path.basename(self.im_dir) + '_out%04d.png'))), shell=True).wait()
 
-    @staticmethod
-    def find_txt_files(path):
-        return {os.path.splitext(os.path.basename(v))[0]: v for v in
-                glob.iglob(os.path.join(path + '/**/*.txt'), recursive=True)}
+
+def find_txt_files(path):
+    return {os.path.splitext(os.path.basename(v))[0]: v for v in
+            glob.iglob(os.path.join(path + '/**/*.txt'), recursive=True)}
 
 
 if __name__ == '__main__':

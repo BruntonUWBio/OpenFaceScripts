@@ -21,8 +21,8 @@ if not os.path.lexists(outFile):
     os.mkdir(outFile)
 
 processes = []
-crop_txt_files = CropAndOpenFace.VideoImageCropper.find_txt_files('/data2/storagedrive/crop_coords')
-nose_txt_files = CropAndOpenFace.VideoImageCropper.find_txt_files('/data2/storagedrive/pose_coords')
+crop_txt_files = find_txt_files('/data2/storagedrive/crop_coords')
+nose_txt_files = find_txt_files('/data2/storagedrive/pose_coords')
 for index, avi in enumerate(avis):
     if 1 < index < 200:  # Change based on how many videos wanted
         out_png = os.path.join(outFile, os.path.basename(avi) + '_out%04d.png')

@@ -1,0 +1,5 @@
+MultiCropper
+************
+
+.. automodule:: MultiCropper
+    :members:
