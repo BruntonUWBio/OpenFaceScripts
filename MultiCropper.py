@@ -9,11 +9,10 @@ import json
 import multiprocessing
 import os
 import sys
+from pathos.multiprocessing import ProcessingPool as Pool
 
-sys.path.append('home/gvelchuru/')
-
+sys.path.append('/home/gvelchuru/')
 from OpenFaceScripts import CropAndOpenFace
-from multiprocessing import Pool
 
 
 def crop_image(i):
