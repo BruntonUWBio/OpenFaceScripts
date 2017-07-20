@@ -1,0 +1,208 @@
+"""
+.. module:: VidCropper
+    :synopsis: A class for cropping a video given bounding boxes. Aims to be much more performant than ImageCropper for essentially the same purpose.
+"""
+import glob
+import json
+import os
+import numpy as np
+import subprocess
+
+
+class CropVid:
+    """
+    Main cropper class
+    """
+
+    def __init__(self, vid, directory, crop_txt_files, nose_txt_files):
+        self.resize_factor = 5
+        self.fps_fraction = 1
+        self.crop_txt_files = crop_txt_files
+        self.nose_txt_files = nose_txt_files
+        self.crop_file_path = None
+        self.nose_file_path = None
+        self.im_dir = directory
+        self.vid = vid
+        self.vid_width = 640
+        self.vid_height = 480
+        self.fps = 30
+        self.vid_length = self.duration(vid)
+        self.num_frames = int(self.vid_length * self.fps)
+        self.read_arr_dict = {}
+        self.un_cropped_ims = []
+        self.crop_im_arr_arr_dict = self.crop_im_arr_arr_list()
+        bb_arr = [None, None, None, None]
+        if self.crop_im_arr_arr_dict:
+            for coords in self.crop_im_arr_arr_dict:
+                im_crop_arr = coords
+                x_min = im_crop_arr[0]
+                y_min = im_crop_arr[1]
+                x_max = im_crop_arr[2]
+                y_max = im_crop_arr[3]
+                if bb_arr[0]:
+                    bb_arr = [min(bb_arr[0], x_min), min(bb_arr[1], y_min),
+                              max(bb_arr[2], x_max), max(bb_arr[3], y_max)]
+                else:
+                    bb_arr = [x_min, y_min, x_max, y_max]
+        if all(bb_arr):
+            x_min = bb_arr[0]
+            y_min = bb_arr[1]
+            x_max = bb_arr[2]
+            y_max = bb_arr[3]
+        else:
+            x_min = 150
+            x_max = 640 - 150
+            y_min = 100
+            y_max = 480 - 100
+
+        self.write_arr(bb_arr, 'bb_arr', extra=True)
+        width = x_max - x_min
+        height = y_max - y_min
+        subprocess.Popen(
+            'ffmpeg -y -i {0} -filter:v \"crop={1}:{2}:{3}:{4}\" {5}'.format(vid, str(width), str(height),
+                                                                          str(x_min), str(y_min),
+                                                                          os.path.join(directory, 'cropped_out.avi')),
+            shell=True).wait()
+        subprocess.Popen(
+            'ffmpeg -y -i {0} -vf scale=5*iw:ih {1}'.format(os.path.join(directory, 'cropped_out.avi'),
+                                                                         os.path.join(directory, 'inter_out.avi')), shell=True).wait()
+        os.remove(os.path.join(directory, 'cropped_out.avi'))
+
+    def crop_im_arr_arr_list(self):
+        base_name = os.path.basename(self.vid)
+        self.crop_file_path = self.find_crop_path(base_name, self.crop_txt_files)
+        self.nose_file_path = self.find_crop_path(base_name, self.nose_txt_files)
+        crop_read_arr = self.make_read_arr(open(self.crop_file_path)) if self.crop_file_path else None
+        nose_read_arr = self.make_read_arr(open(self.nose_file_path)) if self.nose_file_path else None
+        if crop_read_arr and nose_read_arr:
+            return self.find_im_bb(crop_read_arr, nose_read_arr)
+        else:
+            return None
+
+    def find_im_bb(self, crop_read_arr, nose_read_arr):
+        x_min = None
+        y_min = None
+        x_max = None
+        y_max = None
+        bbox = []
+        scaled_width = self.vid_width
+        scaled_height = self.vid_height
+
+        for i in range(self.num_frames):
+            read_arr = crop_read_arr
+            if len(read_arr) > i:
+                curr_im_coords = read_arr[i]
+                x_min = curr_im_coords[0] * scaled_width / 640
+                y_min = curr_im_coords[2] * scaled_height / 480
+                x_max = curr_im_coords[1] * scaled_width / 640
+                y_max = curr_im_coords[3] * scaled_height / 480
+
+            read_arr = nose_read_arr
+            if len(read_arr) > i:
+                confidence = read_arr[i][2]
+                if confidence > .25:
+                    x_center = read_arr[i][0]
+                    y_center = read_arr[i][1]
+                    norm_coords = self.normalize_to_camera([(x_center, y_center)], [x_min, x_max, y_min, y_max],
+                                                           scaled_width=scaled_width, scaled_height=scaled_height)
+                    x_center = norm_coords[0][0]
+                    y_center = norm_coords[0][1]
+                    bb_size = 75  # Change as desired, based on size of face
+
+                    # We want only face, not whole body
+                    x_min = int(x_center - bb_size)
+                    y_min = int(y_center - bb_size)
+                    x_max = int(x_center + bb_size)
+                    y_max = int(y_center + bb_size)
+                    x_coords = np.clip(np.array([x_min, x_max]), 0, self.vid_width)
+                    y_coords = np.clip(np.array([y_min, y_max]), 0, self.vid_height)
+                    x_min = x_coords[0]
+                    x_max = x_coords[1]
+                    y_min = y_coords[0]
+                    y_max = y_coords[1]
+
+                    bbox.append([x_min, y_min, x_max, y_max])
+        return bbox
+
+    def find_crop_path(self, file, crop_txt_files):
+        parts = file.split('.')
+        pid = parts[0]
+        out_file = None
+        if pid in crop_txt_files.keys():
+            out_file = crop_txt_files[pid]
+        return out_file
+
+    def make_read_arr(self, f, num_constraint=None):
+        read_arr = f.readlines()
+        if num_constraint is not None:
+            read_arr = [read_arr[i].split(',')[0:num_constraint] for i in range(0, len(read_arr), self.fps_fraction)]
+        else:
+            read_arr = [read_arr[i].split(',') for i in range(0, len(read_arr), self.fps_fraction)]
+        for index, num in enumerate(read_arr):
+            for val_index, val in enumerate(num):
+                read_arr[index][val_index] = val.replace('(', '')
+                val = read_arr[index][val_index]
+                read_arr[index][val_index] = val.replace(')', '')
+        read_arr = [[float(k) for k in i] for i in read_arr]
+        return read_arr
+
+    @staticmethod
+    def normalize_to_camera(coords, crop_coord, scaled_width, scaled_height):
+        if sum(crop_coord) <= 0:
+            rescale_factor = (scaled_width / 256, scaled_height / 256)  # Original size was 256
+        else:
+            rescale_factor = ((crop_coord[1] - crop_coord[0]) / 256.0, (crop_coord[3] - crop_coord[2]) / 256.0)
+        norm_coords = [
+            np.array((coord[0] * rescale_factor[0] + crop_coord[0], coord[1] * rescale_factor[1] + crop_coord[2]))
+            for coord in coords]
+        return np.array(norm_coords)
+
+    def write_arr(self, arr, name, extra=False):
+        with open(os.path.join(self.im_dir, (name + '.txt')), mode='w') as f:
+            for element in arr:
+                f.write(str(element) + '\n')
+            if extra:
+                f.write('Rescaling factor: ' + '\n' + str(self.resize_factor) + '\n')
+
+    def duration(self, vid_file_path):
+        ''' Video's duration in seconds, return a float number
+        '''
+        _json = self.probe(vid_file_path)
+
+        if 'format' in _json:
+            if 'duration' in _json['format']:
+                return float(_json['format']['duration'])
+
+        if 'streams' in _json:
+            # commonly stream 0 is the video
+            for s in _json['streams']:
+                if 'duration' in s:
+                    return float(s['duration'])
+
+        # if everything didn't happen,
+        # we got here because no single 'return' in the above happen.
+        raise Exception('I found no duration')
+        #return None
+
+    @staticmethod
+    def probe(vid_file_path):
+        ''' Give a json from ffprobe command line
+
+        @vid_file_path : The absolute (full) path of the video file, string.
+        '''
+        if type(vid_file_path) != str:
+            raise Exception('Gvie ffprobe a full file path of the video')
+            return
+
+        command = ["ffprobe",
+                   "-loglevel", "quiet",
+                   "-print_format", "json",
+                   "-show_format",
+                   "-show_streams",
+                   vid_file_path
+                   ]
+
+        pipe = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        out, err = pipe.communicate()
+        out = out.decode("utf-8")
+        return json.loads(out)

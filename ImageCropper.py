@@ -1,6 +1,7 @@
 """
 .. module:: ImageCropper
-    :synopsis: A class for cropping a series of images given bounding boxes and center-of-nose coordinates.
+    :synopsis: A class for cropping a series of images given bounding boxes and center-of-nose coordinates. Note that this
+    is much less performant than VidCropper, making a video is recommended.
 """
 import glob
 import os
