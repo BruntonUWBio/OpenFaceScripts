@@ -5,7 +5,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>Welcome to OpenFaceScript’s documentation! &#8212; OpenFace 1 documentation</title>
+    <title>VidCropper &#8212; OpenFace 1 documentation</title>
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <script type="text/javascript">
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="_static/doctools.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="AUGui" href="AUGui.html" />
+    <link rel="prev" title="MultiCropper" href="MultiCropper.html" />
    
   <link rel="stylesheet" href="_static/custom.css" type="text/css" />
   
@@ -39,27 +39,27 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="welcome-to-openfacescript-s-documentation">
-<h1>Welcome to OpenFaceScript’s documentation!<a class="headerlink" href="#welcome-to-openfacescript-s-documentation" title="Permalink to this headline">¶</a></h1>
-<p>Contents:</p>
-<div class="toctree-wrapper compound">
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="AUGui.html">AUGui</a></li>
-<li class="toctree-l1"><a class="reference internal" href="AUScorer.html">AUScorer</a></li>
-<li class="toctree-l1"><a class="reference internal" href="MultiPrevalenceScorer.html">MultiPrevalenceScorer</a></li>
-<li class="toctree-l1"><a class="reference internal" href="ImageCropper.html">ImageCropper</a></li>
-<li class="toctree-l1"><a class="reference internal" href="MultiCropper.html">MultiCropper</a></li>
-<li class="toctree-l1"><a class="reference internal" href="VidCropper.html">VidCropper</a></li>
-</ul>
-</div>
-</div>
-<div class="section" id="indices-and-tables">
-<h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h1>
-<ul class="simple">
-<li><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></li>
-<li><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></li>
-<li><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></li>
-</ul>
+  <div class="section" id="module-VidCropper">
+<span id="vidcropper"></span><h1>VidCropper<a class="headerlink" href="#module-VidCropper" title="Permalink to this headline">¶</a></h1>
+<span class="target" id="module-VidCropper"></span><dl class="class">
+<dt id="VidCropper.CropVid">
+<em class="property">class </em><code class="descclassname">VidCropper.</code><code class="descname">CropVid</code><span class="sig-paren">(</span><em>vid</em>, <em>directory</em>, <em>crop_txt_files</em>, <em>nose_txt_files</em><span class="sig-paren">)</span><a class="headerlink" href="#VidCropper.CropVid" title="Permalink to this definition">¶</a></dt>
+<dd><p>Main cropper class</p>
+<dl class="method">
+<dt id="VidCropper.CropVid.duration">
+<code class="descname">duration</code><span class="sig-paren">(</span><em>vid_file_path</em><span class="sig-paren">)</span><a class="headerlink" href="#VidCropper.CropVid.duration" title="Permalink to this definition">¶</a></dt>
+<dd><p>Video’s duration in seconds, return a float number</p>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="VidCropper.CropVid.probe">
+<em class="property">static </em><code class="descname">probe</code><span class="sig-paren">(</span><em>vid_file_path</em><span class="sig-paren">)</span><a class="headerlink" href="#VidCropper.CropVid.probe" title="Permalink to this definition">¶</a></dt>
+<dd><p>Give a json from ffprobe command line</p>
+<p>&#64;vid_file_path : The absolute (full) path of the video file, string.</p>
+</dd></dl>
+
+</dd></dl>
+
 </div>
 
 
@@ -67,24 +67,18 @@
         </div>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
-        <div class="sphinxsidebarwrapper">
-  <h3><a href="#">Table Of Contents</a></h3>
-  <ul>
-<li><a class="reference internal" href="#">Welcome to OpenFaceScript’s documentation!</a></li>
-<li><a class="reference internal" href="#indices-and-tables">Indices and tables</a></li>
-</ul>
-<div class="relations">
+        <div class="sphinxsidebarwrapper"><div class="relations">
 <h3>Related Topics</h3>
 <ul>
-  <li><a href="#">Documentation overview</a><ul>
-      <li>Next: <a href="AUGui.html" title="next chapter">AUGui</a></li>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="MultiCropper.html" title="previous chapter">MultiCropper</a></li>
   </ul></li>
 </ul>
 </div>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
-      <li><a href="_sources/index.rst.txt"
+      <li><a href="_sources/VidCropper.rst.txt"
             rel="nofollow">Show Source</a></li>
     </ul>
    </div>
@@ -110,7 +104,7 @@
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
       
       |
-      <a href="_sources/index.rst.txt"
+      <a href="_sources/VidCropper.rst.txt"
           rel="nofollow">Page source</a>
     </div>
 

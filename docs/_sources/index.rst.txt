@@ -11,6 +11,7 @@ Contents:
     MultiPrevalenceScorer
     ImageCropper
     MultiCropper
+    VidCropper
 
 
 

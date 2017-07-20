@@ -1,0 +1,5 @@
+VidCropper
+**********
+
+.. automodule:: VidCropper
+    :members:
