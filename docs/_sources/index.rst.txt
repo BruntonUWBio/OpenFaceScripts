@@ -12,6 +12,7 @@ Contents:
     ImageCropper
     MultiCropper
     VidCropper
+    SecondRunOpenFace
 
 
 

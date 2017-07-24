@@ -6,7 +6,6 @@
 
 import glob
 import json
-import multiprocessing
 import os
 import subprocess
 import sys
@@ -97,3 +96,7 @@ if __name__ == '__main__':
     p = Pool(multiProcessingNum)
     p.map(crop_image, range(len(vids)))
     p.close()
+
+    # for vid in vids:
+    #     if 'aa97abcd_4_00' in vid:
+    #         crop_image(vids.index(vid))

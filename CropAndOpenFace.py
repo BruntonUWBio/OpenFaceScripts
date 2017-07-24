@@ -12,22 +12,24 @@ from OpenFaceScripts import ImageCropper, VidCropper
 def run_open_face(im_dir, vid_mode = False):
     executable = '/home/gvelchuru/OpenFace/build/bin/FeatureExtraction'  # Change to location of OpenFace
     if not vid_mode:
-        subprocess.Popen("ffmpeg -y -r 30 -f image2 -s 1920x1080 -pattern_type glob -i '{0}' -b:v 2000k {1}".format(
+        subprocess.Popen("ffmpeg -y -r 30 -f image2 -pattern_type glob -i '{0}' -b:v 7000k {1}".format(
             os.path.join(im_dir, '*.png'),
             os.path.join(im_dir,
                          'inter_out.mp4')), shell=True).wait()
         vid_name = 'inter_out.mp4'
+        out_name = 'out.mp4'
     else:
         vid_name = 'inter_out.avi'
-
+        out_name = 'out.avi'
     # Remove q if visualization desired, inserted for performance
     subprocess.Popen(
-        '{0} -f {1} -of {2} -q -verbose -wild -multi-view 1'.format(executable,
+        '{0} -f {1} -of {2} -ov {3} -q -verbose -wild -multi-view 1'.format(executable,
                                                                             os.path.join(im_dir,
                                                                                          vid_name),
-                                                                            os.path.join(im_dir, 'au.txt')),
+                                                                            os.path.join(im_dir, 'au.txt'), os.path.join(im_dir, out_name)),
         shell=True).wait()
     os.remove(os.path.join(im_dir, vid_name))
+    return out_name
 
 
 class VideoImageCropper:
@@ -38,6 +40,7 @@ class VideoImageCropper:
         self.im_dir = im_dir
         self.crop_path = crop_path
         self.nose_path = nose_path
+        out_name = 'out.mp4'
         if not self.already_cropped and not self.already_detected:
             if crop_txt_files:
                 self.crop_txt_files = crop_txt_files
@@ -63,16 +66,18 @@ class VideoImageCropper:
             ImageCropper.CropImages(self.im_dir, self.crop_txt_files, self.nose_txt_files, save=True)
             if len(glob.glob(os.path.join(self.im_dir, '*.png'))) > 0:
                 if not self.already_detected:
-                    run_open_face(self.im_dir)
-                frame_direc = os.path.join(self.im_dir, 'labeled_frames/')
-                if not os.path.exists(frame_direc):
-                    os.mkdir(os.path.join(self.im_dir, 'labeled_frames/'))
-                subprocess.Popen(
-                    'ffmpeg -y -i "{0}" -vf fps=30 "{1}"'.format(os.path.join(self.im_dir, 'out.mp4'), os.path.join(frame_direc, (
-                        os.path.basename(self.im_dir) + '_out%04d.png'))), shell=True).wait()
+                    out_name = run_open_face(self.im_dir)
         else:
             VidCropper.CropVid(vid, self.im_dir, self.crop_txt_files, self.nose_txt_files)
-            run_open_face(self.im_dir, vid_mode=True)
+            out_name = run_open_face(self.im_dir, vid_mode=True)
+        frame_direc = os.path.join(self.im_dir, 'labeled_frames/')
+        if not os.path.exists(frame_direc):
+            os.mkdir(os.path.join(self.im_dir, 'labeled_frames/'))
+        subprocess.Popen(
+            'ffmpeg -y -i "{0}" -vf fps=30 "{1}"'.format(os.path.join(self.im_dir, out_name),
+                                                         os.path.join(frame_direc, (
+                                                             os.path.basename(self.im_dir) + '_out%04d.png'))),
+            shell=True).wait()
 
 
 def find_txt_files(path):

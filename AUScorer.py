@@ -146,7 +146,7 @@ class AUScorer:
                 if r_label in frame_presence.keys():
                     scores.append(frame_presence[r_label] / 5)  # divide by 5 to normalize
                 else:
-                    scores.append(1.0 / 5)  # divide by 5 to normalizes
+                    scores.append(1.0 / 5)  # divide by 5 to normalize
         return np.sum(scores)
 
     @staticmethod

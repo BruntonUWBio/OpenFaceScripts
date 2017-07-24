@@ -44,16 +44,12 @@ class CropVid:
                               max(bb_arr[2], x_max), max(bb_arr[3], y_max)]
                 else:
                     bb_arr = [x_min, y_min, x_max, y_max]
-        if all(bb_arr):
-            x_min = bb_arr[0]
-            y_min = bb_arr[1]
-            x_max = bb_arr[2]
-            y_max = bb_arr[3]
-        else:
-            x_min = 150
-            x_max = 640 - 150
-            y_min = 100
-            y_max = 480 - 100
+        if not all(bb_arr):
+            bb_arr = [50, 0, 640-100, 480-100]
+        x_min = bb_arr[0]
+        y_min = bb_arr[1]
+        x_max = bb_arr[2]
+        y_max = bb_arr[3]
 
         self.write_arr(bb_arr, 'bb_arr', extra=True)
         width = x_max - x_min
@@ -64,8 +60,8 @@ class CropVid:
                                                                           os.path.join(directory, 'cropped_out.avi')),
             shell=True).wait()
         subprocess.Popen(
-            'ffmpeg -y -i {0} -vf scale=5*iw:ih {1}'.format(os.path.join(directory, 'cropped_out.avi'),
-                                                                         os.path.join(directory, 'inter_out.avi')), shell=True).wait()
+            'ffmpeg -y -i {0} -vf scale={2}*iw:{3}*ih {1}'.format(os.path.join(directory, 'cropped_out.avi'),
+                                                                         os.path.join(directory, 'inter_out.avi'), str(self.resize_factor), str(self.resize_factor)), shell=True).wait()
         os.remove(os.path.join(directory, 'cropped_out.avi'))
 
     def crop_im_arr_arr_list(self):
