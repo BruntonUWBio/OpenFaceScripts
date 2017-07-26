@@ -9,7 +9,15 @@ sys.path.append('/home/gvelchuru')
 from OpenFaceScripts import ImageCropper, VidCropper
 
 
-def run_open_face(im_dir, vid_mode = False):
+def run_open_face(im_dir, vid_mode = False, remove_intermediates = True):
+    """
+    Runs OpenFace
+
+    :param im_dir: Location of images if not in video mode, location of video if in video mode
+    :param vid_mode: Whether or not to be in video mode (alternative is to run on an image sequence)
+    :param remove_intermediates: Whether or not to remove intermediate files
+    :return: Name of output video produced by OpenFace (with landmarks)
+    """
     executable = '/home/gvelchuru/OpenFace/build/bin/FeatureExtraction'  # Change to location of OpenFace
     if not vid_mode:
         subprocess.Popen("ffmpeg -y -r 30 -f image2 -pattern_type glob -i '{0}' -b:v 7000k {1}".format(
@@ -28,7 +36,8 @@ def run_open_face(im_dir, vid_mode = False):
                                                                                          vid_name),
                                                                             os.path.join(im_dir, 'au.txt'), os.path.join(im_dir, out_name)),
         shell=True).wait()
-    os.remove(os.path.join(im_dir, vid_name))
+    if remove_intermediates:
+        os.remove(os.path.join(im_dir, vid_name))
     return out_name
 
 

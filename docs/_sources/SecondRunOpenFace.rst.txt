@@ -2,4 +2,4 @@ SecondRunOpenFace
 *****************
 
 .. automodule:: SecondRunOpenFace
-    :members: 
+    :members:

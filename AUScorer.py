@@ -42,22 +42,25 @@ class AUScorer:
 
         # Creates a dictionary mapping each frame in the video to a dictionary containing the frame's action units
         # and their amounts
-        au_dict = {
-            frame: {label: open_face_arr[frame][num] for label, num in open_face_dict.items()
+        au_dict = {frame: {label: open_face_arr[frame][num] for label, num in open_face_dict.items()
                     if 'AU' in label} for frame in range(len(open_face_arr))}
+        self.x_y_dict = {frame: {label: open_face_arr[frame][num] for label, num in open_face_dict.items()
+                    if 'x_' in label or 'y_' in label} for frame in range(len(open_face_arr))}
+        self.x_y_dict = {frame: frame_dict for frame, frame_dict in self.x_y_dict.items() if any(frame_dict.values())}
         self.presence_dict = defaultdict()
         for frame in range(len(open_face_arr)):
-            self.presence_dict[frame] = defaultdict()
-            curr_frame = au_dict[frame]
-            curr_frame_keys = curr_frame.keys()
-            for label in curr_frame_keys:
-                if 'c' in label and curr_frame[label] == 1 and not self.is_eyebrow(label):
-                    r_label = label.replace('c', 'r')
-                    if (r_label in curr_frame_keys and curr_frame[r_label] >= au_thresh) or (
-                                r_label not in curr_frame_keys):
-                        self.presence_dict[frame][label] = curr_frame[label]
-                        if r_label in curr_frame_keys:
-                            self.presence_dict[frame][r_label] = curr_frame[r_label]
+            if open_face_arr[frame][open_face_dict['success']]:
+                self.presence_dict[frame] = defaultdict()
+                curr_frame = au_dict[frame]
+                curr_frame_keys = curr_frame.keys()
+                for label in curr_frame_keys:
+                    if 'c' in label and curr_frame[label] == 1 and not self.is_eyebrow(label):
+                        r_label = label.replace('c', 'r')
+                        if (r_label in curr_frame_keys and curr_frame[r_label] >= au_thresh) or (
+                                    r_label not in curr_frame_keys):
+                            self.presence_dict[frame][label] = curr_frame[label]
+                            if r_label in curr_frame_keys:
+                                self.presence_dict[frame][r_label] = curr_frame[r_label]
 
         frame_emotions = self.make_frame_emotions(self.presence_dict)
         self.emotions = {frame: frame_dict for frame, frame_dict in frame_emotions.items()}
@@ -110,6 +113,12 @@ class AUScorer:
         return list(large_set)
 
     def get_emotions(self, index):
+        """
+        Gets the emotions at a specific index.
+
+        :param index:  Index to look for emotions at
+        :return: Emotions at index if index is in the list of emotion indices, else None
+        """
         return self.emotions[index] if index in self.emotions else None
 
     def make_frame_emotions(self, presence_dict):

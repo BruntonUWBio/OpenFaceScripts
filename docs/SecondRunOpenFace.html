@@ -48,21 +48,36 @@
 </dd></dl>
 
 <dl class="function">
+<dt id="SecondRunOpenFace.height_width">
+<code class="descclassname">SecondRunOpenFace.</code><code class="descname">height_width</code><span class="sig-paren">(</span><em>vid_file_path</em><span class="sig-paren">)</span><a class="headerlink" href="#SecondRunOpenFace.height_width" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets height and width of a video
+:param vid_file_path: Path to video
+:return: [Vid height, Vid width]</p>
+</dd></dl>
+
+<dl class="function">
 <dt id="SecondRunOpenFace.make_more_bright">
-<code class="descclassname">SecondRunOpenFace.</code><code class="descname">make_more_bright</code><span class="sig-paren">(</span><em>im</em>, <em>name</em><span class="sig-paren">)</span><a class="headerlink" href="#SecondRunOpenFace.make_more_bright" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">SecondRunOpenFace.</code><code class="descname">make_more_bright</code><span class="sig-paren">(</span><em>ims</em>, <em>i</em><span class="sig-paren">)</span><a class="headerlink" href="#SecondRunOpenFace.make_more_bright" title="Permalink to this definition">¶</a></dt>
 <dd><p>Makes an image brighter.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>im</strong> – Image (from cv2.imread)</li>
+<li><strong>ims</strong> – List of image names</li>
 <li><strong>name</strong> – Name of image</li>
 </ul>
 </td>
 </tr>
 </tbody>
 </table>
+</dd></dl>
+
+<dl class="function">
+<dt id="SecondRunOpenFace.probe">
+<code class="descclassname">SecondRunOpenFace.</code><code class="descname">probe</code><span class="sig-paren">(</span><em>vid_file_path</em><span class="sig-paren">)</span><a class="headerlink" href="#SecondRunOpenFace.probe" title="Permalink to this definition">¶</a></dt>
+<dd><p>Give a json from ffprobe command line</p>
+<p>&#64;vid_file_path : The absolute (full) path of the video file, string.</p>
 </dd></dl>
 
 </div>

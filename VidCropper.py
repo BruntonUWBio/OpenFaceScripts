@@ -9,6 +9,31 @@ import numpy as np
 import subprocess
 
 
+def crop_and_resize(vid, width, height, x_min, y_min, directory, resize_factor):
+    """
+    Crops a video and then resizes it
+
+    :param vid: Video to crop
+    :param width: Width of crop
+    :param height: Height of crop
+    :param x_min: x-coordinate of top-left corner
+    :param y_min: y-coordinate of top-left corner
+    :param directory: Directory to output files to
+    :param resize_factor: Factor by which to resize the cropped video
+    """
+    crop_vid = os.path.join(directory, 'cropped_out.avi')
+    subprocess.Popen(
+        'ffmpeg -y -i {0} -filter:v \"crop={1}:{2}:{3}:{4}\" {5}'.format(vid, str(width), str(height),
+                                                                         str(x_min), str(y_min),
+                                                                         crop_vid),
+        shell=True).wait()
+    subprocess.Popen(
+        'ffmpeg -y -i {0} -vf scale={2}*iw:{2}*ih {1}'.format(crop_vid,
+                                                              os.path.join(directory, 'inter_out.avi'),
+                                                              str(resize_factor)), shell=True).wait()
+    os.remove(os.path.join(directory, 'cropped_out.avi'))
+
+
 class CropVid:
     """
     Main cropper class
@@ -45,7 +70,7 @@ class CropVid:
                 else:
                     bb_arr = [x_min, y_min, x_max, y_max]
         if not all(bb_arr):
-            bb_arr = [50, 0, 640-100, 480-100]
+            bb_arr = [50, 0, 640 - 100, 480 - 100]
         x_min = bb_arr[0]
         y_min = bb_arr[1]
         x_max = bb_arr[2]
@@ -54,15 +79,7 @@ class CropVid:
         self.write_arr(bb_arr, 'bb_arr', extra=True)
         width = x_max - x_min
         height = y_max - y_min
-        subprocess.Popen(
-            'ffmpeg -y -i {0} -filter:v \"crop={1}:{2}:{3}:{4}\" {5}'.format(vid, str(width), str(height),
-                                                                          str(x_min), str(y_min),
-                                                                          os.path.join(directory, 'cropped_out.avi')),
-            shell=True).wait()
-        subprocess.Popen(
-            'ffmpeg -y -i {0} -vf scale={2}*iw:{3}*ih {1}'.format(os.path.join(directory, 'cropped_out.avi'),
-                                                                         os.path.join(directory, 'inter_out.avi'), str(self.resize_factor), str(self.resize_factor)), shell=True).wait()
-        os.remove(os.path.join(directory, 'cropped_out.avi'))
+        crop_and_resize(vid, width, height, x_min, y_min, directory, resize_factor=self.resize_factor)
 
     def crop_im_arr_arr_list(self):
         base_name = os.path.basename(self.vid)
@@ -178,7 +195,7 @@ class CropVid:
         # if everything didn't happen,
         # we got here because no single 'return' in the above happen.
         raise Exception('I found no duration')
-        #return None
+        # return None
 
     @staticmethod
     def probe(vid_file_path):
