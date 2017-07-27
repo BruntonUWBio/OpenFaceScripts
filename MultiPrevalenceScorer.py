@@ -83,10 +83,9 @@ class MultiPrevalenceScorer:
 
     def find_scores(self, patient_dir):
         """
-        Finds the scores for a specific patient directory if the directory
+        Finds the scores for a specific patient directory
 
-        :param scores:
-        :param patient_dir:
+        :param patient_dir: Directory to look in
         """
         print(patient_dir)
         patient_dir_scores = {patient_dir: defaultdict()}
