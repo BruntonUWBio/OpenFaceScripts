@@ -34,6 +34,27 @@ def crop_and_resize(vid, width, height, x_min, y_min, directory, resize_factor):
     os.remove(os.path.join(directory, 'cropped_out.avi'))
 
 
+def duration(vid_file_path):
+    ''' Video's duration in seconds, return a float number
+    '''
+    _json = probe(vid_file_path)
+
+    if 'format' in _json:
+        if 'duration' in _json['format']:
+            return float(_json['format']['duration'])
+
+    if 'streams' in _json:
+        # commonly stream 0 is the video
+        for s in _json['streams']:
+            if 'duration' in s:
+                return float(s['duration'])
+
+    # if everything didn't happen,
+    # we got here because no single 'return' in the above happen.
+    raise Exception('I found no duration')
+    # return None
+
+
 class CropVid:
     """
     Main cropper class
@@ -51,7 +72,7 @@ class CropVid:
         self.vid_width = 640
         self.vid_height = 480
         self.fps = 30
-        self.vid_length = self.duration(vid)
+        self.vid_length = duration(vid)
         self.num_frames = int(self.vid_length * self.fps)
         self.read_arr_dict = {}
         self.un_cropped_ims = []
@@ -141,7 +162,7 @@ class CropVid:
         parts = file.split('.')
         pid = parts[0]
         out_file = None
-        if pid in crop_txt_files.keys():
+        if pid in crop_txt_files:
             out_file = crop_txt_files[pid]
         return out_file
 
@@ -177,45 +198,26 @@ class CropVid:
             if extra:
                 f.write('Rescaling factor: ' + '\n' + str(self.resize_factor) + '\n')
 
-    def duration(self, vid_file_path):
-        ''' Video's duration in seconds, return a float number
-        '''
-        _json = self.probe(vid_file_path)
 
-        if 'format' in _json:
-            if 'duration' in _json['format']:
-                return float(_json['format']['duration'])
+def probe(vid_file_path):
+    ''' Give a json from ffprobe command line
 
-        if 'streams' in _json:
-            # commonly stream 0 is the video
-            for s in _json['streams']:
-                if 'duration' in s:
-                    return float(s['duration'])
+    @vid_file_path : The absolute (full) path of the video file, string.
+    '''
+    if type(vid_file_path) != str:
+        raise Exception('Gvie ffprobe a full file path of the video')
+        return
 
-        # if everything didn't happen,
-        # we got here because no single 'return' in the above happen.
-        raise Exception('I found no duration')
-        # return None
+    command = ["ffprobe",
+               "-loglevel", "quiet",
+               "-print_format", "json",
+               "-show_format",
+               "-show_streams",
+               vid_file_path
+               ]
 
-    @staticmethod
-    def probe(vid_file_path):
-        ''' Give a json from ffprobe command line
+    pipe = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    out, err = pipe.communicate()
+    out = out.decode("utf-8")
+    return json.loads(out)
 
-        @vid_file_path : The absolute (full) path of the video file, string.
-        '''
-        if type(vid_file_path) != str:
-            raise Exception('Gvie ffprobe a full file path of the video')
-            return
-
-        command = ["ffprobe",
-                   "-loglevel", "quiet",
-                   "-print_format", "json",
-                   "-show_format",
-                   "-show_streams",
-                   vid_file_path
-                   ]
-
-        pipe = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-        out, err = pipe.communicate()
-        out = out.decode("utf-8")
-        return json.loads(out)

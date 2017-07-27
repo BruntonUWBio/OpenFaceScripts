@@ -4,13 +4,19 @@
         ground truth labeling for a series of videos.
 
 """
+import csv
+import json
+import multiprocessing
 import os
 import sys
 import glob
 from collections import defaultdict
 
+from pathos.multiprocessing import ProcessingPool as Pool
+from functools import partial
+
 sys.path.append('/home/gvelchuru/')
-from OpenFaceScripts import AUScorer, AUGui
+from OpenFaceScripts import AUScorer, AUGui, VidCropper
 
 
 class MultiPrevalenceScorer:
@@ -19,46 +25,105 @@ class MultiPrevalenceScorer:
 
     """
 
-    def __init__(self, dir):
-        os.chdir(dir)
+    def __init__(self, OpenDir):
+        os.chdir(OpenDir)
         patient_dirs = glob.glob('*cropped')  # Directories have been previously cropped by CropAndOpenFace
+        for patient_dir in patient_dirs:
+            re_crop_dir = os.path.join(patient_dir, 're_crop')
+            if os.path.exists(re_crop_dir):
+                patient_dirs.append(re_crop_dir)
         scores = defaultdict()
-        for patient_dir in sorted(patient_dirs):
-            scores[patient_dir] = defaultdict()
-            try:
-                scorer = AUScorer.AUScorer(patient_dir)
-                frames = glob.glob(os.path.join(patient_dir, '*.png'))
-                csv_paths = glob.glob(os.path.join(patient_dir, '*coordinates.csv'))
-                csv_dict = None
-                if len(csv_paths) == 1:
-                    csv_dict = AUGui.csv_emotion_reader(csv_paths[0])
-                    annotated_ratio = int(len(frames)/len(csv_dict.keys()))
-                    csv_dict = {i * annotated_ratio: c for i, c in csv_dict.items()}
-                for i in range(len(frames)):
-                    emotionDict = scorer.get_emotions(i)
-                    if emotionDict:
-                        reverse_emotions = AUScorer.reverse_emotions(emotionDict)
-                        max_value = max(reverse_emotions.keys())
-                        if len(reverse_emotions[max_value]) > 1:
-                            max_emotion = None
-                        else:
-                            max_emotion = reverse_emotions[max_value][0]
-                        prevalence_score = AUGui.prevalence_score(emotionDict)
-                        scores[patient_dir][i] = [max_emotion, prevalence_score]
-                        if csv_dict:
-                            if i in csv_dict.keys():
-                                scores[patient_dir][i].append(csv_dict[i])
-                            else:
-                                scores[patient_dir][i].append('N/A')
-                        else:
-                            scores[patient_dir][i].append(None)
-                    else:
-                        scores[patient_dir][i] = None
-            except FileNotFoundError as e:
-                print(e)
-                continue
-        pass
+        out_scores = defaultdict()
+        scores_file = 'scores.txt'
+        if os.path.exists(scores_file):
+            scores = json.load(open(scores_file))
+        patient_dirs.sort()
+        self.out_q = multiprocessing.Manager().Queue()
+        Pool().map(self.find_scores, [x for x in patient_dirs if x not in scores])
+        while not self.out_q.empty():
+            scores.update(self.out_q.get())
+        json.dump(scores, open(scores_file, 'w'))
+        for patient_dir in scores:
+            if scores[patient_dir]:
+                out_scores[patient_dir] = {frame: list for frame, list in
+                                           ((f, list) for f, list in scores[patient_dir].items() if
+                                            (list[2] and list[2] != 'N/A'))}
 
+        with open(os.path.join(OpenDir, 'OpenFaceScores.csv'), 'w') as log:
+            csv_writer = csv.writer(log)
+            agreeing_scores = {}
+            for crop_dir in out_scores:
+                if out_scores[crop_dir]:
+                    csv_writer.writerow(crop_dir)
+                    num_agree = 0
+                    for frame in out_scores[crop_dir]:
+                        score_list = out_scores[crop_dir][frame]
+                        if score_list[2] == 'Surprised':
+                            score_list[2] = 'Surprise'
+                        elif score_list[2] == 'Disgusted':
+                            score_list[2] = 'Disgust'
+                        elif score_list[2] == 'Afraid':
+                            score_list[2] = 'Fear'
+
+                        if score_list[0]:
+                            if score_list[1] < 1.5:
+                                if score_list[2] == 'Neutral' or score_list[2] == 'Sleeping':
+                                    num_agree += 1
+                                else:
+                                    continue
+                            else:
+                                emotionString = score_list[0]
+                                annotated_string = score_list[2]
+                                if emotionString == annotated_string:
+                                    num_agree += 1
+                                else:
+                                    continue
+                    agreeing_scores[crop_dir] = [num_agree, len(out_scores[crop_dir])]
+                    csv_writer.writerow(agreeing_scores[crop_dir])
+
+    def find_scores(self, patient_dir):
+        """
+        Finds the scores for a specific patient directory if the directory
+
+        :param scores:
+        :param patient_dir:
+        """
+        print(patient_dir)
+        patient_dir_scores = {patient_dir: defaultdict()}
+        try:
+            scorer = AUScorer.AUScorer(patient_dir)
+            csv_paths = glob.glob(os.path.join(patient_dir, '*.csv'))
+            csv_dict = None
+            num_frames = int(VidCropper.duration(os.path.join(patient_dir, 'out.avi')) * 30)
+            if len(csv_paths) == 1:
+                csv_dict = AUGui.csv_emotion_reader(csv_paths[0])
+                if csv_dict:
+                    annotated_ratio = int(num_frames / len(csv_dict))
+                    csv_dict = {i * annotated_ratio: c for i, c in csv_dict.items()}
+            for i in range(num_frames):
+                emotionDict = scorer.get_emotions(i)
+                if emotionDict:
+                    reverse_emotions = AUScorer.reverse_emotions(emotionDict)
+                    max_value = max(reverse_emotions.keys())
+                    if len(reverse_emotions[max_value]) > 1:
+                        max_emotion = None
+                    else:
+                        max_emotion = reverse_emotions[max_value][0]
+                    prevalence_score = AUGui.prevalence_score(emotionDict)
+                    patient_dir_scores[patient_dir][i] = [max_emotion, prevalence_score]
+                    if csv_dict:
+                        if i in csv_dict:
+                            patient_dir_scores[patient_dir][i].append(csv_dict[i])
+                        else:
+                            patient_dir_scores[patient_dir][i].append('N/A')
+                    else:
+                        patient_dir_scores[patient_dir][i].append(None)
+                        # else:
+                        #    scores[patient_dir][i] = None
+            self.out_q.put(patient_dir_scores)
+        except FileNotFoundError as e:
+            print(e)
+            pass
 
 
 if __name__ == '__main__':
