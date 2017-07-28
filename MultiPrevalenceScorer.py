@@ -37,12 +37,14 @@ class MultiPrevalenceScorer:
         scores_file = 'scores.txt'
         if os.path.exists(scores_file):
             scores = json.load(open(scores_file))
-        patient_dirs.sort()
-        self.out_q = multiprocessing.Manager().Queue()
-        Pool().map(self.find_scores, [x for x in patient_dirs if x not in scores])
-        while not self.out_q.empty():
-            scores.update(self.out_q.get())
-        json.dump(scores, open(scores_file, 'w'))
+        remaining = [x for x in patient_dirs if x not in scores]
+        if len(remaining) > 0:
+            patient_dirs.sort()
+            self.out_q = multiprocessing.Manager().Queue()
+            Pool().map(self.find_scores, remaining)
+            while not self.out_q.empty():
+                scores.update(self.out_q.get())
+            json.dump(scores, open(scores_file, 'w'))
         for patient_dir in scores:
             if scores[patient_dir]:
                 out_scores[patient_dir] = {frame: list for frame, list in
@@ -54,7 +56,6 @@ class MultiPrevalenceScorer:
             agreeing_scores = {}
             for crop_dir in out_scores:
                 if out_scores[crop_dir]:
-                    csv_writer.writerow(crop_dir)
                     num_agree = 0
                     for frame in out_scores[crop_dir]:
                         score_list = out_scores[crop_dir][frame]
@@ -79,7 +80,7 @@ class MultiPrevalenceScorer:
                                 else:
                                     continue
                     agreeing_scores[crop_dir] = [num_agree, len(out_scores[crop_dir])]
-                    csv_writer.writerow(agreeing_scores[crop_dir])
+                    csv_writer.writerow([crop_dir] + agreeing_scores[crop_dir] + [int(VidCropper.duration(os.path.join(crop_dir, 'out.avi')) * 30)])
 
     def find_scores(self, patient_dir):
         """
@@ -98,6 +99,8 @@ class MultiPrevalenceScorer:
                 csv_dict = AUGui.csv_emotion_reader(csv_paths[0])
                 if csv_dict:
                     annotated_ratio = int(num_frames / len(csv_dict))
+                    if annotated_ratio == 0:
+                        annotated_ratio = 1
                     csv_dict = {i * annotated_ratio: c for i, c in csv_dict.items()}
             for i in range(num_frames):
                 emotionDict = scorer.get_emotions(i)
@@ -117,8 +120,6 @@ class MultiPrevalenceScorer:
                             patient_dir_scores[patient_dir][i].append('N/A')
                     else:
                         patient_dir_scores[patient_dir][i].append(None)
-                        # else:
-                        #    scores[patient_dir][i] = None
             self.out_q.put(patient_dir_scores)
         except FileNotFoundError as e:
             print(e)

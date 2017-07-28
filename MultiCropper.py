@@ -19,9 +19,10 @@ def crop_image(i):
     vid = vids[i]
     im_dir = os.path.splitext(vid)[0] + '_cropped'
     try:
-        VidCropper.duration(vid)
-        CropAndOpenFace.VideoImageCropper(vid=vid, im_dir=im_dir, crop_path=crop_path, nose_path=nose_path,
-                                      crop_txt_files=crop_txt_files, nose_txt_files=nose_txt_files, vid_mode=True)
+        if not os.path.exists(im_dir) or 'au.txt' not in os.listdir(im_dir):
+            VidCropper.duration(vid)
+            CropAndOpenFace.VideoImageCropper(vid=vid, im_dir=im_dir, crop_path=crop_path, nose_path=nose_path,
+                                          crop_txt_files=crop_txt_files, nose_txt_files=nose_txt_files, vid_mode=True)
     except ValueError as e:
         print(e)
 
