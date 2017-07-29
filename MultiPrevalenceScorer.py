@@ -91,7 +91,11 @@ class MultiPrevalenceScorer:
         print(patient_dir)
         patient_dir_scores = {patient_dir: defaultdict()}
         try:
-            scorer = AUScorer.AUScorer(patient_dir)
+            all_dict_file = os.path.join(patient_dir, 'all_dict.txt')
+            if os.path.exists(all_dict_file):
+                patient_emotions = json.load(open(all_dict_file))
+            else:
+                patient_emotions = AUScorer.AUScorer(patient_dir).emotions
             csv_paths = glob.glob(os.path.join(patient_dir, '*.csv'))
             csv_dict = None
             num_frames = int(VidCropper.duration(os.path.join(patient_dir, 'out.avi')) * 30)
@@ -102,8 +106,8 @@ class MultiPrevalenceScorer:
                     if annotated_ratio == 0:
                         annotated_ratio = 1
                     csv_dict = {i * annotated_ratio: c for i, c in csv_dict.items()}
-            for i in range(num_frames):
-                emotionDict = scorer.get_emotions(i)
+            for i in (x for x in range(num_frames) if x in patient_emotions):
+                emotionDict = patient_emotions[i]
                 if emotionDict:
                     reverse_emotions = AUScorer.reverse_emotions(emotionDict)
                     max_value = max(reverse_emotions.keys())
