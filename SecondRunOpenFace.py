@@ -108,7 +108,7 @@ class OpenFaceSecondRunner:
 
         json.dump(self.crop_diff, open(self.re_crop_file, 'w'))
         json.dump(self.fr_dict, open(self.reverse_file, 'w'))
-        json.dump(self.reverse_crop_diff, open(self.reverse_re_crop_file), 'w')
+        json.dump(self.reverse_crop_diff, open(self.reverse_re_crop_file, 'w'))
 
     def process_vid_dir(self, vid_dir):
         print(vid_dir)

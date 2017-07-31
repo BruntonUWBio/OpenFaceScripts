@@ -28,10 +28,6 @@ class MultiPrevalenceScorer:
     def __init__(self, OpenDir):
         os.chdir(OpenDir)
         patient_dirs = glob.glob('*cropped')  # Directories have been previously cropped by CropAndOpenFace
-        for patient_dir in patient_dirs:
-            re_crop_dir = os.path.join(patient_dir, 're_crop')
-            if os.path.exists(re_crop_dir):
-                patient_dirs.append(re_crop_dir)
         scores = defaultdict()
         out_scores = defaultdict()
         scores_file = 'scores.txt'
@@ -54,6 +50,7 @@ class MultiPrevalenceScorer:
         with open(os.path.join(OpenDir, 'OpenFaceScores.csv'), 'w') as log:
             csv_writer = csv.writer(log)
             agreeing_scores = {}
+            non_agreeing_scores = []
             for crop_dir in out_scores:
                 if out_scores[crop_dir]:
                     num_agree = 0
@@ -67,20 +64,24 @@ class MultiPrevalenceScorer:
                             score_list[2] = 'Fear'
 
                         if score_list[0]:
-                            if score_list[1] < 1.5:
-                                if score_list[2] == 'Neutral' or score_list[2] == 'Sleeping':
+                            emotionString = score_list[0]
+                            prevalence_score = score_list[1]
+                            annotated_string = score_list[2]
+                            if prevalence_score < 1.5:
+                                if score_list[2] == 'Neutral' or score_list[2] == 'Sleeping' or emotionString == annotated_string:
                                     num_agree += 1
                                 else:
-                                    continue
+                                    non_agreeing_scores.append(score_list)
                             else:
-                                emotionString = score_list[0]
-                                annotated_string = score_list[2]
                                 if emotionString == annotated_string:
                                     num_agree += 1
                                 else:
-                                    continue
+                                    non_agreeing_scores.append(score_list)
                     agreeing_scores[crop_dir] = [num_agree, len(out_scores[crop_dir])]
                     csv_writer.writerow([crop_dir] + agreeing_scores[crop_dir] + [int(VidCropper.duration(os.path.join(crop_dir, 'out.avi')) * 30)])
+            for score in sorted(non_agreeing_scores, key=lambda score: score[0]):
+                csv_writer.writerow(score)
+                print(score)
 
     def find_scores(self, patient_dir):
         """
@@ -93,7 +94,7 @@ class MultiPrevalenceScorer:
         try:
             all_dict_file = os.path.join(patient_dir, 'all_dict.txt')
             if os.path.exists(all_dict_file):
-                patient_emotions = json.load(open(all_dict_file))
+                patient_emotions = {int(k): v for k, v in json.load(open(all_dict_file)).items()}
             else:
                 patient_emotions = AUScorer.AUScorer(patient_dir).emotions
             csv_paths = glob.glob(os.path.join(patient_dir, '*.csv'))
