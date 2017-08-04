@@ -224,8 +224,8 @@ class CropImages:
             read_arr = [read_arr[i].split(',') for i in range(0, len(read_arr), self.fps_fraction)]
         for index, num in enumerate(read_arr):
             for val_index, val in enumerate(num):
-                read_arr[index][val_index] = val.replace('(', '')
+                read_arr[index][val_index] = replace('(', '')
                 val = read_arr[index][val_index]
-                read_arr[index][val_index] = val.replace(')', '')
+                read_arr[index][val_index] = replace(')', '')
         read_arr = [[float(k) for k in i] for i in read_arr]
         return read_arr

@@ -46,20 +46,6 @@
 <dt id="AUScorer.AUScorer">
 <em class="property">class </em><code class="descclassname">AUScorer.</code><code class="descname">AUScorer</code><span class="sig-paren">(</span><em>dir</em>, <em>au_thresh=0</em>, <em>include_eyebrows=True</em><span class="sig-paren">)</span><a class="headerlink" href="#AUScorer.AUScorer" title="Permalink to this definition">¶</a></dt>
 <dd><p>Main scorer</p>
-<dl class="staticmethod">
-<dt id="AUScorer.AUScorer.emotion_list">
-<em class="property">static </em><code class="descname">emotion_list</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#AUScorer.AUScorer.emotion_list" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create standard emotion list.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">List with the emotions Angry, Fear, Sad, Happy, Surprise, and Disgust.</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
 <dl class="method">
 <dt id="AUScorer.AUScorer.get_emotions">
 <code class="descname">get_emotions</code><span class="sig-paren">(</span><em>index</em><span class="sig-paren">)</span><a class="headerlink" href="#AUScorer.AUScorer.get_emotions" title="Permalink to this definition">¶</a></dt>
@@ -76,6 +62,30 @@
 </table>
 </dd></dl>
 
+</dd></dl>
+
+<dl class="function">
+<dt id="AUScorer.emotion_list">
+<code class="descclassname">AUScorer.</code><code class="descname">emotion_list</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#AUScorer.emotion_list" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create standard emotion list.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">List with the emotions Angry, Fear, Sad, Happy, Surprise, and Disgust.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="AUScorer.replace">
+<code class="descclassname">AUScorer.</code><code class="descname">replace</code><span class="sig-paren">(</span><em>arr</em>, <em>num</em>, <em>other_num</em><span class="sig-paren">)</span><a class="headerlink" href="#AUScorer.replace" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove an element from an array and add another one.
+:param arr: Array.
+:param num: Element to remove.
+:param other_num: Element to add.
+:return: Changed array.</p>
 </dd></dl>
 
 <dl class="function">

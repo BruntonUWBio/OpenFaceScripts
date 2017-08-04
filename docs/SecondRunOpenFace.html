@@ -41,17 +41,27 @@
             
   <div class="section" id="module-SecondRunOpenFace">
 <span id="secondrunopenface"></span><h1>SecondRunOpenFace<a class="headerlink" href="#module-SecondRunOpenFace" title="Permalink to this headline">¶</a></h1>
-<dl class="class">
-<dt id="SecondRunOpenFace.OpenFaceSecondRunner">
-<em class="property">class </em><code class="descclassname">SecondRunOpenFace.</code><code class="descname">OpenFaceSecondRunner</code><span class="sig-paren">(</span><em>directory</em><span class="sig-paren">)</span><a class="headerlink" href="#SecondRunOpenFace.OpenFaceSecondRunner" title="Permalink to this definition">¶</a></dt>
-<dd><p>Main runner class</p>
+<dl class="function">
+<dt id="SecondRunOpenFace.get_vid_from_dir">
+<code class="descclassname">SecondRunOpenFace.</code><code class="descname">get_vid_from_dir</code><span class="sig-paren">(</span><em>vid_dir</em><span class="sig-paren">)</span><a class="headerlink" href="#SecondRunOpenFace.get_vid_from_dir" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the full path to a video associated with a crop directory.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>vid_dir</strong> – The crop directory.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">The full path to a video associated with a crop directory.</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="function">
 <dt id="SecondRunOpenFace.height_width">
 <code class="descclassname">SecondRunOpenFace.</code><code class="descname">height_width</code><span class="sig-paren">(</span><em>vid_file_path</em><span class="sig-paren">)</span><a class="headerlink" href="#SecondRunOpenFace.height_width" title="Permalink to this definition">¶</a></dt>
-<dd><p>Gets height and width of a video
-:param vid_file_path: Path to video
+<dd><p>Gets height and width of a video.
+:param vid_file_path: Path to video.
 :return: [Vid height, Vid width]</p>
 </dd></dl>
 
@@ -64,13 +74,21 @@
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>ims</strong> – List of image names</li>
-<li><strong>name</strong> – Name of image</li>
+<li><strong>ims</strong> – List of image names.</li>
+<li><strong>i</strong> – Index of image within ims.</li>
 </ul>
 </td>
 </tr>
 </tbody>
 </table>
+</dd></dl>
+
+<dl class="function">
+<dt id="SecondRunOpenFace.throw_vid_in_reverse">
+<code class="descclassname">SecondRunOpenFace.</code><code class="descname">throw_vid_in_reverse</code><span class="sig-paren">(</span><em>vid_dir</em>, <em>include_eyebrows</em><span class="sig-paren">)</span><a class="headerlink" href="#SecondRunOpenFace.throw_vid_in_reverse" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reverse a video and run OpenFace on it.
+:param vid_dir: Crop directory for video (created from CropAndOpenFace)
+:return: Dictionary with emotions detected from reversed video</p>
 </dd></dl>
 
 </div>

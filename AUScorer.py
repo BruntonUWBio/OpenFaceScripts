@@ -14,6 +14,31 @@ sys.path.append('/home/gvelchuru/')
 from OpenFaceScripts import OpenFaceScorer
 
 
+def emotion_templates(include_similar):
+    emotion_templates = {
+        'Angry': [[23, 7, 17, 4, 2]],
+        'Fear': [[20, 4, 1, 5, 7]],
+        'Sad': [[15, 1, 4, 17, 10]],
+        'Happy': [[12, 6, 26, 10, 23]],
+        'Surprise': [[27, 2, 1, 5, 26]],
+        'Disgust': [[9, 7, 4, 17, 6]]
+    }
+    if include_similar:
+        similar_arr = [
+            [12, 20, 23, 15]
+        ]
+        for emotion, au_list_arr in emotion_templates.items():
+            for similar in similar_arr:
+                for num in similar:
+                    if num in au_list_arr[0]:
+                        for other_num in [x for x in similar if x is not num]:
+                            au_list_arr.append(replace(au_list_arr[0], num, other_num))
+    for emotion in emotion_templates:
+        emotion_templates[emotion] = [sorted(v) for v in emotion_templates[emotion]]
+
+    return emotion_templates
+
+
 class AUScorer:
     """
     Main scorer
@@ -65,51 +90,11 @@ class AUScorer:
         self.emotions = {frame: frame_dict for frame, frame_dict in frame_emotions.items()}
         os.chdir(original_dir)
 
-    @staticmethod
-    def emotion_list():
-        """
-        Create standard emotion list.
-
-        :return: List with the emotions Angry, Fear, Sad, Happy, Surprise, and Disgust.
-        """
-        return ['Angry', 'Fear', 'Sad', 'Happy', 'Surprise', 'Disgust']
-
     def is_eyebrow(self, label):
         if self.include_eyebrows:
             return False
         elif self.return_num(label) in [1, 2, 4]:
             return True
-
-    def emotion_templates(self):
-        emotion_templates = {
-            'Angry': [[23, 7, 17, 4, 2]],
-            'Fear': [[20, 4, 1, 5, 7]],
-            'Sad': [[15, 1, 4, 17, 10]],
-            'Happy': [[12, 6, 26, 10, 23]],
-            'Surprise': [[27, 2, 1, 5, 26]],
-            'Disgust': [[9, 7, 4, 17, 6]]
-        }
-        if self.include_similar:
-            similar_arr = [
-                [12, 20, 23, 15]
-            ]
-            for emotion, au_list_arr in emotion_templates.items():
-                for similar in similar_arr:
-                    for num in similar:
-                        if num in au_list_arr[0]:
-                            for other_num in [x for x in similar if x is not num]:
-                                au_list_arr.append(self.replace(au_list_arr[0], num, other_num))
-        for emotion in emotion_templates:
-            emotion_templates[emotion] = [sorted(v) for v in emotion_templates[emotion]]
-
-        return emotion_templates
-
-    @staticmethod
-    def replace(arr, num, other_num):
-        small_arr = [x for x in arr if x is not num]
-        small_arr.append(other_num)
-        large_set = set(small_arr)
-        return list(large_set)
 
     def get_emotions(self, index):
         """
@@ -139,7 +124,7 @@ class AUScorer:
         return frame_emotion_dict
 
     def find_all_lcs(self, aus):
-        emote_template = self.emotion_templates()
+        emote_template = emotion_templates(self.include_similar)
         return {
             emotion: [back_track(LCS(template, aus), template, aus, len(template), len(aus)) for template in
                       template_arr]
@@ -160,6 +145,28 @@ class AUScorer:
     @staticmethod
     def return_num(string):
         return int(re.findall("\d+", string)[0])
+
+
+def emotion_list():
+    """
+    Create standard emotion list.
+
+    :return: List with the emotions Angry, Fear, Sad, Happy, Surprise, and Disgust.
+    """
+    return ['Angry', 'Fear', 'Sad', 'Happy', 'Surprise', 'Disgust']
+
+
+def replace(arr, num, other_num):
+    """
+    Remove an element from an array and add another one.
+    :param arr: Array.
+    :param num: Element to remove.
+    :param other_num: Element to add.
+    :return: Changed array.
+    """
+    small_arr = [x for x in arr if x is not num]
+    small_arr.append(other_num)
+    return small_arr
 
 
 def back_track(C, X, Y, i, j):

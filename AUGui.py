@@ -55,7 +55,7 @@ class AUGui(wx.Frame):
                                       self.images)}  # Relies on image map only having one item per image
 
         self.AU_threshold = 0
-        self.scorer = AUScorer.AUScorer(curr_directory, self.AU_threshold, incl_eyebrows)
+        self.scorer = AUScorer
 
         n_c = NavCanvas.NavCanvas(self, Debug=0, BackgroundColor="BLACK")
         self.Canvas = n_c.Canvas
@@ -303,7 +303,7 @@ class AUGui(wx.Frame):
             au_dict_keys = sorted(au_dict.keys())
             for au in au_dict_keys:
                 if 'c' in au:
-                    r_label = au.replace('c', 'r')
+                    r_label = replace('c', 'r')
                     au_int = AUScorer.AUScorer.return_num(au)
                     label += '{0} ({1}) = {2} \n'.format(str(au_int), name_dict[au_int], str(
                         au_dict[r_label]) if r_label in au_dict_keys else 'Present')
@@ -422,7 +422,7 @@ class VidPanel(wx.Panel):
         self.st_len = wx.StaticText(self, -1, size=(100, -1))
         self.st_pos = wx.StaticText(self, -1, size=(100, -1))
 
-        self.emotion_list = self.scorer.emotion_list()
+        self.emotion_list = emotion_list()
         full_au_list = self.emotion_list + (['Best Score', '', 'Prominence', ''])
         self.emotion_texts = [wx.StaticText(self, wx.NewId(), "{0}".format(emotion), size=(100, -1)) for emotion in
                               full_au_list]
@@ -558,11 +558,11 @@ def prevalence_score(emotionDict):
     reverse_emotions = AUScorer.reverse_emotions(emotionDict)
     if reverse_emotions:
         max_value = max(reverse_emotions.keys())
-        if len(reverse_emotions[max_value]) > 1:
-            score = 0
-        else:
-            score = (
-                (max_value ** 2) / np.sum([x * len(reverse_emotions[x]) for x in reverse_emotions.keys()]))
+        #if len(reverse_emotions[max_value]) > 1:
+        #    score = 0
+        #else:
+        score = (
+            (max_value ** 2) / np.sum([x * len(reverse_emotions[x]) for x in reverse_emotions.keys()]))
     else:
         score = 0
 

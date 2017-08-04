@@ -55,24 +55,12 @@ ground truth labeling for a series of videos.</td>
 </table>
 </dd>
 </dl>
-<dl class="class">
-<dt id="MultiPrevalenceScorer.MultiPrevalenceScorer">
-<em class="property">class </em><code class="descclassname">MultiPrevalenceScorer.</code><code class="descname">MultiPrevalenceScorer</code><span class="sig-paren">(</span><em>OpenDir</em><span class="sig-paren">)</span><a class="headerlink" href="#MultiPrevalenceScorer.MultiPrevalenceScorer" title="Permalink to this definition">¶</a></dt>
-<dd><p>Main scoring class.</p>
-<dl class="method">
-<dt id="MultiPrevalenceScorer.MultiPrevalenceScorer.find_scores">
-<code class="descname">find_scores</code><span class="sig-paren">(</span><em>patient_dir</em><span class="sig-paren">)</span><a class="headerlink" href="#MultiPrevalenceScorer.MultiPrevalenceScorer.find_scores" title="Permalink to this definition">¶</a></dt>
-<dd><p>Finds the scores for a specific patient directory</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>patient_dir</strong> – Directory to look in</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
+<dl class="function">
+<dt id="MultiPrevalenceScorer.find_scores">
+<code class="descclassname">MultiPrevalenceScorer.</code><code class="descname">find_scores</code><span class="sig-paren">(</span><em>out_q</em>, <em>eyebrow_dict</em>, <em>patient_dir</em><span class="sig-paren">)</span><a class="headerlink" href="#MultiPrevalenceScorer.find_scores" title="Permalink to this definition">¶</a></dt>
+<dd><p>Finds the scores for a specific patient directory
+:param out_q: Queue to output results to (for multiprocessing)
+:param patient_dir: Directory to look in</p>
 </dd></dl>
 
 </div>
