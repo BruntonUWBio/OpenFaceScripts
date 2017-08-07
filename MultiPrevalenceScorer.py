@@ -47,7 +47,7 @@ def find_scores(out_q, eyebrow_dict, patient_dir):
                 if annotated_ratio == 0:
                     annotated_ratio = 1
                 csv_dict = {i * annotated_ratio: c for i, c in csv_dict.items()}
-                for i in csv_dict.keys():
+                for i in [x for x in csv_dict.keys() if 'None' not in csv_dict[x]]:
                     if i in patient_emotions:
                         emotionDict = patient_emotions[i]
                         if emotionDict:
@@ -58,7 +58,7 @@ def find_scores(out_q, eyebrow_dict, patient_dir):
                             if 1 < len(reverse_emotions.keys()):
                                 second_prediction = reverse_emotions[sorted(reverse_emotions.keys(), reverse=True)[1]]
                                 max_emotions['Second'] = second_prediction
-                            patient_dir_scores[patient_dir][i] = [max_emotions, prevalence_score]
+                            patient_dir_scores[patient_dir][i] = [max_emotions, prevalence_score, csv_dict[i]]
                         else:
                             patient_dir_scores[patient_dir][i] = None
                     else:
@@ -123,11 +123,11 @@ if __name__ == '__main__':
     if len(remaining) > 0:
         patient_dirs.sort()
         out_q = multiprocessing.Manager().Queue()
-        eyebrow_dict = SecondRunOpenFace.process_eyebrows(OpenDir, open(join(OpenDir, 'edited_files.txt')))
+        eyebrow_dict = SecondRunOpenFace.process_eyebrows(OpenDir, open(join(OpenDir, 'eyebrows.txt')))
         f = functools.partial(find_scores, out_q, eyebrow_dict)
-        bar = progressbar.ProgressBar(redirect_stdout=True, max_value=1)
+        bar = progressbar.ProgressBar(redirect_stdout=True, max_value=len(remaining))
         for i, _ in enumerate(Pool().imap(f, remaining), 1):
-            bar.update(i / len(remaining))
+            bar.update(i)
         while not out_q.empty():
             scores.update(out_q.get())
         if len(scores) != original_len:

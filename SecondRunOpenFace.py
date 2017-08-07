@@ -7,6 +7,7 @@ import functools
 import glob
 import json
 import os
+import shutil
 import sys
 import progressbar
 import multiprocessing
@@ -207,6 +208,9 @@ def process_vid_dir(eyebrow_dict, queue, vid_dir):
 
     json.dump(orig_dict, open(os.path.join(vid_dir, 'all_dict.txt'), 'w'))
     queue.put(out_dict)
+    shutil.rmtree(os.path.join(vid_dir, 're_crop'))
+    shutil.rmtree(os.path.join(vid_dir, 'reverse'))
+
 
 
 def get_vid_from_dir(vid_dir):
@@ -264,4 +268,5 @@ if __name__ == '__main__':
 
     while not out_q.empty():
         already_ran.update(out_q.get())
+    json.dump(eyebrow_dict, open(os.path.join(patient_directory, 'eyebrow_dict.txt'), 'w'))
     json.dump(already_ran, open(second_runner_files, 'w'), indent='\t')

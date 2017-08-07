@@ -31,10 +31,10 @@ def run_open_face(im_dir, vid_mode = False, remove_intermediates = True):
         out_name = 'out.avi'
     # Remove q if visualization desired, inserted for performance
     subprocess.Popen(
-        '{0} -f {1} -of {2} -ov {3} -q -verbose -wild -multi-view 1'.format(executable,
+        '{0} -f {1} -of {2} -q -verbose -wild -multi-view 1'.format(executable,
                                                                             os.path.join(im_dir,
                                                                                          vid_name),
-                                                                            os.path.join(im_dir, 'au.txt'), os.path.join(im_dir, out_name)),
+                                                                            os.path.join(im_dir, 'au.txt')),
         shell=True).wait()
     if remove_intermediates:
         os.remove(os.path.join(im_dir, vid_name))
@@ -75,18 +75,10 @@ class VideoImageCropper:
             ImageCropper.CropImages(self.im_dir, self.crop_txt_files, self.nose_txt_files, save=True)
             if len(glob.glob(os.path.join(self.im_dir, '*.png'))) > 0:
                 if not self.already_detected:
-                    out_name = run_open_face(self.im_dir)
+                    run_open_face(self.im_dir)
         else:
             VidCropper.CropVid(vid, self.im_dir, self.crop_txt_files, self.nose_txt_files)
-            out_name = run_open_face(self.im_dir, vid_mode=True)
-        frame_direc = os.path.join(self.im_dir, 'labeled_frames/')
-        if not os.path.exists(frame_direc):
-            os.mkdir(os.path.join(self.im_dir, 'labeled_frames/'))
-        subprocess.Popen(
-            'ffmpeg -y -i "{0}" -vf fps=30 "{1}"'.format(os.path.join(self.im_dir, out_name),
-                                                         os.path.join(frame_direc, (
-                                                             os.path.basename(self.im_dir) + '_out%04d.png'))),
-            shell=True).wait()
+            run_open_face(self.im_dir, vid_mode=True)
 
 
 def find_txt_files(path):
