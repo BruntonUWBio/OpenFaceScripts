@@ -6,17 +6,17 @@
 import csv
 import glob
 import os
-import sys
 import shutil
-import numpy as np
 import subprocess
+import sys
 
+import numpy as np
 import wx
 from wx import media
 from wx.lib.floatcanvas import NavCanvas
 
 sys.path.append('/home/gvelchuru/')
-from OpenFaceScripts import AUScorer, OpenFaceScorer
+from OpenFaceScripts.scoring import OpenFaceScorer, AUScorer
 
 
 class AUGui(wx.Frame):
@@ -303,7 +303,7 @@ class AUGui(wx.Frame):
             au_dict_keys = sorted(au_dict.keys())
             for au in au_dict_keys:
                 if 'c' in au:
-                    r_label = replace('c', 'r')
+                    r_label = au.replace('c', 'r')
                     au_int = AUScorer.AUScorer.return_num(au)
                     label += '{0} ({1}) = {2} \n'.format(str(au_int), name_dict[au_int], str(
                         au_dict[r_label]) if r_label in au_dict_keys else 'Present')
@@ -422,7 +422,7 @@ class VidPanel(wx.Panel):
         self.st_len = wx.StaticText(self, -1, size=(100, -1))
         self.st_pos = wx.StaticText(self, -1, size=(100, -1))
 
-        self.emotion_list = emotion_list()
+        self.emotion_list = AUScorer.emotion_list()
         full_au_list = self.emotion_list + (['Best Score', '', 'Prominence', ''])
         self.emotion_texts = [wx.StaticText(self, wx.NewId(), "{0}".format(emotion), size=(100, -1)) for emotion in
                               full_au_list]

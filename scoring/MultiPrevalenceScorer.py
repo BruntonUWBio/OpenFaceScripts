@@ -6,19 +6,21 @@
 """
 import csv
 import functools
+import glob
 import json
 import multiprocessing
 import os
-from os.path import join
 import sys
-import glob
 from collections import defaultdict
+from os.path import join
 
 import progressbar
 from pathos.multiprocessing import ProcessingPool as Pool
 
 sys.path.append('/home/gvelchuru/')
-from OpenFaceScripts import AUScorer, AUGui, VidCropper, SecondRunOpenFace
+from OpenFaceScripts import AUGui
+from OpenFaceScripts.scoring import AUScorer
+from OpenFaceScripts.runners import SecondRunOpenFace, VidCropper
 
 
 def find_scores(out_q, eyebrow_dict, patient_dir):

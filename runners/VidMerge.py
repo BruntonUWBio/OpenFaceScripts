@@ -4,7 +4,8 @@ import os
 import subprocess
 import sys
 
-from OpenFaceScripts import CropAndOpenFace, crop_image_sequence
+from OpenFaceScripts import crop_image_sequence
+from runners import CropAndOpenFace
 
 vid_dir = sys.argv[(sys.argv.index('-vd')) + 1]
 os.chdir(vid_dir)

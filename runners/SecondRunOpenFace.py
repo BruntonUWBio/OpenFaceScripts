@@ -3,25 +3,24 @@
     :synopsis: Module for use after an initial run of OpenFace on a video set, attempts to rerun on the videos
         that OpenFace could not recognize a face in the first time.
 """
+import copy
 import functools
 import glob
 import json
+import multiprocessing
 import os
 import shutil
-import sys
-import progressbar
-import multiprocessing
 import subprocess
-import copy
-
-from collections import defaultdict
-from pathos.multiprocessing import ProcessingPool as Pool
+import sys
 
 import cv2
 import numpy as np
+import progressbar
+from pathos.multiprocessing import ProcessingPool as Pool
 
 sys.path.append('/home/gvelchuru/')
-from OpenFaceScripts import AUScorer, CropAndOpenFace, VidCropper
+from OpenFaceScripts.scoring import AUScorer
+from OpenFaceScripts.runners import CropAndOpenFace, VidCropper
 
 
 def make_more_bright(ims, i):

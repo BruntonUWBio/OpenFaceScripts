@@ -11,7 +11,7 @@ from collections import defaultdict
 import numpy as np
 
 sys.path.append('/home/gvelchuru/')
-from OpenFaceScripts import OpenFaceScorer
+from OpenFaceScripts.scoring import OpenFaceScorer
 
 
 def emotion_templates(include_similar):

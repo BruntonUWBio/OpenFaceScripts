@@ -7,12 +7,12 @@
 import glob
 import json
 import os
-import subprocess
 import sys
+
 from pathos.multiprocessing import ProcessingPool as Pool
 
 sys.path.append('/home/gvelchuru/')
-from OpenFaceScripts import CropAndOpenFace, VidCropper
+from runners import CropAndOpenFace, VidCropper
 
 
 def crop_image(i):

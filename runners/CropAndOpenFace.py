@@ -3,10 +3,9 @@ import json
 import os
 import subprocess
 import sys
-import numpy as np
 
 sys.path.append('/home/gvelchuru')
-from OpenFaceScripts import ImageCropper, VidCropper
+from OpenFaceScripts.runners import ImageCropper, VidCropper
 
 
 def run_open_face(im_dir, vid_mode = False, remove_intermediates = True):
