@@ -41,13 +41,11 @@ def run_open_face(im_dir, vid_mode = False, remove_intermediates = True):
 
 
 class VideoImageCropper:
-    def __init__(self, vid=None, im_dir=None, crop_path=None, nose_path=None, already_cropped=None,
+    def __init__(self, vid=None, im_dir=None, already_cropped=None,
                  already_detected=None, crop_txt_files=None, nose_txt_files = None, vid_mode = False):
         self.already_cropped = already_cropped
         self.already_detected = already_detected
         self.im_dir = im_dir
-        self.crop_path = crop_path
-        self.nose_path = nose_path
         out_name = 'out.mp4'
         if not self.already_cropped and not self.already_detected:
             if crop_txt_files:

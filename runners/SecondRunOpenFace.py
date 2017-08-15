@@ -189,27 +189,48 @@ def re_crop_vid_dir(vid_dir, include_eyebrows):
         return re_crop(vid, original_crop_coords, scorer, out_dir)
 
 
-def process_vid_dir(eyebrow_dict, queue, vid_dir):
-    out_dict = {vid_dir: []}
+def invert_colors(vid_dir, include_eyebrows):
+    scorer = AUScorer.AUScorer(vid_dir, 0, include_eyebrows)
+    if scorer.emotions:
+        out_dir = os.path.join(vid_dir, 'invert_colors')
+        if not os.path.exists(out_dir):
+            os.mkdir(out_dir)
+        vid = get_vid_from_dir(vid_dir)
+        subprocess.Popen(
+            ['ffmpeg', '-i', vid, '-vf', 'lutrgb=\"r=negval:g=negval:b=negval\"', os.path.join(out_dir, vid)])
+        if 'au.txt' not in os.listdir(out_dir):
+            CropAndOpenFace.run_open_face(out_dir, True, True)
+        new_scorer = AUScorer.AUScorer(out_dir)
+        shutil.rmtree(out_dir)
+        return new_scorer.emotions
+
+
+def process_vid_dir(already_ran, eyebrow_dict, queue, vid_dir):
+    all_dict_file = os.path.join(vid_dir, 'all_dict.txt')
+
+    out_dict = json.load(open(all_dict_file)) if os.path.exists(all_dict_file) else {vid_dir: {}}
     if vid_dir in eyebrow_dict['Eyebrows']:
         include_eyebrows = True
     else:
         include_eyebrows = False
     orig_dict = AUScorer.AUScorer(vid_dir).emotions
-    func_dict = [(re_crop_vid_dir, 'cropped'), (throw_vid_in_reverse, 'reversed'), (reverse_re_crop_vid_dir,  'rev_cropped')]
+    func_dict = [
+        (re_crop_vid_dir, 'cropped'),
+        (throw_vid_in_reverse, 'reversed'),
+        (reverse_re_crop_vid_dir, 'rev_cropped')]
 
     for func, name in func_dict:
-        post_func_dict = func(vid_dir, include_eyebrows)
-        if post_func_dict:
-            diff = len([x for x in post_func_dict if x not in orig_dict])
-            orig_dict.update(post_func_dict)
-            out_dict[vid_dir].append('{0}: {1}'.format(name, diff))
+        if name not in out_dict[vid_dir]:
+            post_func_dict = func(vid_dir, include_eyebrows)
+            if post_func_dict:
+                diff = len([x for x in post_func_dict if x not in orig_dict])
+                orig_dict.update(post_func_dict)
+                out_dict[vid_dir][name] = diff
 
     json.dump(orig_dict, open(os.path.join(vid_dir, 'all_dict.txt'), 'w'))
     queue.put(out_dict)
     shutil.rmtree(os.path.join(vid_dir, 're_crop'))
     shutil.rmtree(os.path.join(vid_dir, 'reverse'))
-
 
 
 def get_vid_from_dir(vid_dir):
@@ -242,13 +263,17 @@ def process_eyebrows(dir, file):
             crop_dir = os.path.join(dir, line + '_cropped')
             if not os.path.exists(crop_dir):
                 if eyebrow_mode:
-                    exact_dict['Eyebrows'] += [x for x in os.listdir(dir) if os.path.isdir(os.path.join(dir, x)) and line in x and os.path.join(dir, x) not in exact_dict['No Eyebrows']]
+                    exact_dict['Eyebrows'] += [x for x in os.listdir(dir) if os.path.isdir(os.path.join(dir, x))
+                                               and line in x and os.path.join(dir, x) not in exact_dict['No Eyebrows']]
                 else:
-                    exact_dict['No Eyebrows'] += [x for x in os.listdir(dir) if os.path.isdir(os.path.join(dir, x)) and line in x and os.path.join(dir, x) not in exact_dict['No Eyebrows']]
+                    exact_dict['No Eyebrows'] += [x for x in os.listdir(dir) if os.path.isdir(os.path.join(dir, x))
+                                                  and line in x and os.path.join(dir, x) not in exact_dict[
+                                                      'No Eyebrows']]
     for eyebrow_dir in exact_dict['No Eyebrows']:
         if eyebrow_dir in exact_dict['Eyebrows']:
             exact_dict['Eyebrows'].remove(eyebrow_dir)
     return exact_dict
+
 
 if __name__ == '__main__':
     patient_directory = sys.argv[sys.argv.index('-od') + 1]
@@ -256,14 +281,14 @@ if __name__ == '__main__':
     already_ran = json.load(open(second_runner_files)) if os.path.exists(second_runner_files) else {}
     files = [x for x in (os.path.join(patient_directory, vid_dir) for vid_dir in os.listdir(patient_directory)) if
              (os.path.isdir(x) and 'au.txt' in os.listdir(
-                 x) and x not in already_ran)]
+                 x))]
     out_q = multiprocessing.Manager().Queue()
     eyebrow_file = os.path.join(patient_directory, 'eyebrows.txt')
     eyebrow_dict = process_eyebrows(patient_directory, open(eyebrow_file)) if os.path.exists(eyebrow_file) else {}
-    f = functools.partial(process_vid_dir, eyebrow_dict, out_q)
+    f = functools.partial(process_vid_dir, already_ran, eyebrow_dict, out_q)
     bar = progressbar.ProgressBar(redirect_stdout=True, max_value=1)
     for i, _ in enumerate(Pool().imap(f, files), 1):
-        bar.update(i/len(files))
+        bar.update(i / len(files))
 
     while not out_q.empty():
         already_ran.update(out_q.get())

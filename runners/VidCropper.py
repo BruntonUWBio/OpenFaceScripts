@@ -23,12 +23,12 @@ def crop_and_resize(vid, width, height, x_min, y_min, directory, resize_factor):
     """
     crop_vid = os.path.join(directory, 'cropped_out.avi')
     subprocess.Popen(
-        'ffmpeg -y -i {0} -filter:v \"crop={1}:{2}:{3}:{4}\" {5}'.format(vid, str(width), str(height),
+        'ffmpeg -y -loglevel quiet -i {0} -filter:v \"crop={1}:{2}:{3}:{4}\" {5}'.format(vid, str(width), str(height),
                                                                          str(x_min), str(y_min),
                                                                          crop_vid),
         shell=True).wait()
     subprocess.Popen(
-        'ffmpeg -y -i {0} -vf scale={2}*iw:{2}*ih {1}'.format(crop_vid,
+        'ffmpeg -y -loglevel quiet -i {0} -vf scale={2}*iw:{2}*ih {1}'.format(crop_vid,
                                                               os.path.join(directory, 'inter_out.avi'),
                                                               str(resize_factor)), shell=True).wait()
     os.remove(os.path.join(directory, 'cropped_out.avi'))
@@ -174,9 +174,8 @@ class CropVid:
             read_arr = [read_arr[i].split(',') for i in range(0, len(read_arr), self.fps_fraction)]
         for index, num in enumerate(read_arr):
             for val_index, val in enumerate(num):
-                read_arr[index][val_index] = replace('(', '')
-                val = read_arr[index][val_index]
-                read_arr[index][val_index] = replace(')', '')
+                read_arr[index][val_index] = read_arr[index][val_index].replace('(', '')
+                read_arr[index][val_index] = read_arr[index][val_index].replace(')', '')
         read_arr = [[float(k) for k in i] for i in read_arr]
         return read_arr
 
