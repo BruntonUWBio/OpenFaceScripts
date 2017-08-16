@@ -14,7 +14,7 @@ sys.path.append('/home/gvelchuru/')
 from OpenFaceScripts.scoring import OpenFaceScorer
 
 
-def emotion_templates(include_similar):
+def emotion_templates(include_similar: bool) -> dict:
     emotion_templates = {
         'Angry': [[23, 7, 17, 4, 2]],
         'Fear': [[20, 4, 1, 5, 7]],
@@ -90,13 +90,13 @@ class AUScorer:
         self.emotions = {frame: frame_dict for frame, frame_dict in frame_emotions.items()}
         os.chdir(original_dir)
 
-    def is_eyebrow(self, label):
+    def is_eyebrow(self, label: str) -> bool:
         if self.include_eyebrows:
             return False
         elif self.return_num(label) in [1, 2, 4]:
             return True
 
-    def get_emotions(self, index):
+    def get_emotions(self, index: int):
         """
         Gets the emotions at a specific index.
 
@@ -147,7 +147,7 @@ class AUScorer:
         return int(re.findall("\d+", string)[0])
 
 
-def emotion_list():
+def emotion_list() -> list:
     """
     Create standard emotion list.
 

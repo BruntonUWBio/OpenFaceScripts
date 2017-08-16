@@ -65,7 +65,13 @@ def height_width(vid_file_path):
     raise Exception('No Height and Width found')
 
 
-def get_dimensions(vid_dir):
+def get_dimensions(vid_dir: str):
+    """
+    Gets the crop dimensions from the text file within a directory
+
+    :param vid_dir: Directory
+    :return: Either [None, None, None, None, rescale_factor] if no crop or dictionary containing min, max, and rescale
+    """
     with open(os.path.join(vid_dir, 'bb_arr.txt')) as bb_file:
         lines = bb_file.readlines()
         if lines[0] == 'None\n' and lines[1] == 'None\n' and lines[2] == 'None\n' and lines[3] == 'None\n':
@@ -103,7 +109,7 @@ def throw_vid_in_reverse(vid, vid_dir, include_eyebrows):
     return new_dict
 
 
-def re_crop(vid, original_crop_coords, scorer, out_dir):
+def re_crop(vid: str, original_crop_coords, scorer: AUScorer.AUScorer, out_dir: str) -> dict:
     vid_height, vid_width = height_width(vid)
     min_x = None
     max_x = None
@@ -202,11 +208,19 @@ def invert(vid, out_dir):
     shutil.rmtree(out_dir)
     return new_scorer.emotions
 
-def change_gamma(vid, vid_dir, include_eyebrows):
+
+def change_gamma(vid, vid_dir, include_eyebrows) -> dict:
+    return_dict = {}
+    for gamma in np.linspace(.4, 10, 10, endpoint=True):
+        return_dict.update(spec_gamma_change(vid, vid_dir, gamma))
+    return return_dict
+
+
+def spec_gamma_change(vid, vid_dir, gamma):
     out_dir = os.path.join(vid_dir, 'low_gamma')
     if not os.path.exists(out_dir):
         os.mkdir(out_dir)
-    subprocess.Popen(['ffmpeg', '-y', '-i', vid, '-vf', 'eq=gamma=2.1', os.path.join(out_dir, 'inter_out.avi')]).wait()
+    subprocess.Popen(['ffmpeg', '-y', '-i', vid, '-vf', 'eq=gamma={0}'.format(gamma), os.path.join(out_dir, 'inter_out.avi')]).wait()
     CropAndOpenFace.run_open_face(out_dir, True, True)
     new_scorer = AUScorer.AUScorer(out_dir)
     shutil.rmtree(out_dir)
