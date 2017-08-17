@@ -30,7 +30,7 @@ def run_open_face(im_dir, vid_mode = False, remove_intermediates = True):
         out_name = 'out.avi'
     # Remove q if visualization desired, inserted for performance
     subprocess.Popen(
-        '{0} -f {1} -of {2} -q -verbose -wild -multi-view 1'.format(executable,
+        '{0} -f {1} -of {2} -q -verbose -wild -mloc \"model/main_clnf_wild.txt\" -multi-view 1'.format(executable,
                                                                             os.path.join(im_dir,
                                                                                          vid_name),
                                                                             os.path.join(im_dir, 'au.txt')),

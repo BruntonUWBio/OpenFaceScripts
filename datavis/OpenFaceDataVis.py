@@ -19,7 +19,7 @@ import seaborn as sns
 
 import multiprocessing
 from pathos.multiprocessing import ProcessingPool as Pool
-from runners import VidCropper
+from runners import VidCropper, SecondRunOpenFace
 
 patient_dir = "/data2/OpenFaceTests"
 os.chdir(patient_dir)
@@ -56,7 +56,9 @@ def scores_and_duration_dict(all_dict_q, duration_dict_q, dir):
         all_dict_file = os.path.join(dir, 'all_dict.txt')
         if os.path.exists(all_dict_file):
             all_dicts[patient_name][int(dir_num)] = json.load(open(all_dict_file))
-        duration_dict[patient_name][int(dir_num)] = int(VidCropper.duration(os.path.join(dir, 'out.avi')) * 30)
+        else:
+            all_dicts[patient_name][int(dir_num)] = AUScorer.AUScorer(dir).emotions
+        duration_dict[patient_name][int(dir_num)] = int(VidCropper.duration(SecondRunOpenFace.get_vid_from_dir(dir)) * 30)
         all_dict_q.put(all_dicts)
         duration_dict_q.put(duration_dict)
 
@@ -107,7 +109,7 @@ def make_scatter_plot_dict(patient_dict: dict) -> dict:
     return scatter_plot_dict
 
 
-if not(os.path.exists('all_dict.txt') or os.path.exists('duration_dict.txt')):
+if not(os.path.exists('all_dict.txt') and os.path.exists('duration_dict.txt')):
     combine_scores()
 all_dicts = json.load(open('all_dict.txt'))
 duration_dicts = json.load(open('duration_dict.txt'))

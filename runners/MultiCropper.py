@@ -51,7 +51,7 @@ if __name__ == '__main__':
     os.chdir(path)
     processes = []
     vids = [os.path.join(path, x) for x in glob.glob('*.avi')]
-    multiProcessingNum = 2  # Number of GPUs, adjust as necessary
+    multiProcessingNum = 2  # 2 GPUs
 
     bar = progressbar.ProgressBar(redirect_stdout=True, max_value=1)
     for i, _ in enumerate(Pool(multiProcessingNum).imap(crop_image, range(len(vids))), 1):

@@ -94,13 +94,16 @@ def throw_vid_in_reverse(vid, vid_dir, include_eyebrows):
     out_dir = os.path.join(vid_dir, 'reverse')
     if not os.path.exists(out_dir):
         os.mkdir(out_dir)
-    if 'au.txt' not in os.listdir(out_dir):
+    if 'inter_out.avi' not in os.listdir(out_dir):
         subprocess.Popen("ffmpeg -y -i {0} -vf reverse {1}".format(vid, os.path.join(out_dir, 'inter_out.avi')),
                          shell=True).wait()
+    assert 'inter_out.avi' in os.listdir(out_dir)
+    if 'au.txt' not in os.listdir(out_dir):
         CropAndOpenFace.run_open_face(out_dir, vid_mode=True, remove_intermediates=False)
+    assert os.path.exists(os.path.join(out_dir, 'au.txt'))
     old_scorer = AUScorer.AUScorer(vid_dir, 0, include_eyebrows)
     new_scorer = AUScorer.AUScorer(out_dir, 0, include_eyebrows)
-    num_frames = int(VidCropper.duration(os.path.join(vid_dir, 'out.avi')) * 30)
+    num_frames = int(VidCropper.duration(os.path.join(out_dir, 'inter_out.avi')) * 30)
     new_dict = None
     if len(old_scorer.emotions) > 0 or len(new_scorer.emotions) > 0:
         new_dict = {num_frames - i: k for i, k in new_scorer.emotions.items()}
@@ -193,14 +196,14 @@ def re_crop_vid_dir(vid, vid_dir, include_eyebrows):
         return re_crop(vid, original_crop_coords, scorer, out_dir)
 
 
-def invert_colors(vid, vid_dir, include_eyebrows):
+def invert_colors(vid: str, vid_dir: str, include_eyebrows: bool) -> dict:
     out_dir = os.path.join(vid_dir, 'invert_colors')
     if not os.path.exists(out_dir):
         os.mkdir(out_dir)
     return invert(vid, out_dir)
 
 
-def invert(vid, out_dir):
+def invert(vid: str, out_dir: str) -> dict:
     subprocess.Popen(
         ['ffmpeg', '-y', '-i', vid, '-vf', 'negate', os.path.join(out_dir, 'inter_out.avi')]).wait()
     CropAndOpenFace.run_open_face(out_dir, True, True)
@@ -209,25 +212,26 @@ def invert(vid, out_dir):
     return new_scorer.emotions
 
 
-def change_gamma(vid, vid_dir, include_eyebrows) -> dict:
+def change_gamma(vid: str, vid_dir: str, include_eyebrows: bool) -> dict:
     return_dict = {}
-    for gamma in np.linspace(.4, 10, 10, endpoint=True):
+    for gamma in [.85, 2]:
         return_dict.update(spec_gamma_change(vid, vid_dir, gamma))
     return return_dict
 
 
-def spec_gamma_change(vid, vid_dir, gamma):
+def spec_gamma_change(vid: str, vid_dir: str, gamma: float) -> dict:
     out_dir = os.path.join(vid_dir, 'low_gamma')
     if not os.path.exists(out_dir):
         os.mkdir(out_dir)
-    subprocess.Popen(['ffmpeg', '-y', '-i', vid, '-vf', 'eq=gamma={0}'.format(gamma), os.path.join(out_dir, 'inter_out.avi')]).wait()
+    subprocess.Popen(
+        ['ffmpeg', '-y', '-i', vid, '-vf', 'eq=gamma={0}'.format(gamma), os.path.join(out_dir, 'inter_out.avi')]).wait()
     CropAndOpenFace.run_open_face(out_dir, True, True)
     new_scorer = AUScorer.AUScorer(out_dir)
     shutil.rmtree(out_dir)
     return new_scorer.emotions
 
 
-def process_vid_dir(eyebrow_dict, queue, vid_dir):
+def process_vid_dir(eyebrow_dict: dict, queue: multiprocessing.Manager().Queue, vid_dir: str) -> None:
     all_dict_file = os.path.join(vid_dir, 'all_dict.txt')
 
     out_dict = json.load(open(all_dict_file)) if os.path.exists(all_dict_file) else {vid_dir: {}}
@@ -237,31 +241,33 @@ def process_vid_dir(eyebrow_dict, queue, vid_dir):
         include_eyebrows = False
     orig_dict = AUScorer.AUScorer(vid_dir).emotions
     pre_func_list = [
-        (re_crop_vid_dir, 'cropped'),
-        (throw_vid_in_reverse, 'reversed'),
-        (reverse_re_crop_vid_dir, 'rev_cropped')]
-
-    dir_list = ['re_crop', 'reverse', 'reverse_re_crop']
+        (re_crop_vid_dir, 're_crop'),
+        (throw_vid_in_reverse, 'reverse'),
+        (reverse_re_crop_vid_dir, 'reverse_re_crop')]
 
     post_func_list = [
-        (invert_colors, 'inverted'),
-        (change_gamma, 'gamma')
+        (invert_colors, 'invert_colors'),
+        (change_gamma, 'low_gamma')
     ]
+
+    dir_list = [name for _, name in pre_func_list]
+
+    to_do_list = [x for _, x in pre_func_list if x not in out_dict[vid_dir]]
 
     for func, name in pre_func_list + post_func_list:
         if name not in out_dict[vid_dir]:
             post_func_dict = func(get_vid_from_dir(vid_dir), vid_dir, include_eyebrows)
-            update_dicts(post_func_dict, orig_dict, out_dict, vid_dir, name)
+            update_dicts(post_func_dict=post_func_dict, orig_dict=orig_dict, out_dict=out_dict, vid_dir=vid_dir,
+                         name=name)
 
-    for pre_dir in dir_list:
+    for pre_dir in to_do_list:
         if os.path.exists(os.path.join(vid_dir, pre_dir)):
             if pre_dir not in out_dict[vid_dir]:
                 out_dict[vid_dir][pre_dir] = {}
             for func, name in post_func_list:
-                if name not in out_dict[vid_dir][pre_dir]:
-                    full_path = os.path.join(vid_dir, pre_dir)
-                    post_func_dict = func(glob.glob(os.path.join(full_path, '*.avi'))[0], full_path, include_eyebrows)
-                    update_dicts(post_func_dict, orig_dict, out_dict, vid_dir, name)
+                full_path = os.path.join(vid_dir, pre_dir)
+                post_func_dict = func(glob.glob(os.path.join(full_path, '*.avi'))[0], full_path, include_eyebrows)
+                update_dicts(post_func_dict, orig_dict, out_dict, vid_dir, name)
 
     json.dump(out_dict, open(os.path.join(vid_dir, 'all_dict.txt'), 'w'))
     queue.put(orig_dict)
@@ -270,14 +276,14 @@ def process_vid_dir(eyebrow_dict, queue, vid_dir):
             shutil.rmtree(os.path.join(vid_dir, pre_dir))
 
 
-def update_dicts(post_func_dict, orig_dict, out_dict, vid_dir, name):
+def update_dicts(post_func_dict: dict, orig_dict: dict, out_dict: dict, vid_dir: str, name: str):
+    diff = len([x for x in post_func_dict if x not in orig_dict]) if post_func_dict else None
     if post_func_dict:
-        diff = len([x for x in post_func_dict if x not in orig_dict])
         orig_dict.update(post_func_dict)
-        out_dict[vid_dir][name] = diff
+    out_dict[vid_dir][name] = diff
 
 
-def get_vid_from_dir(vid_dir):
+def get_vid_from_dir(vid_dir: str) -> str:
     """
     Returns the full path to a video associated with a crop directory.
 
@@ -287,7 +293,7 @@ def get_vid_from_dir(vid_dir):
     return os.path.join(os.path.dirname(vid_dir), (vid_dir.replace('_cropped', '') + '.avi'))
 
 
-def process_eyebrows(dir, file):
+def process_eyebrows(dir: str, file) -> dict:
     exact_dict = {'Eyebrows': [], 'No Eyebrows': []}
     lines = file.read().splitlines()
     if lines[0] == "eyebrows:":
@@ -323,15 +329,19 @@ if __name__ == '__main__':
     patient_directory = sys.argv[sys.argv.index('-od') + 1]
     second_runner_files = os.path.join(patient_directory, 'edited_files.txt')
     already_ran = json.load(open(second_runner_files)) if os.path.exists(second_runner_files) else {}
+
     files = [x for x in (os.path.join(patient_directory, vid_dir) for vid_dir in os.listdir(patient_directory)) if
-             (os.path.isdir(x) and 'au.txt' in os.listdir(
-                 x))]
+             (os.path.isdir(x) and 'au.txt' in os.listdir(x))]
+
     out_q = multiprocessing.Manager().Queue()
     eyebrow_file = os.path.join(patient_directory, 'eyebrows.txt')
     eyebrow_dict = process_eyebrows(patient_directory, open(eyebrow_file)) if os.path.exists(eyebrow_file) else {}
     f = functools.partial(process_vid_dir, eyebrow_dict, out_q)
+
+    multiprocessingNum = 2  # 2 GPUs
+
     bar = progressbar.ProgressBar(redirect_stdout=True, max_value=1)
-    for i, _ in enumerate(Pool(1).imap(f, files), 1):
+    for i, _ in enumerate(Pool(multiprocessingNum).imap(f, files), 1):
         bar.update(i / len(files))
 
     while not out_q.empty():
