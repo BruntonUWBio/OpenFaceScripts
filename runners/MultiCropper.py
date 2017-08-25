@@ -54,5 +54,5 @@ if __name__ == '__main__':
     multiProcessingNum = 2  # 2 GPUs
 
     bar = progressbar.ProgressBar(redirect_stdout=True, max_value=1)
-    for i, _ in enumerate(Pool(multiProcessingNum).imap(crop_image, range(len(vids))), 1):
+    for i, _ in enumerate(Pool(multiProcessingNum).imap(crop_image, range(len(vids)), chunksize=10), 1):
         bar.update(i / len(vids))
