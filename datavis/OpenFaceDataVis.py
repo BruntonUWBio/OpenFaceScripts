@@ -98,6 +98,7 @@ def make_scatter_data(patient):
 
     if not temp_plot_dict or (plot_dict != temp_plot_dict):
         emotions = AUScorer.emotion_list()
+        emotions.append('Neutral')
         temp_data = {emotion: [] for emotion in emotions}
         for vid in sorted(plot_dict.keys()):
             for frame in sorted(plot_dict[vid].keys()):
@@ -116,8 +117,29 @@ def make_scatter_data(patient):
         #     temp_data[emotion] = z
 
         data = []
-        for index, emotion in enumerate(sorted(temp_data.keys())):
+        for index, emotion in enumerate(sorted(x for x in emotions if x != 'Neutral')):
             data.append([x + 0.00000000000000000000000000000001 for x in temp_data[emotion]])
+
+
+        neutral_data = [0.00000000000000000000000000000001 for _ in range(len(data[0]))]
+
+        emotion_dict = {
+            'Angry': .4,
+            'Sad': .3,
+            'Happy': .3,
+            'Disgust': .3,
+            'Fear': .5,
+            'Surprise': .5
+        }
+
+        for index, datum in enumerate(data):
+            emotion = emotions[index]
+            for index, val in enumerate(datum):
+                if val < emotion_dict[emotion]:
+                    datum[index] = 0.00000000000000000000000000000001
+                    neutral_data[index] = max(val, neutral_data[index])
+
+        data.append(neutral_data)
 
         # real_data = np.ndarray((len(temp_data),))
         # for index, vals in enumerate(data):
@@ -149,7 +171,7 @@ def make_scatter_data(patient):
             # }
             # test_colormap = matplotlib.colors.ListedColormap('test', cict)
 
-            ax = sns.heatmap(data, cbar_kws={'ticks': LogLocator()}, yticklabels=sorted(temp_data.keys()), xticklabels=False, cmap='BuGn', norm=matplotlib.colors.LogNorm())
+            ax = sns.heatmap(data, cbar_kws={'ticks': LogLocator()}, yticklabels=emotions, xticklabels=False, cmap='BuGn', norm=matplotlib.colors.LogNorm())
             # ax.set_clim(vmin=1.5, vmax=5)
             ax.set_title(patient)
             fig = ax.get_figure()

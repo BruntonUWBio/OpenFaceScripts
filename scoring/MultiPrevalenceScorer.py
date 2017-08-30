@@ -16,6 +16,7 @@ from os.path import join
 
 import progressbar
 from pathos.multiprocessing import ProcessingPool as Pool
+from runners.SecondRunOpenFace import get_vid_from_dir
 
 sys.path.append('/home/gvelchuru/')
 from OpenFaceScripts import AUGui
@@ -41,7 +42,8 @@ def find_scores(out_q, eyebrow_dict, patient_dir):
         else:
             patient_emotions = AUScorer.AUScorer(patient_dir, include_eyebrows=include_eyebrows).emotions
         csv_path = join(patient_dir, os.path.basename(patient_dir).replace('_cropped', '') + '_emotions.csv')
-        num_frames = int(VidCropper.duration(join(patient_dir, 'out.avi')) * 30)
+        num_frames = int(VidCropper.duration(get_vid_from_dir(patient_dir)) * 30)
+
         if os.path.exists(csv_path):
             csv_dict = AUGui.csv_emotion_reader(csv_path)
             if csv_dict:
@@ -60,7 +62,14 @@ def find_scores(out_q, eyebrow_dict, patient_dir):
                             if 1 < len(reverse_emotions.keys()):
                                 second_prediction = reverse_emotions[sorted(reverse_emotions.keys(), reverse=True)[1]]
                                 max_emotions['Second'] = second_prediction
-                            patient_dir_scores[patient_dir][i] = [max_emotions, prevalence_score, csv_dict[i]]
+                            to_write = csv_dict[i]
+                            if to_write == 'Surprised':
+                                to_write = 'Surprise'
+                            elif to_write == 'Disgusted':
+                                to_write = 'Disgust'
+                            elif to_write == 'Afraid':
+                                to_write = 'Fear'
+                            patient_dir_scores[patient_dir][i] = [max_emotions, prevalence_score, to_write]
                         else:
                             patient_dir_scores[patient_dir][i] = None
                     else:
@@ -81,12 +90,6 @@ def write_to_log(log):
         num_blanks = 0
         for frame in (frame for frame in out_scores[crop_dir] if frame):
             score_list = out_scores[crop_dir][frame]
-            if score_list[2] == 'Surprised':
-                score_list[2] = 'Surprise'
-            elif score_list[2] == 'Disgusted':
-                score_list[2] = 'Disgust'
-            elif score_list[2] == 'Afraid':
-                score_list[2] = 'Fear'
 
             if score_list[0]:
                 emotionStrings = score_list[0]
