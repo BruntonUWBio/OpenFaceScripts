@@ -75,6 +75,37 @@ def clean_csv(csv_file):
     return out_dict
 
 
+def validate_thresh_dict(thresh_dict):
+    thresh_list = sorted(thresh_dict.keys())
+    for index, thresh in enumerate(thresh_list):
+        if index:
+            prev_thresh = thresh_list[index - 1]
+            assert thresh > prev_thresh
+            for emotion in thresh_dict[thresh]:
+                assert thresh_dict[thresh][emotion]['total_pos'] == thresh_dict[prev_thresh][emotion]['total_pos']
+                assert thresh_dict[thresh][emotion]['total_neg'] == thresh_dict[prev_thresh][emotion]['total_neg']
+
+                #false positive decreases, true negative increases
+                assert thresh_dict[thresh][emotion]['false_pos'] <= thresh_dict[prev_thresh][emotion]['false_pos']
+
+                #true positive decreases, false negative increases
+                assert thresh_dict[thresh][emotion]['true_pos'] <= thresh_dict[prev_thresh][emotion]['true_pos']
+
+                #assert that recall is monotonically decreasing
+                if thresh_dict[thresh][emotion]['total_pos']:
+                    assert thresh_dict[thresh][emotion]['true_pos']/thresh_dict[thresh][emotion]['total_pos'] <= thresh_dict[prev_thresh][emotion]['true_pos']/thresh_dict[prev_thresh][emotion]['total_pos']
+
+                # #assert that precision is monotonically increasing
+                # assert thresh_dict[thresh][emotion]['true_pos']/(thresh_dict[thresh][emotion]['true_pos'] + thresh_dict[thresh][emotion]['false_pos']) >= thresh_dict[prev_thresh][emotion]['true_pos']/(thresh_dict[prev_thresh][emotion]['true_pos'] + thresh_dict[prev_thresh][emotion]['false_pos'])
+
+                # predict_pos = thresh_dict[thresh][emotion]['true_pos'] + thresh_dict[thresh][emotion]['false_pos']
+                # prev_predict_pos = thresh_dict[prev_thresh][emotion]['true_pos'] + thresh_dict[prev_thresh][emotion]['false_pos']
+                # if predict_pos < prev_predict_pos:
+                #     print('smaller')
+                # else:
+                #     print('geq')
+
+
 
 if __name__ == '__main__':
     OpenDir = sys.argv[sys.argv.index('-d') + 1]
@@ -93,31 +124,66 @@ if __name__ == '__main__':
         threshes = np.linspace(0, 1.5, 100)
         bar = ProgressBar(max_value=len(threshes))
         f = functools.partial(thresh_calc, out_q)
-        for i,_ in enumerate(Pool().imap(f, threshes, chunksize=10)):
+        for i,_ in enumerate(Pool(1).imap(f, threshes, chunksize=10)):
             while not out_q.empty():
                 thresh_dict.update(out_q.get())
             bar.update(i)
         json.dump(thresh_dict, open(thresh_file, 'w'))
+    validate_thresh_dict(thresh_dict)
 
     for emotion in AUScorer.emotion_list():
         x_vals = [thresh_dict[thresh][emotion]['false_pos']/thresh_dict[thresh][emotion]['total_neg'] for thresh in sorted(thresh_dict.keys()) if emotion in thresh_dict[thresh] and thresh_dict[thresh][emotion]['total_neg'] != 0]
         y_vals = [thresh_dict[thresh][emotion]['true_pos']/thresh_dict[thresh][emotion]['total_pos'] for thresh in sorted(thresh_dict.keys()) if emotion in thresh_dict[thresh] and thresh_dict[thresh][emotion]['total_pos']  != 0]
         if x_vals and y_vals:
+            fig = plt.figure()
             z_vals = sorted(thresh_dict.keys())
             x_vals = list(map(float, x_vals))
             y_vals = list(map(float, y_vals))
             z_vals = list(map(float, z_vals))
 
-            fig = plt.figure()
             ax = fig.gca()
             ax.plot(x_vals, y_vals)
             ax.set_xlabel('False Positive Rate')
             ax.set_ylabel('True Positive Rate')
             plt.savefig('{0}_roc'.format(emotion))
-            plt.close()
 
             # fig = plt.figure()
             # ax = fig.gca(projection='3d')
             # ax.plot(x_vals, z_vals, y_vals)
 
-            #heatmap
+        #precision-recall
+        out_vals = {}
+        for thresh in sorted(thresh_dict.keys()):
+            if emotion in thresh_dict[thresh]:
+                total_pos = thresh_dict[thresh][emotion]['total_pos']
+                false_pos = thresh_dict[thresh][emotion]['false_pos']
+                true_pos = thresh_dict[thresh][emotion]['true_pos']
+                if total_pos and (false_pos + true_pos):
+                    precision = true_pos/(false_pos + true_pos)
+                    recall = true_pos/total_pos
+                    out_vals[thresh] = [precision, recall]
+        x_vals = [out_vals[thresh][0] for thresh in sorted(out_vals.keys())]
+        y_vals = [out_vals[thresh][1] for thresh in sorted(out_vals.keys())]
+        z_vals = [float(x) for x in sorted(out_vals.keys())]
+
+        # x_vals = [thresh_dict[thresh][emotion]['true_pos']/(thresh_dict[thresh][emotion]['false_pos'] + thresh_dict[thresh][emotion]['true_pos']) for thresh in sorted(thresh_dict.keys()) if emotion in thresh_dict[thresh] and (thresh_dict[thresh][emotion]['false_pos'] + thresh_dict[thresh][emotion]['true_pos']) != 0]
+        # # y_vals = [thresh_dict[thresh][emotion]['true_pos']/(thresh_dict[thresh][emotion]['total_pos']) for thresh in sorted(thresh_dict.keys()) if emotion in thresh_dict[thresh] and thresh_dict[thresh][emotion]['total_pos']  != 0]
+        # if x_vals and y_vals:
+        #     fig = plt.figure()
+        #     ax = fig.gca()
+        #     ax.plot(x_vals, y_vals)
+        #     ax.set_xlabel('Precision')
+        #     ax.set_ylabel('Recall')
+        #     plt.savefig('{0}_pr'.format(emotion))
+        #     plt.close()
+
+        if x_vals and y_vals and z_vals:
+            fig = plt.figure()
+            ax = fig.gca(projection='3d')
+            ax.plot(x_vals, z_vals, y_vals)
+            ax.set_xlabel('Precision')
+            ax.set_ylabel('Threshold')
+            ax.set_zlabel('Recall')
+            ax.set_title(emotion + '_pr')
+
+    plt.show()
