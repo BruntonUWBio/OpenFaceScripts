@@ -55,7 +55,7 @@ class AUGui(wx.Frame):
                                       self.images)}  # Relies on image map only having one item per image
 
         self.AU_threshold = 0
-        self.scorer = AUScorer
+        self.scorer = AUScorer.AUScorer(curr_directory)
 
         n_c = NavCanvas.NavCanvas(self, Debug=0, BackgroundColor="BLACK")
         self.Canvas = n_c.Canvas
@@ -654,7 +654,7 @@ if __name__ == '__main__':
     app = wx.App(False)
     if '-d' in sys.argv:
         dir_dlg = wx.DirDialog(None, message='Please select a directory')
-        directory = dir_dlg.GetPath() if dir_dlg.ShouldPreventAppExit() == wx.ID_OK else None
+        directory = dir_dlg.GetPath() if dir_dlg.ShowModal() == wx.ID_OK else None
     if '-csv' in sys.argv:
         csv_dialog = wx.FileDialog(None, message="Please select a csv file.")
         csv_path = csv_dialog.GetPath() if csv_dialog.ShowModal() == wx.ID_OK else None

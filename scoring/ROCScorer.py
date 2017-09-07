@@ -2,7 +2,7 @@ import functools
 import glob
 import json
 import sys
-from OpenFaceScripts.scoring import AUScorer
+from scoring import AUScorer
 
 import multiprocessing
 import numpy as np
@@ -15,9 +15,11 @@ from collections import defaultdict
 from progressbar import ProgressBar
 from pathos.multiprocessing import ProcessingPool as Pool
 
+all_emotions = AUScorer.emotion_list()
+all_emotions.extend(['Neutral', 'Sleeping'])
 
 def thresh_calc(out_q, thresh):
-    curr_dict = {thresh: {emotion: {'total_pos': 0, 'total_neg': 0, 'true_pos': 0, 'false_pos': 0} for emotion in AUScorer.emotion_list()}}
+    curr_dict = {thresh: {emotion: {'total_pos': 0, 'total_neg': 0, 'true_pos': 0, 'false_pos': 0} for emotion in all_emotions}}
     for patient in [x for x in scores if x in csv_file]:
         q = csv_file
         for vid in scores[patient]:
@@ -28,17 +30,14 @@ def thresh_calc(out_q, thresh):
                     actual = csv_vid_dict[frame][2]
                 else:
                     actual = None
-                if actual and curr_vid_dict[frame]:
+                if actual:
                         if actual in curr_vid_dict[frame]:
                             score = curr_vid_dict[frame][actual]
                         else:
                             score = 0
-                        if actual not in ['Neutral', 'Sleeping']:
-                            curr_dict[thresh][actual]['total_pos'] += 1
-                            if score >= thresh:
-                                curr_dict[thresh][actual]['true_pos'] += 1
-                        else:
-                            for emotion in curr_dict[thresh]:
+                        curr_dict[thresh][actual]['total_pos'] += 1
+                        for emotion in curr_dict[thresh]:
+                            if emotion != actual:
                                 curr_dict[thresh][emotion]['total_neg'] += 1
                                 if emotion in curr_vid_dict[frame]:
                                     score = curr_vid_dict[frame][emotion]
@@ -46,11 +45,13 @@ def thresh_calc(out_q, thresh):
                                     score = 0
                                 if score >= thresh:
                                     curr_dict[thresh][emotion]['false_pos'] += 1
+                        if score >= thresh:
+                            curr_dict[thresh][actual]['true_pos'] += 1
 
 
 
 
-                    # predict_emotions = predict_dict['Max']
+                # predict_emotions = predict_dict['Max']
                 # if actual and actual not in ['Neutral', 'Sleeping']:
                 #     curr_dict[thresh][actual]['total_pos'] += 1
                 #     if actual in predict_emotions and score >= thresh:
@@ -131,7 +132,7 @@ if __name__ == '__main__':
         json.dump(thresh_dict, open(thresh_file, 'w'))
     validate_thresh_dict(thresh_dict)
 
-    for emotion in AUScorer.emotion_list():
+    for emotion in all_emotions:
         x_vals = [thresh_dict[thresh][emotion]['false_pos']/thresh_dict[thresh][emotion]['total_neg'] for thresh in sorted(thresh_dict.keys()) if emotion in thresh_dict[thresh] and thresh_dict[thresh][emotion]['total_neg'] != 0]
         y_vals = [thresh_dict[thresh][emotion]['true_pos']/thresh_dict[thresh][emotion]['total_pos'] for thresh in sorted(thresh_dict.keys()) if emotion in thresh_dict[thresh] and thresh_dict[thresh][emotion]['total_pos']  != 0]
         if x_vals and y_vals:
@@ -166,24 +167,24 @@ if __name__ == '__main__':
         y_vals = [out_vals[thresh][1] for thresh in sorted(out_vals.keys())]
         z_vals = [float(x) for x in sorted(out_vals.keys())]
 
-        # x_vals = [thresh_dict[thresh][emotion]['true_pos']/(thresh_dict[thresh][emotion]['false_pos'] + thresh_dict[thresh][emotion]['true_pos']) for thresh in sorted(thresh_dict.keys()) if emotion in thresh_dict[thresh] and (thresh_dict[thresh][emotion]['false_pos'] + thresh_dict[thresh][emotion]['true_pos']) != 0]
-        # # y_vals = [thresh_dict[thresh][emotion]['true_pos']/(thresh_dict[thresh][emotion]['total_pos']) for thresh in sorted(thresh_dict.keys()) if emotion in thresh_dict[thresh] and thresh_dict[thresh][emotion]['total_pos']  != 0]
-        # if x_vals and y_vals:
-        #     fig = plt.figure()
-        #     ax = fig.gca()
-        #     ax.plot(x_vals, y_vals)
-        #     ax.set_xlabel('Precision')
-        #     ax.set_ylabel('Recall')
-        #     plt.savefig('{0}_pr'.format(emotion))
-        #     plt.close()
-
-        if x_vals and y_vals and z_vals:
+        x_vals = [thresh_dict[thresh][emotion]['true_pos']/(thresh_dict[thresh][emotion]['false_pos'] + thresh_dict[thresh][emotion]['true_pos']) for thresh in sorted(thresh_dict.keys()) if emotion in thresh_dict[thresh] and (thresh_dict[thresh][emotion]['false_pos'] + thresh_dict[thresh][emotion]['true_pos']) != 0]
+        y_vals = [thresh_dict[thresh][emotion]['true_pos']/(thresh_dict[thresh][emotion]['total_pos']) for thresh in sorted(thresh_dict.keys()) if emotion in thresh_dict[thresh] and thresh_dict[thresh][emotion]['total_pos']  != 0]
+        if x_vals and y_vals:
             fig = plt.figure()
-            ax = fig.gca(projection='3d')
-            ax.plot(x_vals, z_vals, y_vals)
+            ax = fig.gca()
+            ax.plot(x_vals, y_vals)
             ax.set_xlabel('Precision')
-            ax.set_ylabel('Threshold')
-            ax.set_zlabel('Recall')
-            ax.set_title(emotion + '_pr')
+            ax.set_ylabel('Recall')
+            plt.savefig('{0}_pr'.format(emotion))
+            plt.close()
+
+        # if x_vals and y_vals and z_vals:
+        #     fig = plt.figure()
+        #     ax = fig.gca(projection='3d')
+        #     ax.plot(x_vals, z_vals, y_vals)
+        #     ax.set_xlabel('Precision')
+        #     ax.set_ylabel('Threshold')
+        #     ax.set_zlabel('Recall')
+        #     ax.set_title(emotion + '_pr')
 
     plt.show()
