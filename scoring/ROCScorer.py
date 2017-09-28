@@ -7,6 +7,8 @@ from scoring import AUScorer
 import multiprocessing
 import numpy as np
 import os
+import matplotlib
+# matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
@@ -19,9 +21,8 @@ all_emotions = AUScorer.emotion_list()
 all_emotions.extend(['Neutral', 'Sleeping'])
 
 def thresh_calc(out_q, thresh):
-    curr_dict = {thresh: {emotion: {'total_pos': 0, 'total_neg': 0, 'true_pos': 0, 'false_pos': 0} for emotion in all_emotions}}
+    curr_dict = {thresh: {emotion: {'true_neg': 0, 'false_neg': 0, 'true_pos': 0, 'false_pos': 0} for emotion in all_emotions}}
     for patient in [x for x in scores if x in csv_file]:
-        q = csv_file
         for vid in scores[patient]:
             curr_vid_dict = scores[patient][vid]
             csv_vid_dict = csv_file[patient][vid]
@@ -35,20 +36,20 @@ def thresh_calc(out_q, thresh):
                             score = curr_vid_dict[frame][actual]
                         else:
                             score = 0
-                        curr_dict[thresh][actual]['total_pos'] += 1
-                        for emotion in curr_dict[thresh]:
-                            if emotion != actual:
-                                curr_dict[thresh][emotion]['total_neg'] += 1
-                                if emotion in curr_vid_dict[frame]:
-                                    score = curr_vid_dict[frame][emotion]
-                                else:
-                                    score = 0
-                                if score >= thresh:
-                                    curr_dict[thresh][emotion]['false_pos'] += 1
+                        #curr_dict[thresh][actual]['total_pos'] += 1 Try labeling components
+                        for other_emotion in (x for x in curr_dict[thresh] if x != actual):
+                            if other_emotion in curr_vid_dict[frame]:
+                                other_score = curr_vid_dict[frame][other_emotion]
+                            else:
+                                other_score = 0
+                            if other_score >= thresh:
+                                curr_dict[thresh][other_emotion]['false_pos'] += 1
+                            else:
+                                curr_dict[thresh][other_emotion]['true_neg'] += 1
                         if score >= thresh:
                             curr_dict[thresh][actual]['true_pos'] += 1
-
-
+                        else:
+                            curr_dict[thresh][actual]['false_neg'] += 1
 
 
                 # predict_emotions = predict_dict['Max']
@@ -83,8 +84,14 @@ def validate_thresh_dict(thresh_dict):
             prev_thresh = thresh_list[index - 1]
             assert thresh > prev_thresh
             for emotion in thresh_dict[thresh]:
-                assert thresh_dict[thresh][emotion]['total_pos'] == thresh_dict[prev_thresh][emotion]['total_pos']
-                assert thresh_dict[thresh][emotion]['total_neg'] == thresh_dict[prev_thresh][emotion]['total_neg']
+
+                total_pos = thresh_dict[thresh][emotion]['true_pos'] + thresh_dict[thresh][emotion]['false_neg']
+                prev_total_pos = thresh_dict[prev_thresh][emotion]['true_pos'] + thresh_dict[prev_thresh][emotion]['false_neg']
+                assert total_pos == prev_total_pos
+
+                total_neg = thresh_dict[thresh][emotion]['false_pos'] + thresh_dict[thresh][emotion]['true_neg']
+                prev_total_neg = thresh_dict[prev_thresh][emotion]['false_pos'] + thresh_dict[prev_thresh][emotion]['true_neg']
+                assert  total_neg == prev_total_neg
 
                 #false positive decreases, true negative increases
                 assert thresh_dict[thresh][emotion]['false_pos'] <= thresh_dict[prev_thresh][emotion]['false_pos']
@@ -93,18 +100,8 @@ def validate_thresh_dict(thresh_dict):
                 assert thresh_dict[thresh][emotion]['true_pos'] <= thresh_dict[prev_thresh][emotion]['true_pos']
 
                 #assert that recall is monotonically decreasing
-                if thresh_dict[thresh][emotion]['total_pos']:
-                    assert thresh_dict[thresh][emotion]['true_pos']/thresh_dict[thresh][emotion]['total_pos'] <= thresh_dict[prev_thresh][emotion]['true_pos']/thresh_dict[prev_thresh][emotion]['total_pos']
-
-                # #assert that precision is monotonically increasing
-                # assert thresh_dict[thresh][emotion]['true_pos']/(thresh_dict[thresh][emotion]['true_pos'] + thresh_dict[thresh][emotion]['false_pos']) >= thresh_dict[prev_thresh][emotion]['true_pos']/(thresh_dict[prev_thresh][emotion]['true_pos'] + thresh_dict[prev_thresh][emotion]['false_pos'])
-
-                # predict_pos = thresh_dict[thresh][emotion]['true_pos'] + thresh_dict[thresh][emotion]['false_pos']
-                # prev_predict_pos = thresh_dict[prev_thresh][emotion]['true_pos'] + thresh_dict[prev_thresh][emotion]['false_pos']
-                # if predict_pos < prev_predict_pos:
-                #     print('smaller')
-                # else:
-                #     print('geq')
+                if total_pos:
+                    assert thresh_dict[thresh][emotion]['true_pos']/total_pos <= thresh_dict[prev_thresh][emotion]['true_pos']/prev_total_pos
 
 
 
@@ -125,7 +122,7 @@ if __name__ == '__main__':
         threshes = np.linspace(0, 1.5, 100)
         bar = ProgressBar(max_value=len(threshes))
         f = functools.partial(thresh_calc, out_q)
-        for i,_ in enumerate(Pool(1).imap(f, threshes, chunksize=10)):
+        for i,_ in enumerate(Pool().imap(f, threshes, chunksize=10)):
             while not out_q.empty():
                 thresh_dict.update(out_q.get())
             bar.update(i)
@@ -133,9 +130,20 @@ if __name__ == '__main__':
     validate_thresh_dict(thresh_dict)
 
     for emotion in all_emotions:
-        x_vals = [thresh_dict[thresh][emotion]['false_pos']/thresh_dict[thresh][emotion]['total_neg'] for thresh in sorted(thresh_dict.keys()) if emotion in thresh_dict[thresh] and thresh_dict[thresh][emotion]['total_neg'] != 0]
-        y_vals = [thresh_dict[thresh][emotion]['true_pos']/thresh_dict[thresh][emotion]['total_pos'] for thresh in sorted(thresh_dict.keys()) if emotion in thresh_dict[thresh] and thresh_dict[thresh][emotion]['total_pos']  != 0]
-        if x_vals and y_vals:
+
+        x_vals = []
+        y_vals = []
+        for thresh in sorted(thresh_dict.keys()):
+            if emotion in thresh_dict[thresh]:
+                curr_emote_dict = thresh_dict[thresh][emotion]
+                total_neg = curr_emote_dict['false_pos'] + curr_emote_dict['true_neg']
+                total_pos = curr_emote_dict['true_pos'] + curr_emote_dict['false_neg']
+                if total_neg:
+                    x_vals.append(thresh_dict[thresh][emotion]['false_pos'] / total_neg)
+                if total_pos:
+                    y_vals.append(thresh_dict[thresh][emotion]['true_pos'] / total_pos)
+
+        if x_vals and y_vals and len(x_vals) == len(y_vals):
             fig = plt.figure()
             z_vals = sorted(thresh_dict.keys())
             x_vals = list(map(float, x_vals))
@@ -156,9 +164,11 @@ if __name__ == '__main__':
         out_vals = {}
         for thresh in sorted(thresh_dict.keys()):
             if emotion in thresh_dict[thresh]:
-                total_pos = thresh_dict[thresh][emotion]['total_pos']
-                false_pos = thresh_dict[thresh][emotion]['false_pos']
-                true_pos = thresh_dict[thresh][emotion]['true_pos']
+                curr_emote_dict = thresh_dict[thresh][emotion]
+                false_pos = curr_emote_dict['false_pos']
+                true_pos = curr_emote_dict['true_pos']
+                false_neg = curr_emote_dict['false_neg']
+                total_pos = true_pos + false_neg
                 if total_pos and (false_pos + true_pos):
                     precision = true_pos/(false_pos + true_pos)
                     recall = true_pos/total_pos
@@ -167,24 +177,34 @@ if __name__ == '__main__':
         y_vals = [out_vals[thresh][1] for thresh in sorted(out_vals.keys())]
         z_vals = [float(x) for x in sorted(out_vals.keys())]
 
-        x_vals = [thresh_dict[thresh][emotion]['true_pos']/(thresh_dict[thresh][emotion]['false_pos'] + thresh_dict[thresh][emotion]['true_pos']) for thresh in sorted(thresh_dict.keys()) if emotion in thresh_dict[thresh] and (thresh_dict[thresh][emotion]['false_pos'] + thresh_dict[thresh][emotion]['true_pos']) != 0]
-        y_vals = [thresh_dict[thresh][emotion]['true_pos']/(thresh_dict[thresh][emotion]['total_pos']) for thresh in sorted(thresh_dict.keys()) if emotion in thresh_dict[thresh] and thresh_dict[thresh][emotion]['total_pos']  != 0]
-        if x_vals and y_vals:
+
+        if x_vals and y_vals and len(x_vals) == len(y_vals):
             fig = plt.figure()
             ax = fig.gca()
             ax.plot(x_vals, y_vals)
             ax.set_xlabel('Precision')
             ax.set_ylabel('Recall')
             plt.savefig('{0}_pr'.format(emotion))
-            plt.close()
+            # plt.close()
 
-        # if x_vals and y_vals and z_vals:
-        #     fig = plt.figure()
-        #     ax = fig.gca(projection='3d')
-        #     ax.plot(x_vals, z_vals, y_vals)
-        #     ax.set_xlabel('Precision')
-        #     ax.set_ylabel('Threshold')
-        #     ax.set_zlabel('Recall')
-        #     ax.set_title(emotion + '_pr')
+        # precision-recall_3D
+        if x_vals and y_vals and z_vals and len(x_vals) == len(y_vals) == len(z_vals):
+            fig = plt.figure()
+            ax = fig.gca(projection='3d')
+            ax.plot(x_vals, z_vals, y_vals)
+            ax.set_xlabel('Precision')
+            ax.set_zlabel('Recall')
+            ax.set_ylabel('Threshold')
+            plt.savefig('{0}_pr_3d'.format(emotion))
+            # plt.close()
+
+            # if x_vals and y_vals and z_vals:
+            #     fig = plt.figure()
+            #     ax = fig.gca(projection='3d')
+            #     ax.plot(x_vals, z_vals, y_vals)
+            #     ax.set_xlabel('Precision')
+            #     ax.set_ylabel('Threshold')
+            #     ax.set_zlabel('Recall')
+            #     ax.set_title(emotion + '_pr')
 
     plt.show()
