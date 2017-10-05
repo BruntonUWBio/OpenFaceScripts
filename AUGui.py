@@ -568,7 +568,6 @@ def prevalence_score(emotionDict):
 
     return score
 
-
 def make_images():
     """
     Finds all png images in given directory.
