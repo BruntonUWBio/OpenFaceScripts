@@ -155,15 +155,15 @@ if __name__ == '__main__':
         ax = fig.gca()
         ax.plot(x_vals, y_vals, label='Substring')
         ml_dict = {
-            'GaussianNB': [.11, .54],
-            'QuadraticDiscriminantAnalysis': [.12, .52],
-            'DecisionTreeClassifier': [.08, .12],
-            'RandomForestClassifier': [.23, .06],
-            'AdaBoostClassifier': [.17, .03],
-            'MLPClassifier': [.26, .10],
-            'SVCLinear': [0, 0],
-            'KNeighbors': [.16, .08],
-            'SVC': [.52, .03]
+            'GaussianNB': [.80, .69],
+            'QuadraticDiscriminantAnalysis': [.80, .76],
+            'RandomForestClassifier': [.91, .93],
+            'AdaBoostClassifier': [.80, .73],
+            'MLPClassifier': [.88, .92],
+            'SVCLinear': [.87, .57],
+            'KNeighbors': [.89, .92],
+            'SVC': [.85, .83],
+            'KNeighborsSubstring': [.81, .64]
         }
         for label in ml_dict:
             ax.plot(ml_dict[label][0], ml_dict[label][1], 'o', label=label)
