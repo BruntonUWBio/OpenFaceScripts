@@ -1,34 +1,25 @@
+import copy
 import functools
 import json
-import os
-
 import multiprocessing
-
-import progressbar
-import copy
-import matplotlib.pyplot as plt
-import sklearn
-from sklearn import datasets, svm, metrics, neural_network
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
-from sklearn.datasets import make_moons, make_circles, make_classification
-from sklearn.neural_network import MLPClassifier
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.svm import SVC
-from sklearn.gaussian_process import GaussianProcessClassifier
-from sklearn.gaussian_process.kernels import RBF
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier
-from sklearn.naive_bayes import GaussianNB
-from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
-from sklearn.metrics import precision_recall_curve
-
+import os
+import sys
 from random import shuffle
 
-from pathos.multiprocessing import ProcessingPool as Pool
-import sys
+import dill
 import numpy as np
+import progressbar
+from pathos.multiprocessing import ProcessingPool as Pool
+from sklearn import metrics
+from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
+from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier
+from sklearn.externals import joblib
+from sklearn.naive_bayes import GaussianNB
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.neural_network import MLPClassifier
+from sklearn.svm import SVC
 
+from autosklearn import classification
 
 def restricted_k_neighbors(out_q):
     emotion_data = [item for sublist in
@@ -80,7 +71,9 @@ def use_classifier(out_q, au_data, target_data, classifier):
 
     out_q.put("Classification report for classifier %s:\n%s\n"
               % (classifier, metrics.classification_report(expected, predicted)))
-    out_q.put("Confusion matrix:\n%s" % metrics.confusion_matrix(expected, predicted))
+    out_q.put("Confusion matrix:\n%s\n" % metrics.confusion_matrix(expected, predicted))
+
+    joblib.dump(classifier, 'happy_trained_RandomForest.pkl')
 
 
 
@@ -96,14 +89,16 @@ for frame in emotion_data:
     aus = frame[0]
     if frame[1] == 'Happy':
         au_data.append([float(aus[str(x)]) for x in aus_list])
-        target_data.append(frame[1])
+        # target_data.append(frame[1])
+        target_data.append(1)
 index = 0
 happy_len = len(target_data)
 for frame in emotion_data:
     aus = frame[0]
     if frame[1] != 'Happy':
         au_data.append([float(aus[str(x)]) for x in aus_list])
-        target_data.append('Neutral/Sleeping')
+        # target_data.append('Neutral/Sleeping')
+        target_data.append(0)
         index += 1
     if index == happy_len:
         break
@@ -122,18 +117,24 @@ target_data = copy.copy(target_data_shuf)
 au_data = np.array(au_data)
 target_data = np.array(target_data)
 
+# classifiers = [
+#     KNeighborsClassifier(),
+#     SVC(kernel='linear'),
+#     SVC(),
+#     # GaussianProcessClassifier(),
+#     # DecisionTreeClassifier(),
+#     RandomForestClassifier(),
+#     MLPClassifier(),
+#     AdaBoostClassifier(),
+#     GaussianNB(),
+#     QuadraticDiscriminantAnalysis(),
+# ]
+
 classifiers = [
-    KNeighborsClassifier(),
-    SVC(kernel='linear'),
-    SVC(),
-    # GaussianProcessClassifier(),
-    # DecisionTreeClassifier(),
     RandomForestClassifier(),
-    MLPClassifier(),
-    AdaBoostClassifier(),
-    GaussianNB(),
-    QuadraticDiscriminantAnalysis()
 ]
+
+
 
 out_q = multiprocessing.Manager().Queue()
 out_file = open('classifier_performance.txt', 'w')
@@ -141,7 +142,11 @@ f = functools.partial(use_classifier, out_q, au_data, target_data)
 bar = progressbar.ProgressBar(redirect_stdout=True, max_value=len(classifiers))
 for i, _ in enumerate(Pool().imap(f, classifiers), 1):
     bar.update(i)
-print('restricted_k_neighbors...')
-restricted_k_neighbors(out_q)
+# print('auto-sklearn...')
+# use_classifier(out_q, au_data, target_data, classification.AutoSklearnClassifier())
+
+
+# print('restricted_k_neighbors...')
+# restricted_k_neighbors(out_q)
 while not out_q.empty():
     out_file.write(out_q.get())

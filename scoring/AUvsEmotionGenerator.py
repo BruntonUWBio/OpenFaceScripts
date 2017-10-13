@@ -10,9 +10,9 @@ from os.path import join
 
 import progressbar
 from pathos.multiprocessing import ProcessingPool as Pool
-from runners.SecondRunOpenFace import get_vid_from_dir
 
 sys.path.append('/home/gvelchuru/')
+from OpenFaceScripts.runners.SecondRunOpenFace import get_vid_from_dir
 from OpenFaceScripts import AUGui
 from OpenFaceScripts.scoring import AUScorer
 from OpenFaceScripts.runners import SecondRunOpenFace, VidCropper
@@ -40,7 +40,7 @@ def find_scores(out_q, eyebrow_dict, patient_dir):
                     num = int(au[2:4])
                     AU_presences[frame][num] = presence_dict[frame][r_au] if r_au in presence_dict[frame] else presence_dict[frame][au]
                     # AU_presences[frame][num] = presence_dict[frame][au]
-            for num in [1, 2, 4, 5, 6, 7, 9, 10, 12, 14, 15, 17, 20, 23, 25, 26, 45]:
+            for num in [1, 2, 4, 5, 6, 7, 9, 10, 12, 14, 15, 17, 20, 23, 25, 26, 28, 45]:
                 if num not in AU_presences[frame]:
                     AU_presences[frame][num] = 0
 

@@ -2,6 +2,14 @@ import functools
 import glob
 import json
 import sys
+import copy
+
+import sklearn
+from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
+from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier, ExtraTreesClassifier
+from sklearn.metrics import precision_recall_curve
+
+sys.path.append('/home/gvelchuru/OpenFaceScripts')
 from scoring import AUScorer
 
 import multiprocessing
@@ -13,12 +21,24 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
 from collections import defaultdict
-
+from random import shuffle
 from progressbar import ProgressBar
 from pathos.multiprocessing import ProcessingPool as Pool
+from sklearn.naive_bayes import GaussianNB, BernoulliNB
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.neural_network import MLPClassifier
+from sklearn.svm import SVC
 
 all_emotions = AUScorer.emotion_list()
 all_emotions.extend(['Neutral', 'Sleeping'])
+
+def use_classifier(classifier):
+    nine_tenths = (n_samples // 10) * 9
+    classifier.fit(au_data[:nine_tenths], target_data[:nine_tenths])
+    expected = target_data[nine_tenths:]
+    predicted = classifier.predict(au_data[nine_tenths:])
+    decision_function = classifier.predict_proba(au_data[nine_tenths:])[:,1]
+    return expected, decision_function
 
 def thresh_calc(out_q, thresh):
     curr_dict = {thresh: {emotion: {'true_neg': 0, 'false_neg': 0, 'true_pos': 0, 'false_pos': 0} for emotion in all_emotions}}
@@ -129,49 +149,110 @@ if __name__ == '__main__':
         json.dump(thresh_dict, open(thresh_file, 'w'))
     validate_thresh_dict(thresh_dict)
 
-    emotion = 'Happy'
+    for emotion in ['Happy', 'Angry', 'Sad', 'Disgust']:
+        #precision-recall
+        out_vals = {}
+        for thresh in sorted(thresh_dict.keys()):
+            if emotion in thresh_dict[thresh]:
+                curr_emote_dict = thresh_dict[thresh][emotion]
+                false_pos = curr_emote_dict['false_pos']
+                true_pos = curr_emote_dict['true_pos']
+                false_neg = curr_emote_dict['false_neg']
+                total_pos = true_pos + false_neg
+                if total_pos and (false_pos + true_pos):
+                    precision = true_pos/(false_pos + true_pos)
+                    recall = true_pos/total_pos
+                    out_vals[thresh] = [precision, recall]
+        x_vals = [out_vals[thresh][0] for thresh in sorted(out_vals.keys())]
+        y_vals = [out_vals[thresh][1] for thresh in sorted(out_vals.keys())]
+        z_vals = [float(x) for x in sorted(out_vals.keys())]
 
 
-    #precision-recall
-    out_vals = {}
-    for thresh in sorted(thresh_dict.keys()):
-        if emotion in thresh_dict[thresh]:
-            curr_emote_dict = thresh_dict[thresh][emotion]
-            false_pos = curr_emote_dict['false_pos']
-            true_pos = curr_emote_dict['true_pos']
-            false_neg = curr_emote_dict['false_neg']
-            total_pos = true_pos + false_neg
-            if total_pos and (false_pos + true_pos):
-                precision = true_pos/(false_pos + true_pos)
-                recall = true_pos/total_pos
-                out_vals[thresh] = [precision, recall]
-    x_vals = [out_vals[thresh][0] for thresh in sorted(out_vals.keys())]
-    y_vals = [out_vals[thresh][1] for thresh in sorted(out_vals.keys())]
-    z_vals = [float(x) for x in sorted(out_vals.keys())]
+        if x_vals and y_vals and len(x_vals) == len(y_vals):
+            fig = plt.figure()
+            ax = fig.gca()
+            ax.plot(x_vals, y_vals, label='Substring')
+            # ml_dict = {
+            #     'GaussianNB': [.80, .69],
+            #     'QuadraticDiscriminantAnalysis': [.80, .76],
+            #     'AdaBoostClassifier': [.80, .73],
+            #     'MLPClassifier': [.88, .92],
+            #     'SVCLinear': [.87, .57],
+            #     'KNeighbors': [.89, .92],
+            #     'SVC': [.85, .83],
+            #     'KNeighborsSubstring': [.81, .64]
+            # }
+            # for label in ml_dict:
+            #     ax.plot(ml_dict[label][0], ml_dict[label][1], 'o', label=label)
+
+            OpenDir = sys.argv[sys.argv.index('-d') + 1]
+            os.chdir(OpenDir)
+            emotion_data = [item for sublist in
+                            [b for b in
+                             [[a for a in x.values() if a] for x in json.load(open('au_emotes.txt')).values() if x] if b]
+                            for item in sublist if item[1] in [emotion, 'Neutral', 'Sleeping']]
+            au_data = []
+            target_data = []
+            aus_list = sorted([int(x) for x in emotion_data[0][0].keys()])
+            for frame in emotion_data:
+                aus = frame[0]
+                if frame[1] == emotion:
+                    au_data.append([float(aus[str(x)]) for x in aus_list])
+                    # target_data.append(frame[1])
+                    target_data.append(1)
+            index = 0
+            happy_len = len(target_data)
+            for frame in emotion_data:
+                aus = frame[0]
+                if frame[1] != emotion:
+                    au_data.append([float(aus[str(x)]) for x in aus_list])
+                    # target_data.append('Neutral/Sleeping')
+                    target_data.append(0)
+                    index += 1
+                if index == happy_len:
+                    break
+
+            n_samples = len(au_data)
+
+            au_data_shuf = []
+            target_data_shuf = []
+            index_shuf = list(range(len(au_data)))
+            shuffle(index_shuf)
+            for i in index_shuf:
+                au_data_shuf.append(au_data[i])
+                target_data_shuf.append(target_data[i])
+            au_data = copy.copy(au_data_shuf)
+            target_data = copy.copy(target_data_shuf)
+            au_data = np.array(au_data)
+            target_data = np.array(target_data)
+
+            classifier_dict = {
+                KNeighborsClassifier(): 'KNeighbors',
+                SVC(kernel='linear', probability=True): 'SVCLinear',
+                SVC(probability=True): 'SVC',
+                # GaussianProcessClassifier(),
+                # DecisionTreeClassifier(),
+                RandomForestClassifier(): 'RandomForest',
+                ExtraTreesClassifier(): 'ExtraTrees',
+                MLPClassifier(): 'MLP',
+                AdaBoostClassifier(): 'AdaBoost',
+                GaussianNB(): 'GaussianNB',
+                QuadraticDiscriminantAnalysis(): 'QuadraticDiscriminantAnalysis',
+                BernoulliNB(): 'BernoulliNB'
+            }
+
+            for classifier in  sorted(classifier_dict.keys()):
+                expected, decision_function = use_classifier(classifier)
+                precision, recall, thresholds = precision_recall_curve(expected, decision_function)
+                ax.plot(precision, recall, label=classifier_dict[classifier])
 
 
-    if x_vals and y_vals and len(x_vals) == len(y_vals):
-        fig = plt.figure()
-        ax = fig.gca()
-        ax.plot(x_vals, y_vals, label='Substring')
-        ml_dict = {
-            'GaussianNB': [.80, .69],
-            'QuadraticDiscriminantAnalysis': [.80, .76],
-            'RandomForestClassifier': [.91, .93],
-            'AdaBoostClassifier': [.80, .73],
-            'MLPClassifier': [.88, .92],
-            'SVCLinear': [.87, .57],
-            'KNeighbors': [.89, .92],
-            'SVC': [.85, .83],
-            'KNeighborsSubstring': [.81, .64]
-        }
-        for label in ml_dict:
-            ax.plot(ml_dict[label][0], ml_dict[label][1], 'o', label=label)
-        ax.set_title('Performance of Different Methods for Happiness Recognition from Continuous AUs')
-        ax.set_xlabel('Precision')
-        ax.set_ylabel('Recall')
-        ax.legend()
-        plt.savefig('{0}_pr_with_ML'.format(emotion))
-        # plt.close()
 
-    plt.show()
+            ax.set_title('Performance of Different Methods for' + "\' " + emotion + " \'" + 'Recognition from Continuous AUs')
+            ax.set_xlabel('Precision')
+            ax.set_ylabel('Recall')
+            ax.legend()
+            plt.savefig('{0}_pr_with_ML'.format(emotion))
+            plt.close()
+
+    # plt.show()
