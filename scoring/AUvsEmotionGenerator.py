@@ -71,6 +71,12 @@ def find_scores(out_q, eyebrow_dict, patient_dir):
                             patient_dir_scores[patient_dir][i] = None
                     else:
                         patient_dir_scores[patient_dir][i] = None
+        else:
+            for i in range(num_frames):
+                if i in AU_presences:
+                    auDict = AU_presences[i]
+                    if auDict:
+                        patient_dir_scores[patient_dir][i] = [auDict, None]
         out_q.put(patient_dir_scores)
     except FileNotFoundError as e:
         print(e)

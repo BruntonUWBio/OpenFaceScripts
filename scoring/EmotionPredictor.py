@@ -72,7 +72,6 @@ def use_classifier(out_q, au_data, target_data, classifier):
     out_q.put("Classification report for classifier %s:\n%s\n"
               % (classifier, metrics.classification_report(expected, predicted)))
     out_q.put("Confusion matrix:\n%s\n" % metrics.confusion_matrix(expected, predicted))
-
     joblib.dump(classifier, 'happy_trained_RandomForest.pkl')
 
 
