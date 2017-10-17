@@ -9,6 +9,7 @@ import glob
 import json
 import multiprocessing
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -105,9 +106,9 @@ def throw_vid_in_reverse(vid, vid_dir, include_eyebrows):
     new_scorer = AUScorer.AUScorer(out_dir, 0, include_eyebrows)
     num_frames = int(VidCropper.duration(os.path.join(out_dir, 'inter_out.avi')) * 30)
     new_dict = None
-    if len(old_scorer.emotions) > 0 or len(new_scorer.emotions) > 0:
-        new_dict = {num_frames - i: k for i, k in new_scorer.emotions.items()}
-        old_dict = copy.copy(old_scorer.emotions)
+    if len(old_scorer.presence_dict) > 0 or len(new_scorer.presence_dict) > 0:
+        new_dict = {num_frames - i: k for i, k in new_scorer.presence_dict.items()}
+        old_dict = copy.copy(old_scorer.presence_dict)
         new_dict.update(old_dict)
     return new_dict
 
@@ -128,7 +129,7 @@ def re_crop(vid: str, original_crop_coords, scorer: AUScorer.AUScorer, out_dir: 
             'rescale_factor': original_crop_coords[4]
         }
     bb_arr = []  # min_x, min_y, max_x, max_y
-    for frame in scorer.emotions:
+    for frame in scorer.presence_dict:
         if frame in scorer.x_y_dict:
             rescale_factor = original_crop_coords['rescale_factor']
             x_y_dict = scorer.x_y_dict[frame]
@@ -171,13 +172,13 @@ def re_crop(vid: str, original_crop_coords, scorer: AUScorer.AUScorer, out_dir: 
         VidCropper.crop_and_resize(vid, width, height, min_x, min_y, out_dir, 5)
         CropAndOpenFace.run_open_face(out_dir, vid_mode=True, remove_intermediates=False)
     new_scorer = AUScorer.AUScorer(out_dir)
-    return new_scorer.emotions
+    return new_scorer.presence_dict
 
 
 def reverse_re_crop_vid_dir(vid, vid_dir, include_eyebrows):
     reverse_vid_dir = os.path.join(vid_dir, 'reverse')
     scorer = AUScorer.AUScorer(reverse_vid_dir, 0, include_eyebrows)
-    if scorer.emotions:
+    if scorer.presence_dict:
         out_dir = os.path.join(vid_dir, 'reverse_re_crop')
         if not os.path.exists(out_dir):
             os.mkdir(out_dir)
@@ -188,7 +189,7 @@ def reverse_re_crop_vid_dir(vid, vid_dir, include_eyebrows):
 
 def re_crop_vid_dir(vid, vid_dir, include_eyebrows):
     scorer = AUScorer.AUScorer(vid_dir, 0, include_eyebrows)
-    if scorer.emotions:
+    if scorer.presence_dict:
         out_dir = os.path.join(vid_dir, 're_crop')
         if not os.path.exists(out_dir):
             os.mkdir(out_dir)
@@ -210,7 +211,7 @@ def invert(vid: str, out_dir: str) -> dict:
         CropAndOpenFace.run_open_face(out_dir, True, True)
     if 'au.txt' in os.listdir(out_dir):
         new_scorer = AUScorer.AUScorer(out_dir)
-        return new_scorer.emotions
+        return new_scorer.presence_dict
 
 
 def change_gamma(vid: str, vid_dir: str, include_eyebrows: bool) -> dict:
@@ -230,7 +231,7 @@ def spec_gamma_change(vid: str, vid_dir: str, gamma: float) -> dict:
         CropAndOpenFace.run_open_face(out_dir, True, True)
     if 'au.txt' in os.listdir(out_dir):
         new_scorer = AUScorer.AUScorer(out_dir)
-        return new_scorer.emotions
+        return new_scorer.presence_dict
     return {}
 
 
@@ -241,7 +242,7 @@ def process_vid_dir(eyebrow_dict: dict, vid_dir: str) -> None:
     diff_dict = json.load(open(already_ran_file)) if os.path.exists(already_ran_file) else {}
     if vid_dir not in diff_dict:
         diff_dict[vid_dir] = {}
-    emotion_dict = json.load(open(all_dict_file)) if os.path.exists(all_dict_file) else AUScorer.AUScorer(vid_dir).emotions
+    emotion_dict = json.load(open(all_dict_file)) if os.path.exists(all_dict_file) else AUScorer.AUScorer(vid_dir).presence_dict
     if vid_dir in eyebrow_dict['Eyebrows']:
         include_eyebrows = True
     else:
@@ -276,7 +277,21 @@ def process_vid_dir(eyebrow_dict: dict, vid_dir: str) -> None:
                     post_func_dict = func(glob.glob(os.path.join(full_path, '*.avi'))[0], full_path, include_eyebrows)
                     update_dicts(post_func_dict, emotion_dict, diff_dict, vid_dir, pre_dir, name)
 
-    json.dump(emotion_dict, open(all_dict_file, 'w'))
+    AU_presences = {}
+    for frame in emotion_dict:
+        AU_presences[frame] = {}
+        for au in emotion_dict[frame]:
+            if 'c' in au and emotion_dict[frame][au] == 1:
+                r_au = au.replace('c', 'r')
+                num = int(au[2:4])
+                AU_presences[frame][num] = emotion_dict[frame][r_au] if r_au in emotion_dict[frame] else \
+                    emotion_dict[frame][au]
+                # AU_presences[frame][num] = presence_dict[frame][au]
+        for num in [1, 2, 4, 5, 6, 7, 9, 10, 12, 14, 15, 17, 20, 23, 25, 26, 28, 45]:
+            if num not in AU_presences[frame]:
+                AU_presences[frame][num] = 0
+
+    json.dump(AU_presences, open(all_dict_file, 'w'))
     json.dump(diff_dict, open(already_ran_file, 'w'))
     for pre_dir in dir_list:
         if os.path.exists(os.path.join(vid_dir, pre_dir)):
@@ -286,7 +301,9 @@ def process_vid_dir(eyebrow_dict: dict, vid_dir: str) -> None:
 def update_dicts(post_func_dict: dict, emotion_dict: dict, diff_dict: dict, vid_dir: str, name: str, func_name: str):
     diff = len([x for x in post_func_dict if x not in emotion_dict]) if post_func_dict else 0
     if post_func_dict:
-        emotion_dict.update(post_func_dict)
+        for frame in post_func_dict:
+            if frame not in emotion_dict or not emotion_dict[frame]:
+                emotion_dict[frame] = post_func_dict[frame]
     if name not in diff_dict[vid_dir]:
         diff_dict[vid_dir][name] = {}
     diff_dict[vid_dir][name][func_name] = diff
@@ -348,9 +365,9 @@ if __name__ == '__main__':
 
     multiprocessingNum = 2  # 2 GPUs
 
-    bar = progressbar.ProgressBar(redirect_stdout=True, max_value=1)
+    bar = progressbar.ProgressBar(redirect_stdout=True, max_value=len(files))
     for i, _ in enumerate(Pool(multiprocessingNum).imap(f, files, chunksize=10), 1):
-        bar.update(i / len(files))
+        bar.update(i)
 
     json.dump(eyebrow_dict, open(os.path.join(patient_directory, 'eyebrow_dict.txt'), 'w'))
     #json.dump(already_ran, open(second_runner_files, 'w'), indent='\t')
