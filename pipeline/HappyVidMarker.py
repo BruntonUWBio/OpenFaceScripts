@@ -9,10 +9,10 @@ import cv2
 import multiprocessing
 
 import progressbar
-from runners.SecondRunOpenFace import get_vid_from_dir
+from OpenFaceScripts.runners.SecondRunOpenFace import get_vid_from_dir
 import subprocess
 
-from runners.VidCropper import duration
+from OpenFaceScripts.runners.VidCropper import duration
 from sklearn.externals import joblib
 
 import matplotlib
@@ -28,7 +28,7 @@ OpenDir = sys.argv[sys.argv.index('-d') + 1]
 os.chdir(OpenDir)
 
 
-def bar_movie(vid, times, corr):
+def bar_movie(vid, vid_dir, times, corr):
     FFMpegWriter = manimation.writers['ffmpeg']
     metadata = dict(title='Movie Test', artist='Matplotlib',
                     comment='Movie support!')
@@ -39,8 +39,6 @@ def bar_movie(vid, times, corr):
 
     # times = np.loadtxt("times_100_2.txt")
     # corr = np.loadtxt("corr_100_2.txt")
-    vid_dir = '/data2/OpenFaceTests/cb46fd46_7_0135_cropped'
-    vid = '/data2/OpenFaceTests/cb46fd46_7_0135.avi'
     test_line = os.path.join(vid_dir, 'writer_test_line.mp4')
 
     norm = plt.Normalize()
@@ -82,6 +80,7 @@ def bar_movie(vid, times, corr):
                      'scale=640:-1, format=argb, colorchannelmixer=aa=.75 [inner]; [in][inner] overlay=.269 [out]" '
                      '-strict -2 {2}'.format(vid, test_line, os.path.join(vid_dir, 'completed.mp4')), shell=True).wait()
 
+    plt.close()
 
 scores_file = 'au_emotes.txt'
 scores = json.load(open(scores_file))
@@ -105,7 +104,7 @@ classifier = joblib.load('happy_trained_RandomForest.pkl')
 
 # out_file = open('happy_vids.txt', 'w')
 
-def mark_vid_dir(vid_dir, out_q):
+def mark_vid_dir(out_q, vid_dir):
 
     # vid_dir = os.path.join(OpenDir, 'cb46fd46_7_0135_cropped')
     vid = get_vid_from_dir(vid_dir)
@@ -126,7 +125,7 @@ def mark_vid_dir(vid_dir, out_q):
 
 
     # au_data = []
-    aus_list = sorted([int(x) for x in emotion_data[0][0].keys()])
+    aus_list = sorted([1, 2, 4, 5, 6, 7, 9, 10, 12, 14, 15, 17, 20, 23, 25, 26, 28, 45])
     predicted_arr = []
     # emotes = []
     for frame in emotion_data:
@@ -141,7 +140,7 @@ def mark_vid_dir(vid_dir, out_q):
 
     times = [x for x in range(0, len(predicted_arr), 10)]
     corr = [predicted_arr[a][1] for a in times]
-    bar_movie(vid, times, corr)
+    bar_movie(vid, vid_dir, times, corr)
 
     # for index, image_name in enumerate(sorted(images)):
     #     if index in range(len(predicted)) and predicted[index]:

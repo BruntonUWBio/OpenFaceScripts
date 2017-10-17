@@ -105,23 +105,6 @@ class AUScorer:
         """
         return self.emotions[index] if index in self.emotions else None
 
-    # def make_frame_emotions(self, presence_dict):
-    #     frame_emotion_dict = {
-    #         frame: self.find_all_lcs(sorted([self.return_num(au) for au in au_dict if 'c' in au]))
-    #         for frame, au_dict in presence_dict.items()}
-    #
-    #     for frame, emotion_dict in frame_emotion_dict.items():
-    #         for emotion in emotion_dict:
-    #             emotion_dict[emotion] = [x for x in emotion_dict[emotion] if x]  # remove empties
-    #             for index, arr in enumerate(emotion_dict[emotion]):
-    #                 emotion_dict[emotion][index] = self.convert_aus_to_scores(arr, frame, presence_dict)
-    #             if len(emotion_dict[emotion]):
-    #                 emotion_dict[emotion] = max([x for x in emotion_dict[emotion]])
-    #             else:
-    #                 emotion_dict[emotion] = None
-    #         frame_emotion_dict[frame] = {k: v for k, v in emotion_dict.items() if v}
-    #
-    #     return frame_emotion_dict
 
     def make_frame_emotions(self, presence_dict):
         frame_emotion_dict = {
@@ -148,28 +131,16 @@ class AUScorer:
                       template_arr]
             for emotion, template_arr in emote_template.items()}
 
-    # def convert_aus_to_scores(self, arr, frame, presence_dict):
-    #     frame_presence = presence_dict[frame]
-    #     scores = []
-    #     for au in frame_presence:
-    #         if 'c' in au and self.return_num(au) in arr:
-    #             r_label = au.replace('c', 'r')
-    #             if r_label in frame_presence:
-    #                 scores.append(frame_presence[r_label] / 5)  # divide by 5 to normalize
-    #             else:
-    #                 scores.append(1.0 / 5)  # divide by 5 to normalize
-    #     return np.sum(scores)
-
     def convert_aus_to_scores(self, arr, frame, presence_dict):
         frame_presence = presence_dict[frame]
         scores = []
         for au in frame_presence:
             if 'c' in au and self.return_num(au) in arr:
-                # r_label = au.replace('c', 'r')
-                # if r_label in frame_presence:
-                #     scores.append(frame_presence[r_label])
-                # else:
-                scores.append(1.0)
+                r_label = au.replace('c', 'r')
+                if r_label in frame_presence:
+                    scores.append(frame_presence[r_label])
+                else:
+                    scores.append(1.0)
         return np.sum(scores)
 
     @staticmethod
