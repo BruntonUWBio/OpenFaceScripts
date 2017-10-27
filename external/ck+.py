@@ -1,8 +1,7 @@
 import glob
 import json
-import sys
-
 import os
+import sys
 
 emotions = ['Neutral', 'Angry', 'Contempt', 'Disgust', 'Fear', 'Happy', 'Sad', 'Surprised']
 au_list = [1, 2, 4, 5, 6, 7, 9, 10, 12, 14, 15, 17, 20, 23, 25, 26, 28, 45]
@@ -47,4 +46,4 @@ for name in ck_dict:
     if len(ck_dict[name]) == 1:
         ck_dict[name].append(None)
 os.chdir(OpenDir)
-json.dump(ck_dict, open('ck_dict.txt', 'w'))
+json.dump(ck_dict, open('ck_dict.txt', 'w'), indent=1)
