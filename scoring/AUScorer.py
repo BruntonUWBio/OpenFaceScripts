@@ -68,7 +68,8 @@ class AUScorer:
         # Creates a dictionary mapping each frame in the video to a dictionary containing the frame's action units
         # and their amounts
         au_dict = {frame: {label: open_face_arr[frame][num] for label, num in open_face_dict.items()
-                    if 'AU' in label} for frame in range(len(open_face_arr))}
+                           if 'AU' in label or 'pose_R' in label or 'gaze_angle' in label} for frame in
+                   range(len(open_face_arr))}
         self.x_y_dict = {frame: {label: open_face_arr[frame][num] for label, num in open_face_dict.items()
                     if 'x_' in label or 'y_' in label} for frame in range(len(open_face_arr))}
         self.x_y_dict = {frame: frame_dict for frame, frame_dict in self.x_y_dict.items() if any(frame_dict.values())}
@@ -85,6 +86,9 @@ class AUScorer:
                             self.presence_dict[frame][label] = curr_frame[label]
                             if r_label in curr_frame:
                                 self.presence_dict[frame][r_label] = curr_frame[r_label]
+                    elif 'pose_R' in label or 'gaze' in label:
+                        self.presence_dict[frame][label] = curr_frame[label]
+
 
         frame_emotions = self.make_frame_emotions(self.presence_dict)
         self.emotions = {frame: frame_dict for frame, frame_dict in frame_emotions.items()}

@@ -7,9 +7,7 @@ import copy
 import functools
 import glob
 import json
-import multiprocessing
 import os
-import re
 import shutil
 import subprocess
 import sys
@@ -287,10 +285,17 @@ def process_vid_dir(eyebrow_dict: dict, vid_dir: str) -> None:
                 AU_presences[frame][num] = emotion_dict[frame][r_au] if r_au in emotion_dict[frame] else \
                     emotion_dict[frame][au]
                 # AU_presences[frame][num] = presence_dict[frame][au]
+            else:
+                AU_presences[frame][au] = emotion_dict[frame][au]
         for num in [1, 2, 4, 5, 6, 7, 9, 10, 12, 14, 15, 17, 20, 23, 25, 26, 28, 45]:
             if num not in AU_presences[frame]:
                 AU_presences[frame][num] = 0
-
+        for string in ['gaze_0_x', 'gaze_0_y', 'gaze_0_z', 'gaze_1_x', 'gaze_1_y', 'gaze_1_z', 'pose_Rx', 'pose_Ry',
+                       'pose_Rz']:
+            if string not in AU_presences[frame]:
+                AU_presences[frame][string] = 0
+    if AU_presences:
+        print('kurwa')
     json.dump(AU_presences, open(all_dict_file, 'w'))
     json.dump(diff_dict, open(already_ran_file, 'w'))
     for pre_dir in dir_list:

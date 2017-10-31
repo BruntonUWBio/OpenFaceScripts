@@ -6,20 +6,14 @@ import os
 import sys
 from random import shuffle
 
-import dill
 import numpy as np
 import progressbar
 from pathos.multiprocessing import ProcessingPool as Pool
 from sklearn import metrics
-from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
-from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.externals import joblib
-from sklearn.naive_bayes import GaussianNB
 from sklearn.neighbors import KNeighborsClassifier
-from sklearn.neural_network import MLPClassifier
-from sklearn.svm import SVC
 
-from autosklearn import classification
 
 def restricted_k_neighbors(out_q):
     emotion_data = [item for sublist in
@@ -72,7 +66,7 @@ def use_classifier(out_q, au_data, target_data, classifier):
     out_q.put("Classification report for classifier %s:\n%s\n"
               % (classifier, metrics.classification_report(expected, predicted)))
     out_q.put("Confusion matrix:\n%s\n" % metrics.confusion_matrix(expected, predicted))
-    joblib.dump(classifier, 'happy_trained_RandomForest.pkl')
+    joblib.dump(classifier, 'happy_trained_RandomForest_with_pose.pkl')
 
 
 
