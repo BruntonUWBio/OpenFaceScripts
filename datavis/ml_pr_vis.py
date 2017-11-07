@@ -211,7 +211,7 @@ if __name__ == '__main__':
                                 for item in sublist if item[1] in [emotion, 'Neutral', 'Sleeping']]
                 au_data = []
                 target_data = []
-                aus_list = sorted([int(x) for x in emotion_data[0][0].keys()])
+                aus_list = AUScorer.AUList
                 for frame in emotion_data:
                     aus = frame[0]
                     if frame[1] == emotion:
@@ -269,7 +269,7 @@ if __name__ == '__main__':
                 ax.set_xlabel('Precision')
                 ax.set_ylabel('Recall')
                 ax.legend()
-                plt.savefig(short_patient + '_{0}_pr_with_ML'.format(emotion))
+                plt.savefig(short_patient + '_{0}_pr_with_ML_and_pose'.format(emotion))
                 plt.close()
 
                 # plt.show()

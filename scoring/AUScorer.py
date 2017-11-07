@@ -13,6 +13,9 @@ import numpy as np
 sys.path.append('/home/gvelchuru/')
 from OpenFaceScripts.scoring import OpenFaceScorer
 
+AUList = [1, 2, 4, 5, 6, 7, 9, 10, 12, 14, 15, 17, 20, 23, 25, 26, 28, 45, 'gaze_0_x', 'gaze_0_y', 'gaze_0_z',
+          'gaze_1_x', 'gaze_1_y', 'gaze_1_z', 'pose_Rx', 'pose_Ry', 'pose_Rz']
+
 
 def emotion_templates(include_similar: bool) -> dict:
     emotion_templates = {

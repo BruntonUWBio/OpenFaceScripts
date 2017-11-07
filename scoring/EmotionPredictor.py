@@ -1,17 +1,17 @@
-import copy
 import functools
 import json
 import multiprocessing
 import os
 import sys
-from random import shuffle
 
 import numpy as np
 import progressbar
 from pathos.multiprocessing import ProcessingPool as Pool
+from scoring import AUScorer
 from sklearn import metrics
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.externals import joblib
+from sklearn.model_selection import train_test_split
 from sklearn.neighbors import KNeighborsClassifier
 
 
@@ -40,28 +40,16 @@ def restricted_k_neighbors(out_q):
             break
     au_data = np.array(au_data)
     target_data = np.array(target_data)
-    n_samples = len(au_data)
 
-    au_data_shuf = []
-    target_data_shuf = []
-    index_shuf = list(range(len(au_data)))
-    shuffle(index_shuf)
-    for i in index_shuf:
-        au_data_shuf.append(au_data[i])
-        target_data_shuf.append(target_data[i])
-    au_data = copy.copy(au_data_shuf)
-    target_data = copy.copy(target_data_shuf)
-    au_data = np.array(au_data)
-    target_data = np.array(target_data)
-    use_classifier(out_q, au_data, target_data, KNeighborsClassifier())
+    au_train, au_test, target_train, target_test = train_test_split(au_data, target_data, test_size=.1)
+    use_classifier(out_q, au_train, au_test, target_train, target_test, KNeighborsClassifier())
 
 
-def use_classifier(out_q, au_data, target_data, classifier):
-    nine_tenths = (n_samples // 10) * 9
-    classifier.fit(au_data[:nine_tenths], target_data[:nine_tenths])
+def use_classifier(out_q, au_train, au_test, target_train, target_test, classifier):
+    classifier.fit(au_train, target_train)
 
-    expected = target_data[nine_tenths:]
-    predicted = classifier.predict(au_data[nine_tenths:])
+    expected = target_test
+    predicted = classifier.predict(au_test)
 
     out_q.put("Classification report for classifier %s:\n%s\n"
               % (classifier, metrics.classification_report(expected, predicted)))
@@ -77,7 +65,7 @@ emotion_data = [item for sublist in
                 for item in sublist if item[1] in ['Happy', 'Neutral', 'Sleeping']]
 au_data = []
 target_data = []
-aus_list = sorted([int(x) for x in emotion_data[0][0].keys()])
+aus_list = AUScorer.AUList
 for frame in emotion_data:
     aus = frame[0]
     if frame[1] == 'Happy':
@@ -98,17 +86,7 @@ for frame in emotion_data:
 
 n_samples = len(au_data)
 
-au_data_shuf = []
-target_data_shuf = []
-index_shuf = list(range(len(au_data)))
-shuffle(index_shuf)
-for i in index_shuf:
-    au_data_shuf.append(au_data[i])
-    target_data_shuf.append(target_data[i])
-au_data = copy.copy(au_data_shuf)
-target_data = copy.copy(target_data_shuf)
-au_data = np.array(au_data)
-target_data = np.array(target_data)
+au_train, au_test, target_train, target_test = train_test_split(au_data, target_data, test_size=.1)
 
 # classifiers = [
 #     KNeighborsClassifier(),
@@ -131,7 +109,7 @@ classifiers = [
 
 out_q = multiprocessing.Manager().Queue()
 out_file = open('classifier_performance.txt', 'w')
-f = functools.partial(use_classifier, out_q, au_data, target_data)
+f = functools.partial(use_classifier, out_q, au_train, au_test, target_train, target_test)
 bar = progressbar.ProgressBar(redirect_stdout=True, max_value=len(classifiers))
 for i, _ in enumerate(Pool().imap(f, classifiers), 1):
     bar.update(i)
