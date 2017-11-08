@@ -215,10 +215,13 @@ def mark_vid_dir(out_q, vid_dir):
     corr = [predicted_arr[a][1] for a in times]
 
     bar_movie(vid, vid_dir, times, corr)
-    bar_movie(vid, vid_dir, times, corr)
+    bar_movie(os.path.join(vid_dir, 'inter_out.avi'), vid_dir, times, corr)
 
-    # subprocess.Popen(['ffmpeg', '-i', vid, os.path.join(vid_dir, 'inter_out.avi'), ])
+    subprocess.Popen('ffmpeg -i input1.mp4 -i input2.mp4 -filter_complex "[0:v]pad=iw*2:ih[int];[int]['
+                     '1:v]overlay=W/2:0[vid]" -map [vid] -c:v libx264 -crf 23 -preset veryfast {0}'.format(
+        os.path.join(vid_dir, 'combined_out.avi')), shell=True)
 
+    bar_movie(os.path.join(vid_dir, 'combined_out.avi'), vid_dir, times, corr)
 
     out_q.put({vid_dir: sum(corr) / len(corr)})
 
