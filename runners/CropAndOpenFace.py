@@ -8,7 +8,7 @@ sys.path.append('/home/gvelchuru')
 from OpenFaceScripts.runners import ImageCropper, VidCropper
 
 
-def run_open_face(im_dir, vid_mode = False, remove_intermediates = True):
+def run_open_face(im_dir, vid_mode=False, remove_intermediates=False):
     """
     Runs OpenFace
 

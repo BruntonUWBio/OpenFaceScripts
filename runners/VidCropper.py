@@ -2,11 +2,13 @@
 .. module:: VidCropper
     :synopsis: A class for cropping a video given bounding boxes. Aims to be much more performant than ImageCropper for essentially the same purpose.
 """
-import glob
 import json
 import os
-import numpy as np
 import subprocess
+
+import numpy as np
+from OpenFaceScripts.runners.SecondRunOpenFace import presence_bounds
+from scoring.AUScorer import AUScorer
 
 
 def crop_and_resize(vid, width, height, x_min, y_min, directory, resize_factor):
@@ -109,9 +111,17 @@ class CropVid:
         crop_read_arr = self.make_read_arr(open(self.crop_file_path)) if self.crop_file_path else None
         nose_read_arr = self.make_read_arr(open(self.nose_file_path)) if self.nose_file_path else None
         if crop_read_arr and nose_read_arr:
-            return self.find_im_bb(crop_read_arr, nose_read_arr)
+            original_coords = self.find_im_bb(crop_read_arr, nose_read_arr)
+            original_crop_coords = {
+                'x_min': original_coords[0],
+                'y_min': original_coords[1],
+                'x_max': original_coords[2],
+                'y_max': original_coords[3],
+                'rescale_factor': 1
+            }
         else:
-            return None
+            original_crop_coords = [None, None, None, None, 1]
+        return presence_bounds(self.vid, original_crop_coords, AUScorer(self.im_dir))
 
     def find_im_bb(self, crop_read_arr, nose_read_arr):
         x_min = None

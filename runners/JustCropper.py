@@ -1,33 +1,10 @@
-"""
-.. module MultiCropper
-    :synopsis: Script to apply cropping and OpenFace to all videos in a directory.
-
-"""
-
 import glob
 import json
 import os
 import sys
 
 import progressbar
-from pathos.multiprocessing import ProcessingPool as Pool
-
-sys.path.append('/home/gvelchuru/')
 from OpenFaceScripts.runners import CropAndOpenFace, VidCropper
-
-
-def crop_image(i):
-    vid = vids[i]
-    im_dir = os.path.splitext(vid)[0] + '_cropped'
-    try:
-        if not os.path.exists(im_dir) or 'au.txt' not in os.listdir(im_dir):
-            VidCropper.duration(vid)
-            CropAndOpenFace.VideoImageCropper(vid=vid, im_dir=im_dir,
-                                              crop_txt_files=crop_txt_files, nose_txt_files=nose_txt_files,
-                                              vid_mode=True)
-    except Exception as e:
-        print(e)
-
 
 if __name__ == '__main__':
     path = sys.argv[sys.argv.index('-id') + 1]
@@ -50,8 +27,12 @@ if __name__ == '__main__':
 
     os.chdir(path)
     vids = [os.path.join(path, x) for x in glob.glob('*.avi')]
-    multiProcessingNum = 2  # 2 GPUs
-
-    bar = progressbar.ProgressBar(redirect_stdout=True, max_value=1)
-    for i, _ in enumerate(Pool(multiProcessingNum).imap(crop_image, range(len(vids)), chunksize=10), 1):
-        bar.update(i / len(vids))
+    bar = progressbar.ProgressBar(redirect_stdout=True, max_value=len(vids))
+    for index, vid in enumerate(vids):
+        bar.update(index)
+        im_dir = os.path.splitext(vid)[0] + '_cropped'
+        try:
+            VidCropper.duration(vid)
+            VidCropper.CropVid(vid, im_dir, crop_txt_files, nose_txt_files)
+        except Exception as e:
+            print(e)

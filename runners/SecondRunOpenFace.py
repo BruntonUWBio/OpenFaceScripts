@@ -112,6 +112,21 @@ def throw_vid_in_reverse(vid, vid_dir, include_eyebrows):
 
 
 def re_crop(vid: str, original_crop_coords, scorer: AUScorer.AUScorer, out_dir: str) -> dict:
+    bounds_dict = presence_bounds(vid, original_crop_coords, scorer)
+    min_x = bounds_dict[0]
+    min_y = bounds_dict[1]
+    max_x = bounds_dict[2]
+    max_y = bounds_dict[3]
+    width = max_x - min_x
+    height = max_y - min_y
+    if 'au.txt' not in os.listdir(out_dir):
+        VidCropper.crop_and_resize(vid, width, height, min_x, min_y, out_dir, 5)
+        CropAndOpenFace.run_open_face(out_dir, vid_mode=True, remove_intermediates=False)
+    new_scorer = AUScorer.AUScorer(out_dir)
+    return new_scorer.presence_dict
+
+
+def presence_bounds(vid, original_crop_coords, scorer: AUScorer.AUScorer):
     vid_height, vid_width = height_width(vid)
     min_x = None
     max_x = None
@@ -164,13 +179,7 @@ def re_crop(vid: str, original_crop_coords, scorer: AUScorer.AUScorer, out_dir: 
     min_y = y_arr[0]
     max_x = x_arr[1]
     max_y = y_arr[1]
-    width = max_x - min_x
-    height = max_y - min_y
-    if 'au.txt' not in os.listdir(out_dir):
-        VidCropper.crop_and_resize(vid, width, height, min_x, min_y, out_dir, 5)
-        CropAndOpenFace.run_open_face(out_dir, vid_mode=True, remove_intermediates=False)
-    new_scorer = AUScorer.AUScorer(out_dir)
-    return new_scorer.presence_dict
+    return [min_x, min_y, max_x, max_y]
 
 
 def reverse_re_crop_vid_dir(vid, vid_dir, include_eyebrows):
@@ -240,7 +249,8 @@ def process_vid_dir(eyebrow_dict: dict, vid_dir: str) -> None:
     diff_dict = json.load(open(already_ran_file)) if os.path.exists(already_ran_file) else {}
     if vid_dir not in diff_dict:
         diff_dict[vid_dir] = {}
-    emotion_dict = json.load(open(all_dict_file)) if os.path.exists(all_dict_file) else AUScorer.AUScorer(vid_dir).presence_dict
+    emotion_dict = json.load(open(all_dict_file)) if os.path.exists(all_dict_file) else AUScorer.AUScorer(
+        vid_dir).presence_dict
     if vid_dir in eyebrow_dict['Eyebrows']:
         include_eyebrows = True
     else:
@@ -313,6 +323,7 @@ def update_dicts(post_func_dict: dict, emotion_dict: dict, diff_dict: dict, vid_
         diff_dict[vid_dir][name] = {}
     diff_dict[vid_dir][name][func_name] = diff
 
+
 def get_vid_from_dir(vid_dir: str) -> str:
     """
     Returns the full path to a video associated with a crop directory.
@@ -357,13 +368,13 @@ def process_eyebrows(dir: str, file) -> dict:
 
 if __name__ == '__main__':
     patient_directory = sys.argv[sys.argv.index('-od') + 1]
-    #second_runner_files = os.path.join(patient_directory, 'edited_files.txt')
-    #already_ran = json.load(open(second_runner_files)) if os.path.exists(second_runner_files) else {}
+    # second_runner_files = os.path.join(patient_directory, 'edited_files.txt')
+    # already_ran = json.load(open(second_runner_files)) if os.path.exists(second_runner_files) else {}
 
     files = [x for x in (os.path.join(patient_directory, vid_dir) for vid_dir in os.listdir(patient_directory)) if
              (os.path.isdir(x) and 'au.txt' in os.listdir(x))]
 
-    #out_q = multiprocessing.Manager().Queue()
+    # out_q = multiprocessing.Manager().Queue()
     eyebrow_file = os.path.join(patient_directory, 'eyebrows.txt')
     eyebrow_dict = process_eyebrows(patient_directory, open(eyebrow_file)) if os.path.exists(eyebrow_file) else {}
     f = functools.partial(process_vid_dir, eyebrow_dict)
@@ -375,4 +386,4 @@ if __name__ == '__main__':
         bar.update(i)
 
     json.dump(eyebrow_dict, open(os.path.join(patient_directory, 'eyebrow_dict.txt'), 'w'))
-    #json.dump(already_ran, open(second_runner_files, 'w'), indent='\t')
+    # json.dump(already_ran, open(second_runner_files, 'w'), indent='\t')
