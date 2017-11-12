@@ -7,8 +7,8 @@ import os
 import subprocess
 
 import numpy as np
-from OpenFaceScripts.runners.SecondRunOpenFace import presence_bounds
-from scoring.AUScorer import AUScorer
+from OpenFaceScripts.runners import SecondRunOpenFace
+from OpenFaceScripts.scoring.AUScorer import AUScorer
 
 
 def crop_and_resize(vid, width, height, x_min, y_min, directory, resize_factor):
@@ -121,7 +121,7 @@ class CropVid:
             }
         else:
             original_crop_coords = [None, None, None, None, 1]
-        return presence_bounds(self.vid, original_crop_coords, AUScorer(self.im_dir))
+        return SecondRunOpenFace.presence_bounds(self.vid, original_crop_coords, AUScorer(self.im_dir))
 
     def find_im_bb(self, crop_read_arr, nose_read_arr):
         x_min = None

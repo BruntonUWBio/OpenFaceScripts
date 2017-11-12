@@ -57,19 +57,28 @@ def use_classifier(out_q, au_train, au_test, target_train, target_test, classifi
     joblib.dump(classifier, 'happy_trained_RandomForest_with_pose.pkl')
 
 
-
 OpenDir = sys.argv[sys.argv.index('-d') + 1]
 os.chdir(OpenDir)
 emotion_data = [item for sublist in
                 [b for b in [[a for a in x.values() if a] for x in json.load(open('au_emotes.txt')).values() if x] if b]
                 for item in sublist if item[1] in ['Happy', 'Neutral', 'Sleeping']]
+ck_dict = json.load(open('ck_dict.txt'))
+for patient_list in ck_dict.values():
+    if patient_list[1] in [None, 'Happy']:
+        to_add = AUScorer.AUList
+        au_dict = {str(int(float(x))): y for x, y in patient_list[0].items()}
+        for add in to_add:
+            if add not in au_dict:
+                au_dict[add] = 0
+        emotion_data.append([au_dict, patient_list[1]])
+
 au_data = []
 target_data = []
 aus_list = AUScorer.AUList
 for frame in emotion_data:
     aus = frame[0]
     if frame[1] == 'Happy':
-        au_data.append([float(aus[str(x)]) for x in aus_list])
+        au_data.append([float(aus[str(x)]) if str(x) in aus else 0 for x in aus_list])
         # target_data.append(frame[1])
         target_data.append(1)
 index = 0
@@ -77,7 +86,7 @@ happy_len = len(target_data)
 for frame in emotion_data:
     aus = frame[0]
     if frame[1] != 'Happy':
-        au_data.append([float(aus[str(x)]) for x in aus_list])
+        au_data.append([float(aus[str(x)]) if str(x) in aus else 0 for x in aus_list])
         # target_data.append('Neutral/Sleeping')
         target_data.append(0)
         index += 1
@@ -104,8 +113,6 @@ au_train, au_test, target_train, target_test = train_test_split(au_data, target_
 classifiers = [
     RandomForestClassifier(),
 ]
-
-
 
 out_q = multiprocessing.Manager().Queue()
 out_file = open('classifier_performance.txt', 'w')

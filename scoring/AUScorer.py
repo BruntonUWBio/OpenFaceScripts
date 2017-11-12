@@ -13,7 +13,8 @@ import numpy as np
 sys.path.append('/home/gvelchuru/')
 from OpenFaceScripts.scoring import OpenFaceScorer
 
-AUList = [1, 2, 4, 5, 6, 7, 9, 10, 12, 14, 15, 17, 20, 23, 25, 26, 28, 45, 'gaze_0_x', 'gaze_0_y', 'gaze_0_z',
+AUList = ['1', '2', '4', '5', '6', '7', '9', '10', '12', '14', '15', '17', '20', '23', '25', '26', '28', '45',
+          'gaze_0_x', 'gaze_0_y', 'gaze_0_z',
           'gaze_1_x', 'gaze_1_y', 'gaze_1_z', 'pose_Rx', 'pose_Ry', 'pose_Rz']
 
 
@@ -84,11 +85,12 @@ class AUScorer:
                 for label in curr_frame:
                     if 'c' in label and curr_frame[label] == 1 and not self.is_eyebrow(label):
                         r_label = label.replace('c', 'r')
-                        if (r_label in curr_frame and curr_frame[r_label] >= au_thresh) or (
-                                    r_label not in curr_frame):
-                            self.presence_dict[frame][label] = curr_frame[label]
-                            if r_label in curr_frame:
-                                self.presence_dict[frame][r_label] = curr_frame[r_label]
+                        if r_label not in curr_frame or r_label in curr_frame and curr_frame[r_label] < au_thresh:
+                            stripped_label = str(int(label[2:label.index('_') - 1]))
+                            self.presence_dict[frame][stripped_label] = curr_frame[label]
+                        else:
+                            stripped_r_label = str(int(r_label[2:r_label.index('_') - 1]))
+                            self.presence_dict[frame][stripped_r_label] = curr_frame[r_label]
                     elif 'pose_R' in label or 'gaze' in label:
                         self.presence_dict[frame][label] = curr_frame[label]
 
