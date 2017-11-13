@@ -84,7 +84,7 @@ def get_dimensions(vid_dir: str):
         }
 
 
-def throw_vid_in_reverse(vid, vid_dir, include_eyebrows):
+def throw_vid_in_reverse(vid: str, vid_dir: str, include_eyebrows: bool) -> None:
     """
     Reverse a video and run OpenFace on it.
     :param vid_dir: Crop directory for video (created from CropAndOpenFace)
@@ -126,7 +126,7 @@ def re_crop(vid: str, original_crop_coords, scorer: AUScorer.AUScorer, out_dir: 
     return new_scorer.presence_dict
 
 
-def presence_bounds(vid, original_crop_coords, scorer: AUScorer.AUScorer):
+def presence_bounds(vid: str, original_crop_coords, scorer: AUScorer.AUScorer):
     vid_height, vid_width = height_width(vid)
     min_x = None
     max_x = None
@@ -182,7 +182,7 @@ def presence_bounds(vid, original_crop_coords, scorer: AUScorer.AUScorer):
     return [min_x, min_y, max_x, max_y]
 
 
-def reverse_re_crop_vid_dir(vid, vid_dir, include_eyebrows):
+def reverse_re_crop_vid_dir(vid: str, vid_dir: str, include_eyebrows: bool) -> dict:
     reverse_vid_dir = os.path.join(vid_dir, 'reverse')
     scorer = AUScorer.AUScorer(reverse_vid_dir, 0, include_eyebrows)
     if scorer.presence_dict:
@@ -194,7 +194,7 @@ def reverse_re_crop_vid_dir(vid, vid_dir, include_eyebrows):
         return re_crop(vid, original_crop_coords, scorer, out_dir)
 
 
-def re_crop_vid_dir(vid, vid_dir, include_eyebrows):
+def re_crop_vid_dir(vid, vid_dir, include_eyebrows) -> dict:
     scorer = AUScorer.AUScorer(vid_dir, 0, include_eyebrows)
     if scorer.presence_dict:
         out_dir = os.path.join(vid_dir, 're_crop')

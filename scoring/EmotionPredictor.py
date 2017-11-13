@@ -45,6 +45,49 @@ def restricted_k_neighbors(out_q):
     use_classifier(out_q, au_train, au_test, target_train, target_test, KNeighborsClassifier())
 
 
+def make_emotion_data(emotion):
+    emotion_data = [item for sublist in
+                    [b for b in [[a for a in x.values() if a] for x in json.load(open('au_emotes.txt')).values() if x]
+                     if b]
+                    for item in sublist if item[1] in [emotion, 'Neutral', 'Sleeping']]
+
+    ck_dict = json.load(open('ck_dict.txt'))
+    for patient_list in ck_dict.values():
+        if patient_list[1] in [None, emotion]:
+            to_add = AUScorer.AUList
+            au_dict = {str(int(float(x))): y for x, y in patient_list[0].items()}
+            for add in to_add:
+                if add not in au_dict:
+                    au_dict[add] = 0
+            emotion_data.append([au_dict, patient_list[1]])
+
+    au_data = []
+    target_data = []
+    aus_list = AUScorer.AUList
+    for frame in emotion_data:
+        aus = frame[0]
+        if frame[1] == emotion:
+            au_data.append([float(aus[str(x)]) for x in aus_list])
+            # target_data.append(frame[1])
+            target_data.append(1)
+    index = 0
+    happy_len = len(target_data)
+    for frame in emotion_data:
+        aus = frame[0]
+        if frame[1] != 'Happy':
+            au_data.append([float(aus[str(x)]) for x in aus_list])
+            # target_data.append('Neutral/Sleeping')
+            target_data.append(0)
+            index += 1
+        if index == happy_len:
+            break
+
+    n_samples = len(au_data)
+
+    au_train, au_test, target_train, target_test = train_test_split(au_data, target_data, test_size=.1)
+    return au_train, au_test, target_train, target_test
+
+
 def use_classifier(out_q, au_train, au_test, target_train, target_test, classifier):
     classifier.fit(au_train, target_train)
 
@@ -59,43 +102,6 @@ def use_classifier(out_q, au_train, au_test, target_train, target_test, classifi
 
 OpenDir = sys.argv[sys.argv.index('-d') + 1]
 os.chdir(OpenDir)
-emotion_data = [item for sublist in
-                [b for b in [[a for a in x.values() if a] for x in json.load(open('au_emotes.txt')).values() if x] if b]
-                for item in sublist if item[1] in ['Happy', 'Neutral', 'Sleeping']]
-ck_dict = json.load(open('ck_dict.txt'))
-for patient_list in ck_dict.values():
-    if patient_list[1] in [None, 'Happy']:
-        to_add = AUScorer.AUList
-        au_dict = {str(int(float(x))): y for x, y in patient_list[0].items()}
-        for add in to_add:
-            if add not in au_dict:
-                au_dict[add] = 0
-        emotion_data.append([au_dict, patient_list[1]])
-
-au_data = []
-target_data = []
-aus_list = AUScorer.AUList
-for frame in emotion_data:
-    aus = frame[0]
-    if frame[1] == 'Happy':
-        au_data.append([float(aus[str(x)]) if str(x) in aus else 0 for x in aus_list])
-        # target_data.append(frame[1])
-        target_data.append(1)
-index = 0
-happy_len = len(target_data)
-for frame in emotion_data:
-    aus = frame[0]
-    if frame[1] != 'Happy':
-        au_data.append([float(aus[str(x)]) if str(x) in aus else 0 for x in aus_list])
-        # target_data.append('Neutral/Sleeping')
-        target_data.append(0)
-        index += 1
-    if index == happy_len:
-        break
-
-n_samples = len(au_data)
-
-au_train, au_test, target_train, target_test = train_test_split(au_data, target_data, test_size=.1)
 
 # classifiers = [
 #     KNeighborsClassifier(),
@@ -113,6 +119,8 @@ au_train, au_test, target_train, target_test = train_test_split(au_data, target_
 classifiers = [
     RandomForestClassifier(),
 ]
+
+au_train, au_test, target_train, target_test = make_emotion_data('Happy')
 
 out_q = multiprocessing.Manager().Queue()
 out_file = open('classifier_performance.txt', 'w')
