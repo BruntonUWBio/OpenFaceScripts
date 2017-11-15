@@ -361,7 +361,7 @@ if __name__ == '__main__':
     multiprocessingNum = 2  # 2 GPUs
 
     bar = progressbar.ProgressBar(redirect_stdout=True, max_value=len(files))
-    for i, _ in enumerate(Pool(multiprocessingNum).imap(f, files, chunksize=10), 1):
+    for i, _ in enumerate(Pool(multiprocessingNum).imap(f, files, chunksize=100), 1):
         bar.update(i)
 
     json.dump(eyebrow_dict, open(os.path.join(patient_directory, 'eyebrow_dict.txt'), 'w'))

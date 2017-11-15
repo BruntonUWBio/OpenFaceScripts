@@ -20,11 +20,12 @@ def crop_image(i):
     vid = vids[i]
     im_dir = os.path.splitext(vid)[0] + '_cropped'
     try:
-        # if not os.path.exists(im_dir) or 'au.txt' not in os.listdir(im_dir):
-        VidCropper.duration(vid)
-        CropAndOpenFace.VideoImageCropper(vid=vid, im_dir=im_dir,
-                                          crop_txt_files=crop_txt_files, nose_txt_files=nose_txt_files,
-                                          vid_mode=True)
+        if not os.path.exists(im_dir) or 'ran_open_face.txt' not in os.listdir(im_dir):
+            VidCropper.duration(vid)
+            CropAndOpenFace.VideoImageCropper(vid=vid, im_dir=im_dir,
+                                              crop_txt_files=crop_txt_files, nose_txt_files=nose_txt_files,
+                                              vid_mode=True)
+            open('ran_open_face.txt', 'w').write('Yes')
     except Exception as e:
         print(e)
 
@@ -53,5 +54,5 @@ if __name__ == '__main__':
     multiProcessingNum = 2  # 2 GPUs
 
     bar = progressbar.ProgressBar(redirect_stdout=True, max_value=len(vids))
-    for i, _ in enumerate(Pool(multiProcessingNum).imap(crop_image, range(len(vids)), chunksize=10), 1):
+    for i, _ in enumerate(Pool(multiProcessingNum).imap(crop_image, range(len(vids)), chunksize=100), 1):
         bar.update(i)

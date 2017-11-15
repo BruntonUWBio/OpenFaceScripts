@@ -105,28 +105,6 @@ class CropVid:
         width = x_max - x_min
         height = y_max - y_min
 
-        original_crop_coords = {
-            'x_min': x_min,
-            'y_min': y_min,
-            'x_max': x_max,
-            'y_max': y_max,
-            'rescale_factor': 1
-        }
-        if 'au.txt' not in os.listdir(directory):
-            crop_and_resize(vid, width, height, x_min, y_min, directory, 1)
-        CropAndOpenFace.run_open_face(directory, vid_mode=True)
-        bb_arr = SecondRunOpenFace.presence_bounds(os.path.join(directory, 'inter_out.avi'), original_crop_coords,
-                                                   AUScorer(directory))
-
-        x_min = bb_arr[0]
-        y_min = bb_arr[1]
-        x_max = bb_arr[2]
-        y_max = bb_arr[3]
-
-        self.write_arr(bb_arr, 'bb_arr', extra=True)
-        width = x_max - x_min
-        height = y_max - y_min
-
         crop_and_resize(vid, width, height, x_min, y_min, directory, resize_factor=self.resize_factor)
 
     def crop_im_arr_arr_list(self):
