@@ -16,6 +16,7 @@ from OpenFaceScripts.scoring import OpenFaceScorer
 AUList = ['1', '2', '4', '5', '6', '7', '9', '10', '12', '14', '15', '17', '20', '23', '25', '26', '28', '45',
           'gaze_0_x', 'gaze_0_y', 'gaze_0_z',
           'gaze_1_x', 'gaze_1_y', 'gaze_1_z', 'pose_Rx', 'pose_Ry', 'pose_Rz']
+include_similar = False
 
 
 def emotion_templates(include_similar: bool) -> dict:
@@ -60,7 +61,6 @@ class AUScorer:
         :type include_eyebrows: bool
         """
         self.include_eyebrows = include_eyebrows
-        self.include_similar = False
         original_dir = os.getcwd()
         os.chdir(dir)
         au_file = 'au.txt'  # Replace with name of action units file
@@ -75,7 +75,7 @@ class AUScorer:
                            if 'AU' in label or 'pose_R' in label or 'gaze_angle' in label} for frame in
                    range(len(open_face_arr))}
         self.x_y_dict = {frame: {label: open_face_arr[frame][num] for label, num in open_face_dict.items()
-                    if 'x_' in label or 'y_' in label} for frame in range(len(open_face_arr))}
+                                 if 'x_' in label or 'y_' in label} for frame in range(len(open_face_arr))}
         self.x_y_dict = {frame: frame_dict for frame, frame_dict in self.x_y_dict.items() if any(frame_dict.values())}
         self.presence_dict = defaultdict()
         for frame in range(len(open_face_arr)):
@@ -85,15 +85,18 @@ class AUScorer:
                 for label in curr_frame:
                     if 'c' in label and curr_frame[label] == 1 and not self.is_eyebrow(label):
                         r_label = label.replace('c', 'r')
-                        if r_label not in curr_frame or r_label in curr_frame and curr_frame[r_label] < au_thresh:
-                            stripped_label = str(int(label[2:label.index('_') - 1]))
+                        if r_label not in curr_frame:
+                            stripped_label = str(AUScorer.return_num(label))
                             self.presence_dict[frame][stripped_label] = curr_frame[label]
                         else:
-                            stripped_r_label = str(int(r_label[2:r_label.index('_') - 1]))
+                            stripped_r_label = str(AUScorer.return_num(r_label))
                             self.presence_dict[frame][stripped_r_label] = curr_frame[r_label]
+                    elif 'r' in label and not self.is_eyebrow(label):
+                        c_label = label.replace('r', 'c')
+                        if c_label not in curr_frame:
+                            self.presence_dict[frame][str(AUScorer.return_num(label))] = curr_frame[label]
                     elif 'pose_R' in label or 'gaze' in label:
                         self.presence_dict[frame][label] = curr_frame[label]
-
 
         frame_emotions = self.make_frame_emotions(self.presence_dict)
         self.emotions = {frame: frame_dict for frame, frame_dict in frame_emotions.items()}
@@ -114,17 +117,17 @@ class AUScorer:
         """
         return self.emotions[index] if index in self.emotions else None
 
-
-    def make_frame_emotions(self, presence_dict):
+    @staticmethod
+    def make_frame_emotions(presence_dict):
         frame_emotion_dict = {
-            frame: self.find_all_lcs(sorted([self.return_num(au) for au in au_dict if 'c' in au]))
+            frame: AUScorer.find_all_lcs(sorted([AUScorer.return_num(au) for au in au_dict if 'c' in au]))
             for frame, au_dict in presence_dict.items()}
 
         for frame, emotion_dict in frame_emotion_dict.items():
             for emotion in emotion_dict:
                 emotion_dict[emotion] = [x for x in emotion_dict[emotion] if x]  # remove empties
                 for index, arr in enumerate(emotion_dict[emotion]):
-                    emotion_dict[emotion][index] = self.convert_aus_to_scores(arr, frame, presence_dict)
+                    emotion_dict[emotion][index] = AUScorer.convert_aus_to_scores(arr, frame, presence_dict)
                 if len(emotion_dict[emotion]):
                     emotion_dict[emotion] = max([x for x in emotion_dict[emotion]])
                 else:
@@ -133,18 +136,20 @@ class AUScorer:
 
         return frame_emotion_dict
 
-    def find_all_lcs(self, aus):
-        emote_template = emotion_templates(self.include_similar)
+    @staticmethod
+    def find_all_lcs(aus):
+        emote_template = emotion_templates(include_similar)
         return {
             emotion: [back_track(LCS(template, aus), template, aus, len(template), len(aus)) for template in
                       template_arr]
             for emotion, template_arr in emote_template.items()}
 
-    def convert_aus_to_scores(self, arr, frame, presence_dict):
+    @staticmethod
+    def convert_aus_to_scores(arr, frame, presence_dict):
         frame_presence = presence_dict[frame]
         scores = []
         for au in frame_presence:
-            if 'c' in au and self.return_num(au) in arr:
+            if 'c' in au and AUScorer.return_num(au) in arr:
                 r_label = au.replace('c', 'r')
                 if r_label in frame_presence:
                     scores.append(frame_presence[r_label])

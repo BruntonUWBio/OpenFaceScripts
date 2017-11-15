@@ -16,9 +16,9 @@ from os.path import join
 
 import progressbar
 from pathos.multiprocessing import ProcessingPool as Pool
-from runners.SecondRunOpenFace import get_vid_from_dir
-
 sys.path.append('/home/gvelchuru/')
+
+from OpenFaceScripts.runners.SecondRunOpenFace import get_vid_from_dir
 from OpenFaceScripts import AUGui
 from OpenFaceScripts.scoring import AUScorer
 from OpenFaceScripts.runners import SecondRunOpenFace, VidCropper
@@ -85,6 +85,9 @@ def find_scores(out_q, eyebrow_dict, patient_dir):
     :param out_q: Queue to output results to (for multiprocessing)
     :param patient_dir: Directory to look in
     """
+    if os.path.exists(join(patient_dir, os.path.basename(patient_dir).replace('_cropped',
+                                                                              '') + '_emotions.csv')) and 'cb46' in patient_dir:
+        print('kurwa')
     patient_dir_scores = {patient_dir: defaultdict()}
     try:
         if patient_dir in eyebrow_dict['Eyebrows']:
@@ -93,7 +96,7 @@ def find_scores(out_q, eyebrow_dict, patient_dir):
             include_eyebrows = False
         all_dict_file = join(patient_dir, 'all_dict.txt')
         if os.path.exists(all_dict_file):
-            patient_emotions = {int(k): v for k, v in json.load(open(all_dict_file)).items()}
+            patient_emotions = AUScorer.AUScorer.make_frame_emotions(json.load(open(all_dict_file)))
         else:
             patient_emotions = AUScorer.AUScorer(patient_dir, include_eyebrows=include_eyebrows).emotions
         csv_path = join(patient_dir, os.path.basename(patient_dir).replace('_cropped', '') + '_emotions.csv')

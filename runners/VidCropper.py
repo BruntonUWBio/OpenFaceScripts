@@ -7,7 +7,7 @@ import os
 import subprocess
 
 import numpy as np
-from OpenFaceScripts.runners import SecondRunOpenFace
+from OpenFaceScripts.runners import SecondRunOpenFace, CropAndOpenFace
 from OpenFaceScripts.scoring.AUScorer import AUScorer
 
 
@@ -26,13 +26,13 @@ def crop_and_resize(vid, width, height, x_min, y_min, directory, resize_factor):
     crop_vid = os.path.join(directory, 'cropped_out.avi')
     subprocess.Popen(
         'ffmpeg -y -loglevel quiet -i {0} -filter:v \"crop={1}:{2}:{3}:{4}\" {5}'.format(vid, str(width), str(height),
-                                                                         str(x_min), str(y_min),
-                                                                         crop_vid),
+                                                                                         str(x_min), str(y_min),
+                                                                                         crop_vid),
         shell=True).wait()
     subprocess.Popen(
         'ffmpeg -y -loglevel quiet -i {0} -vf scale={2}*iw:{2}*ih {1}'.format(crop_vid,
-                                                              os.path.join(directory, 'inter_out.avi'),
-                                                              str(resize_factor)), shell=True).wait()
+                                                                              os.path.join(directory, 'inter_out.avi'),
+                                                                              str(resize_factor)), shell=True).wait()
     os.remove(os.path.join(directory, 'cropped_out.avi'))
 
 
@@ -80,7 +80,9 @@ class CropVid:
         self.un_cropped_ims = []
         self.crop_im_arr_arr_dict = self.crop_im_arr_arr_list()
         bb_arr = [None, None, None, None]
-        if self.crop_im_arr_arr_dict:
+        if not all(self.crop_im_arr_arr_dict):
+            bb_arr = [50, 0, 640 - 100, 480 - 100]
+        else:
             for coords in self.crop_im_arr_arr_dict:
                 im_crop_arr = coords
                 x_min = im_crop_arr[0]
@@ -102,6 +104,29 @@ class CropVid:
         self.write_arr(bb_arr, 'bb_arr', extra=True)
         width = x_max - x_min
         height = y_max - y_min
+
+        original_crop_coords = {
+            'x_min': x_min,
+            'y_min': y_min,
+            'x_max': x_max,
+            'y_max': y_max,
+            'rescale_factor': 1
+        }
+        if 'au.txt' not in os.listdir(directory):
+            crop_and_resize(vid, width, height, x_min, y_min, directory, 1)
+        CropAndOpenFace.run_open_face(directory, vid_mode=True)
+        bb_arr = SecondRunOpenFace.presence_bounds(os.path.join(directory, 'inter_out.avi'), original_crop_coords,
+                                                   AUScorer(directory))
+
+        x_min = bb_arr[0]
+        y_min = bb_arr[1]
+        x_max = bb_arr[2]
+        y_max = bb_arr[3]
+
+        self.write_arr(bb_arr, 'bb_arr', extra=True)
+        width = x_max - x_min
+        height = y_max - y_min
+
         crop_and_resize(vid, width, height, x_min, y_min, directory, resize_factor=self.resize_factor)
 
     def crop_im_arr_arr_list(self):
@@ -111,17 +136,12 @@ class CropVid:
         crop_read_arr = self.make_read_arr(open(self.crop_file_path)) if self.crop_file_path else None
         nose_read_arr = self.make_read_arr(open(self.nose_file_path)) if self.nose_file_path else None
         if crop_read_arr and nose_read_arr:
-            original_coords = self.find_im_bb(crop_read_arr, nose_read_arr)
-            original_crop_coords = {
-                'x_min': original_coords[0],
-                'y_min': original_coords[1],
-                'x_max': original_coords[2],
-                'y_max': original_coords[3],
-                'rescale_factor': 1
-            }
+            original_crop_coords = self.find_im_bb(crop_read_arr, nose_read_arr)
+            if not original_crop_coords:
+                original_crop_coords = [None, None, None, None, 1]
         else:
             original_crop_coords = [None, None, None, None, 1]
-        return SecondRunOpenFace.presence_bounds(self.vid, original_crop_coords, AUScorer(self.im_dir))
+        return original_crop_coords
 
     def find_im_bb(self, crop_read_arr, nose_read_arr):
         x_min = None
@@ -229,4 +249,3 @@ def probe(vid_file_path):
     out, err = pipe.communicate()
     out = out.decode("utf-8")
     return json.loads(out)
-

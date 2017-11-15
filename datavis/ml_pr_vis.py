@@ -1,12 +1,13 @@
-import copy
 import functools
 import glob
 import json
 import sys
 
+import progressbar
+from sklearn.model_selection import train_test_split
+
 sys.path.append('/home/gvelchuru/OpenFaceScripts')
 
-from scoring.EmotionPredictor import make_emotion_data
 from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
 from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier, ExtraTreesClassifier
 from sklearn.metrics import precision_recall_curve
@@ -16,11 +17,13 @@ from scoring import AUScorer
 import multiprocessing
 import numpy as np
 import os
-# matplotlib.use('Agg')
+
+import matplotlib
+
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
 from collections import defaultdict
-from random import shuffle
 from progressbar import ProgressBar
 from pathos.multiprocessing import ProcessingPool as Pool
 from sklearn.naive_bayes import GaussianNB, BernoulliNB
@@ -33,9 +36,9 @@ all_emotions.extend(['Neutral', 'Sleeping'])
 
 
 def use_classifier(classifier, au_train, au_test, target_train, target_test):
-    classifier.fit(au_train, au_test)
+    classifier.fit(au_train, target_train)
     expected = target_test
-    decision_function = classifier.predict_proba(target_train)[:, 1]
+    decision_function = classifier.predict_proba(au_test)[:, 1]
     return expected, decision_function
 
 
@@ -117,7 +120,53 @@ def validate_thresh_dict(thresh_dict):
                                                                                        'true_pos'] / prev_total_pos
 
 
-def vis(short_patient, thresh_file):
+def make_emotion_data(emotion):
+    emotion_data = [item for sublist in
+                    [b for b in [[a for a in x.values() if a] for x in json.load(open('au_emotes.txt')).values() if x]
+                     if b]
+                    for item in sublist if item[1] in [emotion, 'Neutral', 'Sleeping']]
+
+    ck_dict = json.load(open('ck_dict.txt'))
+    for patient_list in ck_dict.values():
+        if patient_list[1] in [None, emotion]:
+            to_add = AUScorer.AUList
+            au_dict = {str(int(float(x))): y for x, y in patient_list[0].items()}
+            for add in to_add:
+                if add not in au_dict:
+                    au_dict[add] = 0
+            emotion_data.append([au_dict, patient_list[1]])
+
+    au_data = []
+    target_data = []
+    aus_list = AUScorer.AUList
+    for frame in emotion_data:
+        aus = frame[0]
+        if frame[1] == emotion:
+            au_data.append([float(aus[str(x)]) for x in aus_list])
+            # target_data.append(frame[1])
+            target_data.append(1)
+    index = 0
+    happy_len = len(target_data)
+    for frame in emotion_data:
+        aus = frame[0]
+        if frame[1] != 'Happy':
+            au_data.append([float(aus[str(x)]) for x in aus_list])
+            # target_data.append('Neutral/Sleeping')
+            target_data.append(0)
+            index += 1
+        if index == happy_len:
+            break
+
+    n_samples = len(au_data)
+
+    au_train, au_test, target_train, target_test = train_test_split(au_data, target_data, test_size=.1)
+    return au_train, au_test, target_train, target_test
+
+
+def vis(short_patient, thresh_file=None):
+    print(short_patient)
+    if not thresh_file:
+        thresh_file = short_patient + '_threshes.txt'
     thresh_dict = json.load(open(thresh_file)) if os.path.exists(thresh_file) else {}
     if not thresh_dict:
         out_q = multiprocessing.Manager().Queue()
@@ -215,8 +264,17 @@ if __name__ == '__main__':
         short_direc = direc[:direc.index('_')]
         short_patient_list.add(short_direc)
 
-    vis('all', 'threshes.txt')
+    to_remove = set()
+    # For debugging
+    for short_patient in short_patient_list:
+        for png in glob.glob(os.path.join(OpenDir, '*.png'), recursive=False):
+            if short_patient in png and short_patient in short_patient_list:
+                to_remove.add(short_patient)
+    for to_r in to_remove:
+        short_patient_list.remove(to_r)
+    print(short_patient_list)
+
+    # vis('all', 'threshes.txt')
 
     for short_patient in short_patient_list:
-        thresh_file = short_patient + '_threshes.txt'
-        vis(short_patient, thresh_file)
+        vis(short_patient)

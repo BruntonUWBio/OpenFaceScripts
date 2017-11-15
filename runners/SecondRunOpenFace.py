@@ -126,7 +126,7 @@ def re_crop(vid: str, original_crop_coords, scorer: AUScorer.AUScorer, out_dir: 
     return new_scorer.presence_dict
 
 
-def presence_bounds(vid: str, original_crop_coords, scorer: AUScorer.AUScorer):
+def presence_bounds(vid: str, original_crop_coords, scorer: AUScorer.AUScorer) -> list:
     vid_height, vid_width = height_width(vid)
     min_x = None
     max_x = None
