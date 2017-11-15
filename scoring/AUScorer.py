@@ -120,7 +120,8 @@ class AUScorer:
     @staticmethod
     def make_frame_emotions(presence_dict):
         frame_emotion_dict = {
-            frame: AUScorer.find_all_lcs(sorted([AUScorer.return_num(au) for au in au_dict if 'c' in au]))
+            frame: AUScorer.find_all_lcs(
+                sorted([AUScorer.return_num(au) for au in au_dict if 'pose' not in au and 'gaze' not in au]))
             for frame, au_dict in presence_dict.items()}
 
         for frame, emotion_dict in frame_emotion_dict.items():

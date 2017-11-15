@@ -33,7 +33,7 @@ from sklearn.svm import SVC
 
 all_emotions = AUScorer.emotion_list()
 all_emotions.extend(['Neutral', 'Sleeping'])
-
+au_emote_dict = json.load(open('au_emotes.txt'))
 
 def use_classifier(classifier, au_train, au_test, target_train, target_test):
     classifier.fit(au_train, target_train)
@@ -120,9 +120,11 @@ def validate_thresh_dict(thresh_dict):
                                                                                        'true_pos'] / prev_total_pos
 
 
-def make_emotion_data(emotion):
+def make_emotion_data(emotion, short_patient):
+    keys = [x for x in au_emote_dict if short_patient not in x]
+    values = [au_emote_dict[x] for x in keys if x]
     emotion_data = [item for sublist in
-                    [b for b in [[a for a in x.values() if a] for x in json.load(open('au_emotes.txt')).values() if x]
+                    [b for b in [[a for a in x.values() if a] for x in values]
                      if b]
                     for item in sublist if item[1] in [emotion, 'Neutral', 'Sleeping']]
 
@@ -156,10 +158,34 @@ def make_emotion_data(emotion):
             index += 1
         if index == happy_len:
             break
-
+    au_train = au_data
+    target_train = target_data
     n_samples = len(au_data)
 
-    au_train, au_test, target_train, target_test = train_test_split(au_data, target_data, test_size=.1)
+    keys = [x for x in au_emote_dict if short_patient in x]
+    values = [au_emote_dict[x] for x in keys if x]
+    emotion_data = [item for sublist in
+                    [b for b in [[a for a in x.values() if a] for x in values]
+                     if b]
+                    for item in sublist if item[1] in [emotion, 'Neutral', 'Sleeping']]
+    au_data = []
+    target_data = []
+    aus_list = AUScorer.AUList
+    for frame in emotion_data:
+        aus = frame[0]
+        if frame[1] == emotion:
+            au_data.append([float(aus[str(x)]) for x in aus_list])
+            # target_data.append(frame[1])
+            target_data.append(1)
+    for frame in emotion_data:
+        aus = frame[0]
+        if frame[1] != 'Happy':
+            au_data.append([float(aus[str(x)]) for x in aus_list])
+            # target_data.append('Neutral/Sleeping')
+            target_data.append(0)
+    au_test = au_data
+    target_test = target_data
+
     return au_train, au_test, target_train, target_test
 
 
@@ -216,7 +242,7 @@ def vis(short_patient, thresh_file=None):
 
             OpenDir = sys.argv[sys.argv.index('-d') + 1]
             os.chdir(OpenDir)
-            au_train, au_test, target_train, target_test = make_emotion_data('Happy')
+            au_train, au_test, target_train, target_test = make_emotion_data('Happy', short_patient)
 
             classifier_dict = {
                 KNeighborsClassifier(): 'KNeighbors',
