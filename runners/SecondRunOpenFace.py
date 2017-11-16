@@ -346,6 +346,8 @@ def process_eyebrows(dir: str, file) -> dict:
 
 
 if __name__ == '__main__':
+    os.environ["CUDA_VISIBLE_DEVICES"] = "1"
+    print(os.environ)
     patient_directory = sys.argv[sys.argv.index('-od') + 1]
     # second_runner_files = os.path.join(patient_directory, 'edited_files.txt')
     # already_ran = json.load(open(second_runner_files)) if os.path.exists(second_runner_files) else {}
@@ -361,8 +363,10 @@ if __name__ == '__main__':
     multiprocessingNum = 2  # 2 GPUs
 
     bar = progressbar.ProgressBar(redirect_stdout=True, max_value=len(files))
-    for i, _ in enumerate(Pool(multiprocessingNum).imap(f, files, chunksize=100), 1):
-        bar.update(i)
+    # for i, _ in enumerate(Pool(multiprocessingNum).imap(f, files, chunksize=100), 1):
+    #     bar.update(i)
+    # for i, vid in enumerate(files, 1):
+
 
     json.dump(eyebrow_dict, open(os.path.join(patient_directory, 'eyebrow_dict.txt'), 'w'))
     # json.dump(already_ran, open(second_runner_files, 'w'), indent='\t')
