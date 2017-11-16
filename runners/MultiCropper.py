@@ -50,4 +50,3 @@ if __name__ == '__main__':
         env={'CUDA_VISIBLE_DEVICES': '1'})
     p1.wait()
     p2.wait()
-   
