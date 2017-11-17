@@ -6,11 +6,12 @@ import shutil
 import subprocess
 import sys
 
-from OpenFaceScripts.runners.SecondRunOpenFace import height_width, get_vid_from_dir
+sys.path.append('/home/gvelchuru/')
+
 from OpenFaceScripts.runners.VidCropper import duration
 from OpenFaceScripts.scoring import AUScorer
+from OpenFaceScripts.helpers.SecondRunHelper import height_width, get_vid_from_dir
 
-sys.path.append('/home/gvelchuru/')
 
 import numpy as np
 import matplotlib
@@ -122,7 +123,7 @@ remaining = [x for x in files if x not in vids_done]
 out_q = multiprocessing.Manager().Queue()
 f = functools.partial(mark_vid_dir, out_q)
 bar = progressbar.ProgressBar(redirect_stdout=True, max_value=len(remaining))
-for i, _ in enumerate(Pool(1).imap(f, remaining), 1):
+for i, _ in enumerate(Pool().imap(f, remaining), 1):
     bar.update(i)
 while not out_q.empty():
     vids_done.update(out_q.get())

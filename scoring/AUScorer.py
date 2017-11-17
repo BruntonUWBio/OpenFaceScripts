@@ -16,6 +16,7 @@ from OpenFaceScripts.scoring import OpenFaceScorer
 AUList = ['1', '2', '4', '5', '6', '7', '9', '10', '12', '14', '15', '17', '20', '23', '25', '26', '28', '45',
           'gaze_0_x', 'gaze_0_y', 'gaze_0_z',
           'gaze_1_x', 'gaze_1_y', 'gaze_1_z', 'pose_Rx', 'pose_Ry', 'pose_Rz']
+LandmarkList = [x for x in AUList if 'gaze' not in x and 'pose' not in x]
 include_similar = False
 
 
@@ -72,7 +73,7 @@ class AUScorer:
         # Creates a dictionary mapping each frame in the video to a dictionary containing the frame's action units
         # and their amounts
         au_dict = {frame: {label: open_face_arr[frame][num] for label, num in open_face_dict.items()
-                           if 'AU' in label or 'pose_R' in label or 'gaze_angle' in label} for frame in
+                           if any(x in label for x in ['gaze', 'pose_R', 'AU'])} for frame in
                    range(len(open_face_arr))}
         self.x_y_dict = {frame: {label: open_face_arr[frame][num] for label, num in open_face_dict.items()
                                  if 'x_' in label or 'y_' in label} for frame in range(len(open_face_arr))}

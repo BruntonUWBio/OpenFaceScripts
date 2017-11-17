@@ -8,10 +8,10 @@ from collections import defaultdict
 from os.path import join
 
 import progressbar
+from helpers.SecondRunHelper import process_eyebrows, get_vid_from_dir
 from pathos.multiprocessing import ProcessingPool as Pool
 
 sys.path.append('/home/gvelchuru/')
-from OpenFaceScripts.runners.SecondRunOpenFace import get_vid_from_dir
 from OpenFaceScripts import AUGui
 from OpenFaceScripts.scoring import AUScorer
 from OpenFaceScripts.runners import SecondRunOpenFace, VidCropper
@@ -95,7 +95,7 @@ if __name__ == '__main__':
     if len(remaining) > 0:
         patient_dirs.sort()
         out_q = multiprocessing.Manager().Queue()
-        eyebrow_dict = SecondRunOpenFace.process_eyebrows(OpenDir, open(join(OpenDir, 'eyebrows.txt')))
+        eyebrow_dict = process_eyebrows(OpenDir, open(join(OpenDir, 'eyebrows.txt')))
         f = functools.partial(find_scores, out_q, eyebrow_dict)
         bar = progressbar.ProgressBar(redirect_stdout=True, max_value=len(remaining))
         for i, _ in enumerate(Pool().imap(f, remaining), 1):
