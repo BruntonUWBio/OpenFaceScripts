@@ -10,7 +10,7 @@ import numpy as np
 import cv2
 
 from OpenFaceScripts.runners import VidCropper, CropAndOpenFace
-from scoring.AUScorer import AUScorer
+from OpenFaceScripts.scoring import AUScorer
 
 
 def make_more_bright(ims, i):

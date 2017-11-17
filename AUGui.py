@@ -304,7 +304,7 @@ class AUGui(wx.Frame):
             for au in au_dict_keys:
                 if 'c' in au:
                     r_label = au.replace('c', 'r')
-                    au_int = AUScorer.AUScorer.return_num(au)
+                    au_int = return_num(au)
                     label += '{0} ({1}) = {2} \n'.format(str(au_int), name_dict[au_int], str(
                         au_dict[r_label]) if r_label in au_dict_keys else 'Present')
         self.au_text.SetValue(label)

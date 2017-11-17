@@ -22,12 +22,12 @@ class CropThread:
         vid = self.vids[i]
         im_dir = os.path.splitext(vid)[0] + '_cropped'
         try:
-            if not os.path.exists(im_dir) or 'ran_open_face.txt' not in os.listdir(im_dir):
-                VidCropper.duration(vid)
-                CropAndOpenFace.VideoImageCropper(vid=vid, im_dir=im_dir,
-                                                  crop_txt_files=crop_txt_files, nose_txt_files=nose_txt_files,
-                                                  vid_mode=True)
-                open(os.path.join(im_dir, 'ran_open_face.txt'), 'w').write('Yes')
+            # if not os.path.exists(im_dir) or 'ran_open_face.txt' not in os.listdir(im_dir):
+            VidCropper.duration(vid)
+            CropAndOpenFace.VideoImageCropper(vid=vid, im_dir=im_dir,
+                                              crop_txt_files=crop_txt_files, nose_txt_files=nose_txt_files,
+                                              vid_mode=True)
+            open(os.path.join(im_dir, 'ran_open_face.txt'), 'w').write('Yes')
         except Exception as e:
             print(e)
 

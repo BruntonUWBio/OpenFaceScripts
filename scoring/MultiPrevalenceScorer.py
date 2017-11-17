@@ -15,13 +15,14 @@ from collections import defaultdict
 from os.path import join
 
 import progressbar
+from helpers.SecondRunHelper import process_eyebrows, get_vid_from_dir
 from pathos.multiprocessing import ProcessingPool as Pool
+
 sys.path.append('/home/gvelchuru/')
 
-from OpenFaceScripts.runners.SecondRunOpenFace import get_vid_from_dir
 from OpenFaceScripts import AUGui
 from OpenFaceScripts.scoring import AUScorer
-from OpenFaceScripts.runners import SecondRunOpenFace, VidCropper
+from OpenFaceScripts.runners import VidCropper
 
 
 # def find_scores(out_q, eyebrow_dict, patient_dir):
@@ -96,7 +97,7 @@ def find_scores(out_q, eyebrow_dict, patient_dir):
             include_eyebrows = False
         all_dict_file = join(patient_dir, 'all_dict.txt')
         if os.path.exists(all_dict_file):
-            patient_emotions = AUScorer.AUScorer.make_frame_emotions(json.load(open(all_dict_file)))
+            patient_emotions = make_frame_emotions(json.load(open(all_dict_file)))
         else:
             patient_emotions = AUScorer.AUScorer(patient_dir, include_eyebrows=include_eyebrows).emotions
         csv_path = join(patient_dir, os.path.basename(patient_dir).replace('_cropped', '') + '_emotions.csv')
@@ -184,7 +185,7 @@ if __name__ == '__main__':
     remaining = [x for x in patient_dirs if x not in scores or not scores[x]]
     if len(remaining) > 0:
         out_q = multiprocessing.Manager().Queue()
-        eyebrow_dict = SecondRunOpenFace.process_eyebrows(OpenDir, open(join(OpenDir, 'eyebrows.txt')))
+        eyebrow_dict = process_eyebrows(OpenDir, open(join(OpenDir, 'eyebrows.txt')))
         f = functools.partial(find_scores, out_q, eyebrow_dict)
         bar = progressbar.ProgressBar(redirect_stdout=True, max_value=len(remaining))
         for i, _ in enumerate(Pool(1).imap(f, remaining), 1):

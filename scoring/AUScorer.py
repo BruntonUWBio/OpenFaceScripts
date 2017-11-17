@@ -21,12 +21,12 @@ include_similar = False
 
 def emotion_templates(include_similar: bool) -> dict:
     emotion_templates = {
-        'Angry': [[23, 7, 17, 4, 2]],
-        'Fear': [[20, 4, 1, 5, 7]],
-        'Sad': [[15, 1, 4, 17, 10]],
-        'Happy': [[12, 6, 26, 10, 23]],
-        'Surprise': [[27, 2, 1, 5, 26]],
-        'Disgust': [[9, 7, 4, 17, 6]]
+        'Angry': [list(map(str, [23, 7, 17, 4, 2]))],
+        'Fear': [list(map(str, [20, 4, 1, 5, 7]))],
+        'Sad': [list(map(str, [15, 1, 4, 17, 10]))],
+        'Happy': [list(map(str, [12, 6, 26, 10, 23]))],
+        'Surprise': [list(map(str, [27, 2, 1, 5, 26]))],
+        'Disgust': [list(map(str, [9, 7, 4, 17, 6]))]
     }
     if include_similar:
         similar_arr = [
@@ -86,26 +86,26 @@ class AUScorer:
                     if 'c' in label and curr_frame[label] == 1 and not self.is_eyebrow(label):
                         r_label = label.replace('c', 'r')
                         if r_label not in curr_frame:
-                            stripped_label = str(AUScorer.return_num(label))
-                            self.presence_dict[frame][stripped_label] = curr_frame[label]
+                            stripped_label = str(return_num(label))
+                            self.presence_dict[frame][stripped_label] = str(curr_frame[label])
                         else:
-                            stripped_r_label = str(AUScorer.return_num(r_label))
-                            self.presence_dict[frame][stripped_r_label] = curr_frame[r_label]
+                            stripped_r_label = str(return_num(r_label))
+                            self.presence_dict[frame][stripped_r_label] = str(curr_frame[r_label])
                     elif 'r' in label and not self.is_eyebrow(label):
                         c_label = label.replace('r', 'c')
                         if c_label not in curr_frame:
-                            self.presence_dict[frame][str(AUScorer.return_num(label))] = curr_frame[label]
+                            self.presence_dict[frame][str(return_num(label))] = str(curr_frame[label])
                     elif 'pose_R' in label or 'gaze' in label:
                         self.presence_dict[frame][label] = curr_frame[label]
 
-        frame_emotions = self.make_frame_emotions(self.presence_dict)
+        frame_emotions = make_frame_emotions(self.presence_dict)
         self.emotions = {frame: frame_dict for frame, frame_dict in frame_emotions.items()}
         os.chdir(original_dir)
 
     def is_eyebrow(self, label: str) -> bool:
         if self.include_eyebrows:
             return False
-        elif self.return_num(label) in [1, 2, 4]:
+        elif return_num(label) in [1, 2, 4]:
             return True
 
     def get_emotions(self, index: int):
@@ -117,50 +117,46 @@ class AUScorer:
         """
         return self.emotions[index] if index in self.emotions else None
 
-    @staticmethod
-    def make_frame_emotions(presence_dict):
-        frame_emotion_dict = {
-            frame: AUScorer.find_all_lcs(
-                sorted([AUScorer.return_num(au) for au in au_dict if 'pose' not in au and 'gaze' not in au]))
-            for frame, au_dict in presence_dict.items()}
 
-        for frame, emotion_dict in frame_emotion_dict.items():
-            for emotion in emotion_dict:
-                emotion_dict[emotion] = [x for x in emotion_dict[emotion] if x]  # remove empties
-                for index, arr in enumerate(emotion_dict[emotion]):
-                    emotion_dict[emotion][index] = AUScorer.convert_aus_to_scores(arr, frame, presence_dict)
-                if len(emotion_dict[emotion]):
-                    emotion_dict[emotion] = max([x for x in emotion_dict[emotion]])
-                else:
-                    emotion_dict[emotion] = None
-            frame_emotion_dict[frame] = {k: v for k, v in emotion_dict.items() if v}
+def make_frame_emotions(presence_dict: dict) -> dict:
+    frame_emotion_dict = {
+        frame: find_all_lcs(
+            sorted([au for au in au_dict if 'pose' not in au and 'gaze' not in au]))
+        for frame, au_dict in presence_dict.items()}
 
-        return frame_emotion_dict
+    for frame, emotion_dict in frame_emotion_dict.items():
+        for emotion in emotion_dict:
+            emotion_dict[emotion] = [x for x in emotion_dict[emotion] if x]  # remove empties
+            for index, arr in enumerate(emotion_dict[emotion]):
+                emotion_dict[emotion][index] = convert_aus_to_scores(arr, frame, presence_dict)
+            if len(emotion_dict[emotion]):
+                emotion_dict[emotion] = max([x for x in emotion_dict[emotion]])
+            else:
+                emotion_dict[emotion] = None
+        frame_emotion_dict[frame] = {k: v for k, v in emotion_dict.items() if v}
 
-    @staticmethod
-    def find_all_lcs(aus):
-        emote_template = emotion_templates(include_similar)
-        return {
-            emotion: [back_track(LCS(template, aus), template, aus, len(template), len(aus)) for template in
-                      template_arr]
-            for emotion, template_arr in emote_template.items()}
+    return frame_emotion_dict
 
-    @staticmethod
-    def convert_aus_to_scores(arr, frame, presence_dict):
-        frame_presence = presence_dict[frame]
-        scores = []
-        for au in frame_presence:
-            if 'c' in au and AUScorer.return_num(au) in arr:
-                r_label = au.replace('c', 'r')
-                if r_label in frame_presence:
-                    scores.append(frame_presence[r_label])
-                else:
-                    scores.append(1.0)
-        return np.sum(scores)
 
-    @staticmethod
-    def return_num(string):
-        return int(re.findall("\d+", string)[0])
+def find_all_lcs(aus: list) -> dict:
+    emote_template = emotion_templates(include_similar)
+    return {
+        emotion: [back_track(LCS(template, aus), template, aus, len(template), len(aus)) for template in
+                  template_arr]
+        for emotion, template_arr in emote_template.items()}
+
+
+def convert_aus_to_scores(arr: list, frame: int, presence_dict: dict) -> np.ndarray:
+    frame_presence = presence_dict[frame]
+    scores = []
+    for au, val in ((x, val) for x, val in frame_presence.items() if x in arr):
+        scores.append(val)
+    scores = np.array(scores, np.float64)
+    return np.sum(scores)
+
+
+def return_num(string: str) -> int:
+    return int(re.findall("\d+", string)[0])
 
 
 def emotion_list() -> list:
@@ -172,7 +168,7 @@ def emotion_list() -> list:
     return ['Angry', 'Fear', 'Sad', 'Happy', 'Surprise', 'Disgust']
 
 
-def replace(arr, num, other_num):
+def replace(arr: list, num: int, other_num: int):
     """
     Remove an element from an array and add another one.
     :param arr: Array.

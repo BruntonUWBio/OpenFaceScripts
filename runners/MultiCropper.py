@@ -7,18 +7,11 @@
 import glob
 import json
 import os
-import sys
-import threading
 import subprocess
-from threading import Thread
-from plumbum import local
-
-import progressbar
-from pathos.multiprocessing import ProcessingPool as Pool
-from multiprocessing import Process
+import sys
 
 sys.path.append('/home/gvelchuru/')
-from OpenFaceScripts.runners import CropAndOpenFace, VidCropper
+from OpenFaceScripts.runners import CropAndOpenFace
 
 if __name__ == '__main__':
 
@@ -37,7 +30,10 @@ if __name__ == '__main__':
         nose_txt_files = CropAndOpenFace.find_txt_files(nose_path)
         json.dump(nose_txt_files, open(nose_file, mode='w'))
 
-    vids = [x for x in glob.glob(os.path.join(path, '*.avi'))]
+    folder_components = os.listdir(path)
+    vids = [x for x in glob.glob(os.path.join(path, '*.avi')) if (
+    os.path.splitext(x)[0] + '_cropped' not in folder_components or 'ran_open_face.txt' not in os.listdir(
+        os.path.join(path, os.path.splitext(x)[0] + '_cropped')))]
 
     mid = len(vids) // 2
     p1 = subprocess.Popen(
