@@ -1,5 +1,5 @@
 VidCropper
 **********
 
-.. automodule:: VidCropper
+.. automodule:: runners.VidCropper
     :members:

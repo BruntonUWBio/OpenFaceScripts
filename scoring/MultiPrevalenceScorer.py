@@ -15,70 +15,16 @@ from collections import defaultdict
 from os.path import join
 
 import progressbar
-from helpers.SecondRunHelper import process_eyebrows, get_vid_from_dir
 from pathos.multiprocessing import ProcessingPool as Pool
 
 sys.path.append('/home/gvelchuru/')
 
 from OpenFaceScripts import AUGui
+from OpenFaceScripts.scoring.AUScorer import make_frame_emotions
 from OpenFaceScripts.scoring import AUScorer
+from OpenFaceScripts.helpers.SecondRunHelper import process_eyebrows, get_vid_from_dir
 from OpenFaceScripts.runners import VidCropper
 
-
-# def find_scores(out_q, eyebrow_dict, patient_dir):
-#     """
-#     Finds the scores for a specific patient directory
-#     :param out_q: Queue to output results to (for multiprocessing)
-#     :param patient_dir: Directory to look in
-#     """
-#     patient_dir_scores = {patient_dir: defaultdict()}
-#     try:
-#         if patient_dir in eyebrow_dict['Eyebrows']:
-#             include_eyebrows = True
-#         else:
-#             include_eyebrows = False
-#         all_dict_file = join(patient_dir, 'all_dict.txt')
-#         if os.path.exists(all_dict_file):
-#             patient_emotions = {int(k): v for k, v in json.load(open(all_dict_file)).items()}
-#         else:
-#             patient_emotions = AUScorer.AUScorer(patient_dir, include_eyebrows=include_eyebrows).emotions
-#         csv_path = join(patient_dir, os.path.basename(patient_dir).replace('_cropped', '') + '_emotions.csv')
-#         num_frames = int(VidCropper.duration(get_vid_from_dir(patient_dir)) * 30)
-#
-#         if os.path.exists(csv_path):
-#             csv_dict = AUGui.csv_emotion_reader(csv_path)
-#             if csv_dict:
-#                 annotated_ratio = int(num_frames / len(csv_dict))
-#                 if annotated_ratio == 0:
-#                     annotated_ratio = 1
-#                 csv_dict = {i * annotated_ratio: c for i, c in csv_dict.items()}
-#                 for i in [x for x in csv_dict.keys() if 'None' not in csv_dict[x]]:
-#                     if i in patient_emotions:
-#                         emotionDict = patient_emotions[i]
-#                         if emotionDict:
-#                             reverse_emotions = AUScorer.reverse_emotions(emotionDict)
-#                             max_value = max(reverse_emotions.keys())
-#                             max_emotions = {'Max': reverse_emotions[max_value]}
-#                             prevalence_score = AUGui.prevalence_score(emotionDict)
-#                             if 1 < len(reverse_emotions.keys()):
-#                                 second_prediction = reverse_emotions[sorted(reverse_emotions.keys(), reverse=True)[1]]
-#                                 max_emotions['Second'] = second_prediction
-#                             to_write = csv_dict[i]
-#                             if to_write == 'Surprised':
-#                                 to_write = 'Surprise'
-#                             elif to_write == 'Disgusted':
-#                                 to_write = 'Disgust'
-#                             elif to_write == 'Afraid':
-#                                 to_write = 'Fear'
-#                             patient_dir_scores[patient_dir][i] = [max_emotions, prevalence_score, to_write]
-#                         else:
-#                             patient_dir_scores[patient_dir][i] = None
-#                     else:
-#                         patient_dir_scores[patient_dir][i] = None
-#         out_q.put(patient_dir_scores)
-#     except FileNotFoundError as e:
-#         print(e)
-#         pass
 
 def find_scores(out_q, eyebrow_dict, patient_dir):
     """
@@ -86,9 +32,6 @@ def find_scores(out_q, eyebrow_dict, patient_dir):
     :param out_q: Queue to output results to (for multiprocessing)
     :param patient_dir: Directory to look in
     """
-    if os.path.exists(join(patient_dir, os.path.basename(patient_dir).replace('_cropped',
-                                                                              '') + '_emotions.csv')) and 'cb46' in patient_dir:
-        print('kurwa')
     patient_dir_scores = {patient_dir: defaultdict()}
     try:
         if patient_dir in eyebrow_dict['Eyebrows']:
@@ -138,6 +81,7 @@ def find_scores(out_q, eyebrow_dict, patient_dir):
         print(e)
         pass
 
+
 def write_to_log(log):
     csv_writer = csv.writer(log)
     agreeing_scores = {}
@@ -182,13 +126,13 @@ if __name__ == '__main__':
     if os.path.exists(scores_file):
         scores = json.load(open(scores_file))
     original_len = len(scores)
-    remaining = [x for x in patient_dirs if x not in scores or not scores[x]]
+    remaining = [x for x in patient_dirs if x not in scores]
     if len(remaining) > 0:
         out_q = multiprocessing.Manager().Queue()
         eyebrow_dict = process_eyebrows(OpenDir, open(join(OpenDir, 'eyebrows.txt')))
         f = functools.partial(find_scores, out_q, eyebrow_dict)
         bar = progressbar.ProgressBar(redirect_stdout=True, max_value=len(remaining))
-        for i, _ in enumerate(Pool(1).imap(f, remaining), 1):
+        for i, _ in enumerate(Pool().imap(f, remaining), 1):
             bar.update(i)
         while not out_q.empty():
             scores.update(out_q.get())

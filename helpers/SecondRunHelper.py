@@ -1,14 +1,15 @@
-import functools
+import copy
+import glob
 import json
+import os
+import shutil
+import subprocess
 import sys
 
-import copy
-import os
-import subprocess
-import shutil
-import numpy as np
 import cv2
+import numpy as np
 
+sys.path.append('/home/gvelchuru/')
 from OpenFaceScripts.runners import VidCropper, CropAndOpenFace
 from OpenFaceScripts.scoring import AUScorer
 
@@ -305,6 +306,12 @@ def get_vid_from_dir(vid_dir: str) -> str:
 
 
 def process_eyebrows(dir: str, file) -> dict:
+    """
+    Turn the file containing eyebrow information into eyebrow dict
+    :param dir: Folder containing patients
+    :param file: Eyebrow file
+    :return: eyebrow dict
+    """
     exact_dict = {'Eyebrows': [], 'No Eyebrows': []}
     lines = file.read().splitlines()
     if lines[0] == "eyebrows:":
@@ -341,7 +348,10 @@ if __name__ == '__main__':
 
     files = [x for x in (os.path.join(patient_directory, vid_dir) for vid_dir in os.listdir(patient_directory)) if
              (os.path.isdir(x) and 'au.txt' in os.listdir(x))]
-
+    left = sys.argv[sys.argv.index('vl') + 1]
+    right = sys.argv[sys.argv.index('vr') + 1]
     eyebrow_file = os.path.join(patient_directory, 'eyebrows.txt')
     eyebrow_dict = process_eyebrows(patient_directory, open(eyebrow_file)) if os.path.exists(eyebrow_file) else {}
-    f = functools.partial(process_vid_dir, eyebrow_dict)
+    json.dump(eyebrow_dict, open(os.path.join(patient_directory, 'eyebrow_dict.txt'), 'w'))
+    for vid_dir in files[left:right]:
+        process_vid_dir(eyebrow_dict, vid_dir)

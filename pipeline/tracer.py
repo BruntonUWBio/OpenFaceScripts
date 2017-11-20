@@ -27,7 +27,7 @@ emotion_data = []
 scores_file = 'au_emotes.txt'
 scores = json.load(open(scores_file))
 scores_dict = scores[os.path.basename(vid_dir)]
-classifier = joblib.load('happy_trained_RandomForest.pkl')
+classifier = joblib.load('Happy_trained_RandomForest.pkl')
 
 for frame in range(int(duration(vid) * 30)):
     if str(frame) in scores_dict:

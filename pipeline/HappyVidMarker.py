@@ -69,7 +69,7 @@ def bar_movie(vid, vid_dir, times, corr):
 
 scores_file = 'au_emotes.txt'
 scores = json.load(open(scores_file))
-classifier = joblib.load('happy_trained_RandomForest_with_pose.pkl')
+classifier = joblib.load('Happy_trained_RandomForest_with_pose.pkl')
 
 
 def mark_vid_dir(out_q, vid_dir):
@@ -108,9 +108,10 @@ def mark_vid_dir(out_q, vid_dir):
         os.path.join(vid_dir, 'combined_out.avi'), vid, os.path.join(vid_dir, 'inter_out.avi')), shell=True).wait()
 
     bar_movie(os.path.join(vid_dir, 'combined_out.avi'), vid_dir, times, corr)
-
-    out_q.put({vid_dir: sum(corr) / len(corr)})
-
+    if corr:
+        out_q.put({vid_dir: sum(corr) / len(corr)})
+    else:
+        out_q.put({vid_dir: 0})
 
 vids_file = 'happy_predic_vids.txt'
 vids_done = {}

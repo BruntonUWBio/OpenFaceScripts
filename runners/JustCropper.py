@@ -5,6 +5,7 @@ import sys
 
 import progressbar
 from OpenFaceScripts.runners import CropAndOpenFace, VidCropper
+from helpers.HalfCropper import try_cropping
 
 if __name__ == '__main__':
     path = sys.argv[sys.argv.index('-id') + 1]
@@ -31,8 +32,4 @@ if __name__ == '__main__':
     for index, vid in enumerate(vids):
         bar.update(index)
         im_dir = os.path.splitext(vid)[0] + '_cropped'
-        try:
-            VidCropper.duration(vid)
-            VidCropper.CropVid(vid, im_dir, crop_txt_files, nose_txt_files)
-        except Exception as e:
-            print(e)
+        try_cropping(vid, im_dir)

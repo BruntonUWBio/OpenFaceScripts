@@ -39,16 +39,24 @@
       <div class="documentwrapper">
         <div class="bodywrapper">
           <div class="body" role="main">
-            
-  <div class="section" id="module-AUScorer">
-<span id="auscorer"></span><h1>AUScorer<a class="headerlink" href="#module-AUScorer" title="Permalink to this headline">¶</a></h1>
+
+              <div class="section" id="module-scoring.AUScorer">
+                  <span id="auscorer"></span>
+                  <h1>AUScorer<a class="headerlink" href="#module-scoring.AUScorer"
+                                 title="Permalink to this headline">¶</a></h1>
 <span class="target" id="module-AUScorer"></span><dl class="class">
-<dt id="AUScorer.AUScorer">
-<em class="property">class </em><code class="descclassname">AUScorer.</code><code class="descname">AUScorer</code><span class="sig-paren">(</span><em>dir</em>, <em>au_thresh=0</em>, <em>include_eyebrows=True</em><span class="sig-paren">)</span><a class="headerlink" href="#AUScorer.AUScorer" title="Permalink to this definition">¶</a></dt>
+                  <dt id="scoring.AUScorer.AUScorer">
+                      <em class="property">class </em><code class="descclassname">scoring.AUScorer.</code><code
+                          class="descname">AUScorer</code><span class="sig-paren">(</span><em>dir</em>,
+                      <em>au_thresh=0</em>, <em>include_eyebrows=True</em><span class="sig-paren">)</span><a
+                          class="headerlink" href="#scoring.AUScorer.AUScorer"
+                          title="Permalink to this definition">¶</a></dt>
 <dd><p>Main scorer</p>
 <dl class="method">
-<dt id="AUScorer.AUScorer.get_emotions">
-<code class="descname">get_emotions</code><span class="sig-paren">(</span><em>index</em><span class="sig-paren">)</span><a class="headerlink" href="#AUScorer.AUScorer.get_emotions" title="Permalink to this definition">¶</a></dt>
+    <dt id="scoring.AUScorer.AUScorer.get_emotions">
+        <code class="descname">get_emotions</code><span class="sig-paren">(</span><em>index: int</em><span
+            class="sig-paren">)</span><a class="headerlink" href="#scoring.AUScorer.AUScorer.get_emotions"
+                                         title="Permalink to this definition">¶</a></dt>
 <dd><p>Gets the emotions at a specific index.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -65,8 +73,12 @@
 </dd></dl>
 
 <dl class="function">
-<dt id="AUScorer.emotion_list">
-<code class="descclassname">AUScorer.</code><code class="descname">emotion_list</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#AUScorer.emotion_list" title="Permalink to this definition">¶</a></dt>
+    <dt id="scoring.AUScorer.emotion_list">
+        <code class="descclassname">scoring.AUScorer.</code><code class="descname">emotion_list</code><span
+            class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; list<a class="headerlink"
+                                                                                       href="#scoring.AUScorer.emotion_list"
+                                                                                       title="Permalink to this definition">¶</a>
+    </dt>
 <dd><p>Create standard emotion list.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -79,8 +91,11 @@
 </dd></dl>
 
 <dl class="function">
-<dt id="AUScorer.replace">
-<code class="descclassname">AUScorer.</code><code class="descname">replace</code><span class="sig-paren">(</span><em>arr</em>, <em>num</em>, <em>other_num</em><span class="sig-paren">)</span><a class="headerlink" href="#AUScorer.replace" title="Permalink to this definition">¶</a></dt>
+    <dt id="scoring.AUScorer.replace">
+        <code class="descclassname">scoring.AUScorer.</code><code class="descname">replace</code><span
+            class="sig-paren">(</span><em>arr: list</em>, <em>num: int</em>, <em>other_num: int</em><span
+            class="sig-paren">)</span><a class="headerlink" href="#scoring.AUScorer.replace"
+                                         title="Permalink to this definition">¶</a></dt>
 <dd><p>Remove an element from an array and add another one.
 :param arr: Array.
 :param num: Element to remove.
@@ -89,8 +104,12 @@
 </dd></dl>
 
 <dl class="function">
-<dt id="AUScorer.reverse_emotions">
-<code class="descclassname">AUScorer.</code><code class="descname">reverse_emotions</code><span class="sig-paren">(</span><em>emotionDict</em><span class="sig-paren">)</span><a class="headerlink" href="#AUScorer.reverse_emotions" title="Permalink to this definition">¶</a></dt>
+    <dt id="scoring.AUScorer.reverse_emotions">
+        <code class="descclassname">scoring.AUScorer.</code><code class="descname">reverse_emotions</code><span
+            class="sig-paren">(</span><em>emotionDict</em><span class="sig-paren">)</span><a class="headerlink"
+                                                                                             href="#scoring.AUScorer.reverse_emotions"
+                                                                                             title="Permalink to this definition">¶</a>
+    </dt>
 <dd><p>Creates a dictionary mapping between the values of emotions and all the emotions with that value.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />

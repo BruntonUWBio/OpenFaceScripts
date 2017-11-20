@@ -33,7 +33,7 @@ from sklearn.svm import SVC
 
 all_emotions = AUScorer.emotion_list()
 all_emotions.extend(['Neutral', 'Sleeping'])
-au_emote_dict = json.load(open('au_emotes.txt'))
+
 
 def use_classifier(classifier, au_train, au_test, target_train, target_test):
     classifier.fit(au_train, target_train)
@@ -126,11 +126,10 @@ def make_emotion_data(emotion, short_patient):
     emotion_data = [item for sublist in
                     [b for b in [[a for a in x.values() if a] for x in values]
                      if b]
-                    for item in sublist if item[1] in [emotion, 'Neutral', 'Sleeping']]
+                    for item in sublist]
 
     ck_dict = json.load(open('ck_dict.txt'))
     for patient_list in ck_dict.values():
-        if patient_list[1] in [None, emotion]:
             to_add = AUScorer.AUList
             au_dict = {str(int(float(x))): y for x, y in patient_list[0].items()}
             for add in to_add:
@@ -278,6 +277,7 @@ def vis(short_patient, thresh_file=None):
 if __name__ == '__main__':
     OpenDir = sys.argv[sys.argv.index('-d') + 1]
     os.chdir(OpenDir)
+    au_emote_dict = json.load(open('au_emotes.txt'))
     patient_dirs = glob.glob('*cropped')  # Directories have been previously cropped by CropAndOpenFace
     scores = defaultdict()
     scores_file = 'old_all_dict.txt'
@@ -290,17 +290,17 @@ if __name__ == '__main__':
         short_direc = direc[:direc.index('_')]
         short_patient_list.add(short_direc)
 
-    to_remove = set()
-    # For debugging
-    for short_patient in short_patient_list:
-        for png in glob.glob(os.path.join(OpenDir, '*.png'), recursive=False):
-            if short_patient in png and short_patient in short_patient_list:
-                to_remove.add(short_patient)
-    for to_r in to_remove:
-        short_patient_list.remove(to_r)
-    print(short_patient_list)
+    # to_remove = set()
+    # # For debugging
+    # for short_patient in short_patient_list:
+    #     for png in glob.glob(os.path.join(OpenDir, '*.png'), recursive=False):
+    #         if short_patient in png and short_patient in short_patient_list:
+    #             to_remove.add(short_patient)
+    # for to_r in to_remove:
+    #     short_patient_list.remove(to_r)
 
     # vis('all', 'threshes.txt')
 
     for short_patient in short_patient_list:
+        print(short_patient)
         vis(short_patient)

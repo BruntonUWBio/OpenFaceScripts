@@ -1,5 +1,5 @@
 ImageCropper
 ************
 
-.. automodule:: ImageCropper
+.. automodule:: runners.ImageCropper
     :members:

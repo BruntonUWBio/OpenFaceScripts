@@ -10,9 +10,10 @@ Contents:
     AUScorer
     MultiPrevalenceScorer
     ImageCropper
-    MultiCropper
+            MultiCropAndOpenFace
     VidCropper
     SecondRunOpenFace
+            CropAndOpenFace
 
 
 

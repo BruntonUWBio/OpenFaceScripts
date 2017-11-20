@@ -6,8 +6,9 @@ import sys
 
 import numpy as np
 import progressbar
+from autosklearn.estimators import AutoSklearnClassifier
 from pathos.multiprocessing import ProcessingPool as Pool
-from scoring import AUScorer
+from OpenFaceScripts.scoring import AUScorer
 from sklearn import metrics
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.externals import joblib
@@ -42,24 +43,23 @@ def restricted_k_neighbors(out_q):
     target_data = np.array(target_data)
 
     au_train, au_test, target_train, target_test = train_test_split(au_data, target_data, test_size=.1)
-    use_classifier(out_q, au_train, au_test, target_train, target_test, KNeighborsClassifier())
+    use_classifier(out_q, au_train, au_test, target_train, target_test, 'Happy', KNeighborsClassifier())
 
 
 def make_emotion_data(emotion):
     emotion_data = [item for sublist in
                     [b for b in [[a for a in x.values() if a] for x in json.load(open('au_emotes.txt')).values() if x]
                      if b]
-                    for item in sublist if item[1] in [emotion, 'Neutral', 'Sleeping']]
+                    for item in sublist]
 
     ck_dict = json.load(open('ck_dict.txt'))
     for patient_list in ck_dict.values():
-        if patient_list[1] in [None, emotion]:
-            to_add = AUScorer.AUList
-            au_dict = {str(int(float(x))): y for x, y in patient_list[0].items()}
-            for add in to_add:
-                if add not in au_dict:
-                    au_dict[add] = 0
-            emotion_data.append([au_dict, patient_list[1]])
+        to_add = AUScorer.AUList
+        au_dict = {str(int(float(x))): y for x, y in patient_list[0].items()}
+        for add in to_add:
+            if add not in au_dict:
+                au_dict[add] = 0
+        emotion_data.append([au_dict, patient_list[1]])
 
     au_data = []
     target_data = []
@@ -68,69 +68,53 @@ def make_emotion_data(emotion):
         aus = frame[0]
         if frame[1] == emotion:
             au_data.append([float(aus[str(x)]) for x in aus_list])
-            # target_data.append(frame[1])
             target_data.append(1)
     index = 0
     happy_len = len(target_data)
     for frame in emotion_data:
         aus = frame[0]
-        if frame[1] != 'Happy':
+        if frame[1] != emotion:
             au_data.append([float(aus[str(x)]) for x in aus_list])
-            # target_data.append('Neutral/Sleeping')
             target_data.append(0)
             index += 1
         if index == happy_len:
             break
 
-    n_samples = len(au_data)
-
     au_train, au_test, target_train, target_test = train_test_split(au_data, target_data, test_size=.1)
     return au_train, au_test, target_train, target_test
 
 
-def use_classifier(out_q, au_train, au_test, target_train, target_test, classifier):
+def use_classifier(out_q, au_train: list, au_test: list, target_train: list, target_test: list, emotion: str,
+                   classifier):
     classifier.fit(au_train, target_train)
 
     expected = target_test
     predicted = classifier.predict(au_test)
 
+    out_q.put(emotion + '\n')
     out_q.put("Classification report for classifier %s:\n%s\n"
               % (classifier, metrics.classification_report(expected, predicted)))
     out_q.put("Confusion matrix:\n%s\n" % metrics.confusion_matrix(expected, predicted))
-    joblib.dump(classifier, 'happy_trained_RandomForest_with_pose.pkl')
+    joblib.dump(classifier, '{0}_trained_RandomForest_with_pose.pkl'.format(emotion))
 
 
 OpenDir = sys.argv[sys.argv.index('-d') + 1]
 os.chdir(OpenDir)
 
-# classifiers = [
-#     KNeighborsClassifier(),
-#     SVC(kernel='linear'),
-#     SVC(),
-#     # GaussianProcessClassifier(),
-#     # DecisionTreeClassifier(),
-#     RandomForestClassifier(),
-#     MLPClassifier(),
-#     AdaBoostClassifier(),
-#     GaussianNB(),
-#     QuadraticDiscriminantAnalysis(),
-# ]
-
 classifiers = [
     RandomForestClassifier(),
 ]
-
-au_train, au_test, target_train, target_test = make_emotion_data('Happy')
-
-out_q = multiprocessing.Manager().Queue()
 out_file = open('classifier_performance.txt', 'w')
-f = functools.partial(use_classifier, out_q, au_train, au_test, target_train, target_test)
-bar = progressbar.ProgressBar(redirect_stdout=True, max_value=len(classifiers))
-for i, _ in enumerate(Pool().imap(f, classifiers), 1):
-    bar.update(i)
-# print('auto-sklearn...')
-# use_classifier(out_q, au_data, target_data, classification.AutoSklearnClassifier())
+out_q = multiprocessing.Manager().Queue()
 
+index = 1
+bar = progressbar.ProgressBar(redirect_stdout=True, max_value=len(classifiers) * len(AUScorer.emotion_list()))
+for emotion in AUScorer.emotion_list():
+    au_train, au_test, target_train, target_test = make_emotion_data(emotion)
+    f = functools.partial(use_classifier, out_q, au_train, au_test, target_train, target_test, emotion)
+    for i, _ in enumerate(Pool().imap(f, classifiers)):
+        bar.update(index)
+        index += 1
 
 # print('restricted_k_neighbors...')
 # restricted_k_neighbors(out_q)

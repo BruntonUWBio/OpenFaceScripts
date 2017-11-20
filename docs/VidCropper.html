@@ -39,18 +39,29 @@
       <div class="documentwrapper">
         <div class="bodywrapper">
           <div class="body" role="main">
-            
-  <div class="section" id="module-VidCropper">
-<span id="vidcropper"></span><h1>VidCropper<a class="headerlink" href="#module-VidCropper" title="Permalink to this headline">¶</a></h1>
+
+              <div class="section" id="module-runners.VidCropper">
+                  <span id="vidcropper"></span>
+                  <h1>VidCropper<a class="headerlink" href="#module-runners.VidCropper"
+                                   title="Permalink to this headline">¶</a></h1>
 <span class="target" id="module-VidCropper"></span><dl class="class">
-<dt id="VidCropper.CropVid">
-<em class="property">class </em><code class="descclassname">VidCropper.</code><code class="descname">CropVid</code><span class="sig-paren">(</span><em>vid</em>, <em>directory</em>, <em>crop_txt_files</em>, <em>nose_txt_files</em><span class="sig-paren">)</span><a class="headerlink" href="#VidCropper.CropVid" title="Permalink to this definition">¶</a></dt>
+                  <dt id="runners.VidCropper.CropVid">
+                      <em class="property">class </em><code class="descclassname">runners.VidCropper.</code><code
+                          class="descname">CropVid</code><span class="sig-paren">(</span><em>vid</em>,
+                      <em>directory</em>, <em>crop_txt_files</em>, <em>nose_txt_files</em><span
+                          class="sig-paren">)</span><a class="headerlink" href="#runners.VidCropper.CropVid"
+                                                       title="Permalink to this definition">¶</a></dt>
 <dd><p>Main cropper class</p>
 </dd></dl>
 
 <dl class="function">
-<dt id="VidCropper.crop_and_resize">
-<code class="descclassname">VidCropper.</code><code class="descname">crop_and_resize</code><span class="sig-paren">(</span><em>vid</em>, <em>width</em>, <em>height</em>, <em>x_min</em>, <em>y_min</em>, <em>directory</em>, <em>resize_factor</em><span class="sig-paren">)</span><a class="headerlink" href="#VidCropper.crop_and_resize" title="Permalink to this definition">¶</a></dt>
+    <dt id="runners.VidCropper.crop_and_resize">
+        <code class="descclassname">runners.VidCropper.</code><code class="descname">crop_and_resize</code><span
+            class="sig-paren">(</span><em>vid</em>, <em>width</em>, <em>height</em>, <em>x_min</em>, <em>y_min</em>,
+        <em>directory</em>, <em>resize_factor</em><span class="sig-paren">)</span><a class="headerlink"
+                                                                                     href="#runners.VidCropper.crop_and_resize"
+                                                                                     title="Permalink to this definition">¶</a>
+    </dt>
 <dd><p>Crops a video and then resizes it</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -72,14 +83,22 @@
 </dd></dl>
 
 <dl class="function">
-<dt id="VidCropper.duration">
-<code class="descclassname">VidCropper.</code><code class="descname">duration</code><span class="sig-paren">(</span><em>vid_file_path</em><span class="sig-paren">)</span><a class="headerlink" href="#VidCropper.duration" title="Permalink to this definition">¶</a></dt>
+    <dt id="runners.VidCropper.duration">
+        <code class="descclassname">runners.VidCropper.</code><code class="descname">duration</code><span
+            class="sig-paren">(</span><em>vid_file_path</em><span class="sig-paren">)</span><a class="headerlink"
+                                                                                               href="#runners.VidCropper.duration"
+                                                                                               title="Permalink to this definition">¶</a>
+    </dt>
 <dd><p>Video’s duration in seconds, return a float number</p>
 </dd></dl>
 
 <dl class="function">
-<dt id="VidCropper.probe">
-<code class="descclassname">VidCropper.</code><code class="descname">probe</code><span class="sig-paren">(</span><em>vid_file_path</em><span class="sig-paren">)</span><a class="headerlink" href="#VidCropper.probe" title="Permalink to this definition">¶</a></dt>
+    <dt id="runners.VidCropper.probe">
+        <code class="descclassname">runners.VidCropper.</code><code class="descname">probe</code><span
+            class="sig-paren">(</span><em>vid_file_path</em><span class="sig-paren">)</span><a class="headerlink"
+                                                                                               href="#runners.VidCropper.probe"
+                                                                                               title="Permalink to this definition">¶</a>
+    </dt>
 <dd><p>Give a json from ffprobe command line</p>
 <p>&#64;vid_file_path : The absolute (full) path of the video file, string.</p>
 </dd></dl>

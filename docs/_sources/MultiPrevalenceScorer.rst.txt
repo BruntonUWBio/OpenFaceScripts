@@ -1,5 +1,5 @@
 MultiPrevalenceScorer
 *********************
 
-.. automodule:: MultiPrevalenceScorer
+.. automodule:: scoring.MultiPrevalenceScorer
     :members:

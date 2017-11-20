@@ -1,5 +1,5 @@
 AUScorer
 ********
 
-.. automodule:: AUScorer
+.. automodule:: scoring.AUScorer
     :members:

@@ -4,19 +4,13 @@ import os
 import subprocess
 import sys
 
-from OpenFaceScripts import crop_image_sequence
 from runners import CropAndOpenFace
+from runners.CropAndOpenFace import find_txt_files
 
 vid_dir = sys.argv[(sys.argv.index('-vd')) + 1]
 os.chdir(vid_dir)
 avis = sorted(glob.glob(os.path.join(vid_dir, '**/*.avi'), recursive=True))
 outFile = os.path.join(vid_dir, os.path.basename(vid_dir))
-
-# outString = 'avimerge -o {0}.avi -i '.format(outFile)
-# outString += ' {0}  {1}'.format(avis[0], avis[1])
-# subprocess.Popen(outString, shell=True).wait()
-# old_outfile = copy.deepcopy(outFile)
-# new_outfile = None
 
 if not os.path.lexists(outFile):
     os.mkdir(outFile)

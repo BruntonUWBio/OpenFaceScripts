@@ -1,3 +1,9 @@
+"""
+.. module CropAndOpenFace
+    :synopsis: Contains a method for running OpenFace on a video directory as well as a class which crops a video and
+    runs OpenFace on it
+"""
+
 import glob
 import json
 import os

@@ -7,6 +7,7 @@ emotions = ['Neutral', 'Angry', 'Contempt', 'Disgust', 'Fear', 'Happy', 'Sad', '
 au_list = [1, 2, 4, 5, 6, 7, 9, 10, 12, 14, 15, 17, 20, 23, 25, 26, 28, 45]
 OpenDir = sys.argv[sys.argv.index('-od') + 1]
 ck_dir = sys.argv[sys.argv.index('-ck') + 1]
+assert os.path.exists(ck_dir)
 ck_dict = {}
 facs_dir = os.path.join(ck_dir, 'FACS')
 for facs_file in glob.glob(os.path.join(facs_dir, '**/*.txt'), recursive=True):
@@ -41,7 +42,11 @@ for emotion_file in glob.glob(os.path.join(emotion_dir, '**/*.txt'), recursive=T
         line = file.read()
         line = [x for x in line.strip().split() if x]
         line = complex(line[0]).real
-        ck_dict[basename].append(emotions[int(line)])
+        emotion = emotions[int(line)]
+        if emotion == 'Surprised':
+            ck_dict[basename].append('Surprise')
+        else:
+            ck_dict[basename].append(emotion)
 for name in ck_dict:
     if len(ck_dict[name]) == 1:
         ck_dict[name].append(None)

@@ -8,13 +8,13 @@ from collections import defaultdict
 from os.path import join
 
 import progressbar
-from helpers.SecondRunHelper import process_eyebrows, get_vid_from_dir
 from pathos.multiprocessing import ProcessingPool as Pool
 
 sys.path.append('/home/gvelchuru/')
+from OpenFaceScripts.helpers.SecondRunHelper import process_eyebrows, get_vid_from_dir
 from OpenFaceScripts import AUGui
 from OpenFaceScripts.scoring import AUScorer
-from OpenFaceScripts.runners import SecondRunOpenFace, VidCropper
+from OpenFaceScripts.runners import VidCropper
 
 
 def find_scores(out_q, eyebrow_dict, patient_dir):
@@ -37,7 +37,6 @@ def find_scores(out_q, eyebrow_dict, patient_dir):
             presence_dict = AUScorer.AUScorer(patient_dir).presence_dict
 
         AU_presences = presence_dict
-
 
         csv_path = join(patient_dir, os.path.basename(patient_dir).replace('_cropped', '') + '_emotions.csv')
         num_frames = int(VidCropper.duration(get_vid_from_dir(patient_dir)) * 30)
@@ -91,7 +90,7 @@ if __name__ == '__main__':
     if os.path.exists(scores_file):
         scores = json.load(open(scores_file))
     original_len = len(scores)
-    remaining = [x for x in patient_dirs if x not in scores or not scores[x]]
+    remaining = [x for x in patient_dirs if x not in scores]
     if len(remaining) > 0:
         patient_dirs.sort()
         out_q = multiprocessing.Manager().Queue()

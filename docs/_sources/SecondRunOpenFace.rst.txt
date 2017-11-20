@@ -1,5 +1,5 @@
 SecondRunOpenFace
 *****************
 
-.. automodule:: SecondRunOpenFace
+.. automodule:: runners.SecondRunOpenFace
     :members:

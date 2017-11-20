@@ -1,5 +1,5 @@
-MultiCropper
-************
+MultiCropAndOpenFace
+********************
 
-.. automodule:: MultiCropper
+.. automodule:: runners.MultiCropAndOpenFace
     :members:
