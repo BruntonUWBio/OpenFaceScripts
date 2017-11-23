@@ -121,15 +121,16 @@ def validate_thresh_dict(thresh_dict):
 
 
 def make_emotion_data(emotion, short_patient):
-    keys = [x for x in au_emote_dict if short_patient not in x]
-    values = [au_emote_dict[x] for x in keys if x]
-    emotion_data = [item for sublist in
-                    [b for b in [[a for a in x.values() if a] for x in values]
-                     if b]
-                    for item in sublist]
+    if short_patient == "all":
+        diction = json.load(open('au_emotes.txt'))
+        emotion_data = [item for sublist in
+                        [b for b in
+                         [[a for a in x.values() if a] for x in diction.values() if x]
+                         if b]
+                        for item in sublist]
 
-    ck_dict = json.load(open('ck_dict.txt'))
-    for patient_list in ck_dict.values():
+        ck_dict = json.load(open('ck_dict.txt'))
+        for patient_list in ck_dict.values():
             to_add = AUScorer.AUList
             au_dict = {str(int(float(x))): y for x, y in patient_list[0].items()}
             for add in to_add:
@@ -137,59 +138,96 @@ def make_emotion_data(emotion, short_patient):
                     au_dict[add] = 0
             emotion_data.append([au_dict, patient_list[1]])
 
-    au_data = []
-    target_data = []
-    aus_list = AUScorer.AUList
-    for frame in emotion_data:
-        aus = frame[0]
-        if frame[1] == emotion:
-            au_data.append([float(aus[str(x)]) for x in aus_list])
-            # target_data.append(frame[1])
-            target_data.append(1)
-    index = 0
-    happy_len = len(target_data)
-    for frame in emotion_data:
-        aus = frame[0]
-        if frame[1] != 'Happy':
-            au_data.append([float(aus[str(x)]) for x in aus_list])
-            # target_data.append('Neutral/Sleeping')
-            target_data.append(0)
-            index += 1
-        if index == happy_len:
-            break
-    au_train = au_data
-    target_train = target_data
-    n_samples = len(au_data)
+        au_data = []
+        target_data = []
+        aus_list = AUScorer.AUList
+        for frame in emotion_data:
+            aus = frame[0]
+            if frame[1] == emotion:
+                au_data.append([float(aus[str(x)]) for x in aus_list])
+                target_data.append(1)
+        index = 0
+        happy_len = len(target_data)
+        for frame in emotion_data:
+            aus = frame[0]
+            if frame[1] and frame[1] != emotion:
+                au_data.append([float(aus[str(x)]) for x in aus_list])
+                target_data.append(0)
+                index += 1
+            if index == happy_len:
+                break
 
-    keys = [x for x in au_emote_dict if short_patient in x]
-    values = [au_emote_dict[x] for x in keys if x]
-    emotion_data = [item for sublist in
-                    [b for b in [[a for a in x.values() if a] for x in values]
-                     if b]
-                    for item in sublist if item[1] in [emotion, 'Neutral', 'Sleeping']]
-    au_data = []
-    target_data = []
-    aus_list = AUScorer.AUList
-    for frame in emotion_data:
-        aus = frame[0]
-        if frame[1] == emotion:
-            au_data.append([float(aus[str(x)]) for x in aus_list])
-            # target_data.append(frame[1])
-            target_data.append(1)
-    for frame in emotion_data:
-        aus = frame[0]
-        if frame[1] != 'Happy':
-            au_data.append([float(aus[str(x)]) for x in aus_list])
-            # target_data.append('Neutral/Sleeping')
-            target_data.append(0)
-    au_test = au_data
-    target_test = target_data
+        au_train, au_test, target_train, target_test = train_test_split(au_data, target_data, test_size=.1)
+        return au_train, au_test, target_train, target_test
+    else:
+        keys = [x for x in au_emote_dict if short_patient not in x]
+        values = [au_emote_dict[x] for x in keys if x]
+        emotion_data = [item for sublist in
+                        [b for b in [[a for a in x.values() if a] for x in values]
+                         if b]
+                        for item in sublist if item[1]]
 
-    return au_train, au_test, target_train, target_test
+        ck_dict = json.load(open('ck_dict.txt'))
+        for patient_list in ck_dict.values():
+            to_add = AUScorer.AUList
+            au_dict = {str(int(float(x))): y for x, y in patient_list[0].items()}
+            for add in to_add:
+                if add not in au_dict:
+                    au_dict[add] = 0
+            emotion_data.append([au_dict, patient_list[1]])
+
+        au_data = []
+        target_data = []
+        aus_list = AUScorer.AUList
+        for frame in emotion_data:
+            aus = frame[0]
+            if frame[1] == emotion:
+                au_data.append([float(aus[str(x)]) for x in aus_list])
+                # target_data.append(frame[1])
+                target_data.append(1)
+        index = 0
+        happy_len = len(target_data)
+        for frame in emotion_data:
+            aus = frame[0]
+            if frame[1] and frame[1] != emotion:
+                au_data.append([float(aus[str(x)]) for x in aus_list])
+                # target_data.append('Neutral/Sleeping')
+                target_data.append(0)
+                index += 1
+            if index == happy_len:
+                break
+        au_train = au_data.copy()
+        target_train = target_data.copy()
+        n_samples = len(au_data)
+
+        keys = [x for x in au_emote_dict if short_patient in x]
+        values = [au_emote_dict[x] for x in keys if x]
+        emotion_data = [item for sublist in
+                        [b for b in [[a for a in x.values() if a] for x in values]
+                         if b]
+                        for item in sublist]
+        au_data = []
+        target_data = []
+        aus_list = AUScorer.AUList
+        for frame in emotion_data:
+            aus = frame[0]
+            if frame[1] == emotion:
+                au_data.append([float(aus[str(x)]) for x in aus_list])
+                # target_data.append(frame[1])
+                target_data.append(1)
+        for frame in emotion_data:
+            aus = frame[0]
+            if frame[1] and frame[1] != emotion:
+                au_data.append([float(aus[str(x)]) for x in aus_list])
+                # target_data.append('Neutral/Sleeping')
+                target_data.append(0)
+        au_test = au_data
+        target_test = target_data
+
+        return au_train, au_test, target_train, target_test
 
 
 def vis(short_patient, thresh_file=None):
-    print(short_patient)
     if not thresh_file:
         thresh_file = short_patient + '_threshes.txt'
     thresh_dict = json.load(open(thresh_file)) if os.path.exists(thresh_file) else {}
@@ -241,7 +279,7 @@ def vis(short_patient, thresh_file=None):
 
             OpenDir = sys.argv[sys.argv.index('-d') + 1]
             os.chdir(OpenDir)
-            au_train, au_test, target_train, target_test = make_emotion_data('Happy', short_patient)
+            au_train, au_test, target_train, target_test = make_emotion_data(emotion, short_patient)
 
             classifier_dict = {
                 KNeighborsClassifier(): 'KNeighbors',
@@ -274,15 +312,30 @@ def vis(short_patient, thresh_file=None):
             # plt.show()
 
 
+def make_scores_file(scores_file):
+    all_dict = multiprocessing.Manager().dict()
+    Pool().map(functools.partial(add_patient_dir_scores, all_dict), patient_dirs)
+    json.dump(all_dict, open(scores_file, 'w'))
+
+
+def add_patient_dir_scores(all_dict, patient_dir):
+    if 'all_dict.txt' in os.listdir(patient_dir):
+        emotion_dict = AUScorer.make_frame_emotions(json.load(open(os.path.join(patient_dir, 'all_dict.txt'))))
+    else:
+        emotion_dict = AUScorer.AUScorer(patient_dir).emotions
+    all_dict[patient_dir.replace('_cropped', '')] = emotion_dict
+
+
 if __name__ == '__main__':
     OpenDir = sys.argv[sys.argv.index('-d') + 1]
     os.chdir(OpenDir)
     au_emote_dict = json.load(open('au_emotes.txt'))
     patient_dirs = glob.glob('*cropped')  # Directories have been previously cropped by CropAndOpenFace
     scores = defaultdict()
-    scores_file = 'old_all_dict.txt'
-    if os.path.exists(scores_file):
-        scores = json.load(open(scores_file))
+    scores_file = 'predic_substring_dict.txt'
+    if not os.path.exists(scores_file):
+        make_scores_file(scores_file)
+    scores = json.load(open(scores_file))
     csv_file = json.load(open('scores.txt'))
     csv_file = clean_csv(csv_file)
     short_patient_list = set()
@@ -299,8 +352,10 @@ if __name__ == '__main__':
     # for to_r in to_remove:
     #     short_patient_list.remove(to_r)
 
-    # vis('all', 'threshes.txt')
+    vis('all', 'threshes.txt')
 
-    for short_patient in short_patient_list:
-        print(short_patient)
+    bar = ProgressBar(max_value=len(short_patient_list))
+    for i, short_patient in enumerate(short_patient_list, 1):
         vis(short_patient)
+        bar.update(i)
+        # for i, _ in enumerate(Pool().imap(vis, short_patient_list)):

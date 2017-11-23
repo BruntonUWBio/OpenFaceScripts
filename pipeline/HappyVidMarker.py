@@ -12,7 +12,6 @@ from OpenFaceScripts.runners.VidCropper import duration
 from OpenFaceScripts.scoring import AUScorer
 from OpenFaceScripts.helpers.SecondRunHelper import height_width, get_vid_from_dir
 
-
 import numpy as np
 import matplotlib
 
@@ -21,7 +20,6 @@ import matplotlib.animation as manimation
 import matplotlib.pyplot as plt
 import progressbar
 from sklearn.externals import joblib
-
 
 from pathos.multiprocessing import ProcessingPool as Pool
 
@@ -113,6 +111,7 @@ def mark_vid_dir(out_q, vid_dir):
     else:
         out_q.put({vid_dir: 0})
 
+
 vids_file = 'happy_predic_vids.txt'
 vids_done = {}
 original_len = len(vids_done)
@@ -122,9 +121,11 @@ if os.path.exists(vids_file):
     vids_done = json.load(vids_file)
 remaining = [x for x in files if x not in vids_done]
 out_q = multiprocessing.Manager().Queue()
-f = functools.partial(mark_vid_dir, out_q)
+# f = functools.partial(mark_vid_dir, out_q)
 bar = progressbar.ProgressBar(redirect_stdout=True, max_value=len(remaining))
-for i, _ in enumerate(Pool().imap(f, remaining), 1):
+# for i, _ in enumerate(Pool().imap(f, remaining), 1):
+for i, remain in enumerate(remaining, 1):
+    mark_vid_dir(out_q, remain)
     bar.update(i)
 while not out_q.empty():
     vids_done.update(out_q.get())

@@ -53,28 +53,28 @@ def find_scores(out_q, eyebrow_dict, patient_dir):
                     if i in AU_presences:
                         auDict = AU_presences[i]
                         for au in aus_list:
-                            if str(au) not in auDict:
-                                if au not in auDict:
-                                    auDict[str(au)] = 0
-                        if auDict:
-                            to_write = csv_dict[i]
-                            if to_write == 'Surprised':
-                                to_write = 'Surprise'
-                            elif to_write == 'Disgusted':
-                                to_write = 'Disgust'
-                            elif to_write == 'Afraid':
-                                to_write = 'Fear'
-                            patient_dir_scores[patient_dir][i] = [auDict, to_write]
-                        else:
-                            patient_dir_scores[patient_dir][i] = None
+                            if au not in auDict:
+                                auDict[str(au)] = 0
+                        if len(auDict) != len(aus_list):
+                            print('kurwa')
+                        to_write = csv_dict[i]
+                        if to_write == 'Surprised':
+                            to_write = 'Surprise'
+                        elif to_write == 'Disgusted':
+                            to_write = 'Disgust'
+                        elif to_write == 'Afraid':
+                            to_write = 'Fear'
+                        patient_dir_scores[patient_dir][i] = [auDict, to_write]
                     else:
                         patient_dir_scores[patient_dir][i] = None
         else:
             for i in range(num_frames):
                 if i in AU_presences:
                     auDict = AU_presences[i]
-                    if auDict:
-                        patient_dir_scores[patient_dir][i] = [auDict, None]
+                    for au in aus_list:
+                        if au not in auDict:
+                            auDict[str(au)] = 0
+                    patient_dir_scores[patient_dir][i] = [auDict, None]
         out_q.put(patient_dir_scores)
     except FileNotFoundError as e:
         print(e)

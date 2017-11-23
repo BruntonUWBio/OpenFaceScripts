@@ -44,7 +44,6 @@ def emotion_templates(include_similar: bool) -> dict:
 
     return emotion_templates
 
-
 class AUScorer:
     """
     Main scorer
@@ -98,9 +97,7 @@ class AUScorer:
                             self.presence_dict[frame][str(return_num(label))] = str(curr_frame[label])
                     elif 'pose_R' in label or 'gaze' in label:
                         self.presence_dict[frame][label] = curr_frame[label]
-
-        frame_emotions = make_frame_emotions(self.presence_dict)
-        self.emotions = {frame: frame_dict for frame, frame_dict in frame_emotions.items()}
+        self.emotions = make_frame_emotions(self.presence_dict)
         os.chdir(original_dir)
 
     def is_eyebrow(self, label: str) -> bool:

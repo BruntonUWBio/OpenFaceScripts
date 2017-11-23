@@ -18,7 +18,7 @@ if __name__ == '__main__':
 
     num_GPUs = 2
     processes = []
-    indices = np.linspace(0, len(files), num=num_GPUs + 1)
+    indices = list(map(int, np.linspace(0, len(files), num=num_GPUs + 1)))
     for index in range(len(indices) - 1):
         processes.append(subprocess.Popen(
             ['python3', '/home/gvelchuru/OpenFaceScripts/helpers/SecondRunHelper.py', '-od', patient_directory, '-vl',

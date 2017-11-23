@@ -8,6 +8,8 @@ import numpy as np
 import progressbar
 from autosklearn.estimators import AutoSklearnClassifier
 from pathos.multiprocessing import ProcessingPool as Pool
+
+sys.path.append('/home/gvelchuru/')
 from OpenFaceScripts.scoring import AUScorer
 from sklearn import metrics
 from sklearn.ensemble import RandomForestClassifier
@@ -20,7 +22,7 @@ def restricted_k_neighbors(out_q):
     emotion_data = [item for sublist in
                     [b for b in [[a for a in x.values() if a] for x in json.load(open('au_emotes.txt')).values() if x]
                      if b]
-                    for item in sublist if item[1] in ['Happy', 'Neutral', 'Sleeping']]
+                    for item in sublist if item[1]]
     au_data = []
     target_data = []
     aus_list = sorted([12, 6, 26, 10, 23])
@@ -73,7 +75,7 @@ def make_emotion_data(emotion):
     happy_len = len(target_data)
     for frame in emotion_data:
         aus = frame[0]
-        if frame[1] != emotion:
+        if frame[1] and frame[1] != emotion:
             au_data.append([float(aus[str(x)]) for x in aus_list])
             target_data.append(0)
             index += 1

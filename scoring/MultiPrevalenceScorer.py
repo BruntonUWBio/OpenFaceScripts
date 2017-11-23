@@ -26,10 +26,10 @@ from OpenFaceScripts.helpers.SecondRunHelper import process_eyebrows, get_vid_fr
 from OpenFaceScripts.runners import VidCropper
 
 
-def find_scores(out_q, eyebrow_dict, patient_dir):
+def find_scores(out_dict, eyebrow_dict, patient_dir):
     """
     Finds the scores for a specific patient directory
-    :param out_q: Queue to output results to (for multiprocessing)
+    :param out_dict: Dictionary to output results to (for multiprocessing)
     :param patient_dir: Directory to look in
     """
     patient_dir_scores = {patient_dir: defaultdict()}
@@ -76,7 +76,7 @@ def find_scores(out_q, eyebrow_dict, patient_dir):
                             patient_dir_scores[patient_dir][i] = None
                     else:
                         patient_dir_scores[patient_dir][i] = None
-        out_q.put(patient_dir_scores)
+        out_dict.update(patient_dir_scores)
     except FileNotFoundError as e:
         print(e)
         pass
@@ -127,20 +127,19 @@ if __name__ == '__main__':
         scores = json.load(open(scores_file))
     original_len = len(scores)
     remaining = [x for x in patient_dirs if x not in scores]
+    out_dict = multiprocessing.Manager().dict()
+    out_dict.update(scores)
     if len(remaining) > 0:
-        out_q = multiprocessing.Manager().Queue()
         eyebrow_dict = process_eyebrows(OpenDir, open(join(OpenDir, 'eyebrows.txt')))
-        f = functools.partial(find_scores, out_q, eyebrow_dict)
+        f = functools.partial(find_scores, out_dict, eyebrow_dict)
         bar = progressbar.ProgressBar(redirect_stdout=True, max_value=len(remaining))
         for i, _ in enumerate(Pool().imap(f, remaining), 1):
             bar.update(i)
-        while not out_q.empty():
-            scores.update(out_q.get())
-        if len(scores) != original_len:
-            json.dump(scores, open(scores_file, 'w'))
-    for patient_dir in (x for x in scores if scores[x]):
+        if len(out_dict) != original_len:
+            json.dump(out_dict, open(scores_file, 'w'))
+    for patient_dir in (x for x in out_dict if out_dict[x]):
         # Maps frame to list if frame has been detected by OpenFace and it has been annotated
-        out_scores[patient_dir] = {frame: score_list for frame, score_list in scores[patient_dir].items() if
+        out_scores[patient_dir] = {frame: score_list for frame, score_list in out_dict[patient_dir].items() if
                                    score_list}
 
     with open(join(OpenDir, 'OpenFaceScores.csv'), 'w') as log:

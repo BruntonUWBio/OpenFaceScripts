@@ -86,8 +86,9 @@ def throw_vid_in_reverse(vid: str, vid_dir: str, include_eyebrows: bool) -> None
     if not os.path.exists(out_dir):
         os.mkdir(out_dir)
     if 'inter_out.avi' not in os.listdir(out_dir):
-        subprocess.Popen("ffmpeg -y -i {0} -vf reverse {1}".format(vid, os.path.join(out_dir, 'inter_out.avi')),
-                         shell=True).wait()
+        subprocess.Popen(
+            "ffmpeg -loglevel quiet -y -i {0} -vf reverse {1}".format(vid, os.path.join(out_dir, 'inter_out.avi')),
+            shell=True).wait()
     assert 'inter_out.avi' in os.listdir(out_dir)
     if 'au.txt' not in os.listdir(out_dir):
         CropAndOpenFace.run_open_face(out_dir, vid_mode=True, remove_intermediates=False)
@@ -205,7 +206,8 @@ def invert_colors(vid: str, vid_dir: str, include_eyebrows: bool) -> dict:
 
 def invert(vid: str, out_dir: str) -> dict:
     subprocess.Popen(
-        ['ffmpeg', '-y', '-i', vid, '-vf', 'negate', os.path.join(out_dir, 'inter_out.avi')]).wait()
+        ['ffmpeg', '-loglevel', 'quiet', '-y', '-i', vid, '-vf', 'negate',
+         os.path.join(out_dir, 'inter_out.avi')]).wait()
     if 'inter_out.avi' in os.listdir(out_dir):
         CropAndOpenFace.run_open_face(out_dir, True, True)
     if 'au.txt' in os.listdir(out_dir):
@@ -225,7 +227,8 @@ def spec_gamma_change(vid: str, vid_dir: str, gamma: float) -> dict:
     if not os.path.exists(out_dir):
         os.mkdir(out_dir)
     subprocess.Popen(
-        ['ffmpeg', '-y', '-i', vid, '-vf', 'eq=gamma={0}'.format(gamma), os.path.join(out_dir, 'inter_out.avi')]).wait()
+        ['ffmpeg', '-loglevel', 'quiet', '-y', '-i', vid, '-vf', 'eq=gamma={0}'.format(gamma),
+         os.path.join(out_dir, 'inter_out.avi')]).wait()
     if 'inter_out.avi' in os.listdir(out_dir):
         CropAndOpenFace.run_open_face(out_dir, True, True)
     if 'au.txt' in os.listdir(out_dir):
@@ -348,10 +351,10 @@ if __name__ == '__main__':
 
     files = [x for x in (os.path.join(patient_directory, vid_dir) for vid_dir in os.listdir(patient_directory)) if
              (os.path.isdir(x) and 'au.txt' in os.listdir(x))]
-    left = sys.argv[sys.argv.index('vl') + 1]
-    right = sys.argv[sys.argv.index('vr') + 1]
+    left = sys.argv[sys.argv.index('-vl') + 1]
+    right = sys.argv[sys.argv.index('-vr') + 1]
     eyebrow_file = os.path.join(patient_directory, 'eyebrows.txt')
     eyebrow_dict = process_eyebrows(patient_directory, open(eyebrow_file)) if os.path.exists(eyebrow_file) else {}
     json.dump(eyebrow_dict, open(os.path.join(patient_directory, 'eyebrow_dict.txt'), 'w'))
-    for vid_dir in files[left:right]:
+    for vid_dir in files[int(left):int(right)]:
         process_vid_dir(eyebrow_dict, vid_dir)
