@@ -315,7 +315,9 @@ def vis(short_patient, thresh_file=None):
 def make_scores_file(scores_file):
     all_dict = multiprocessing.Manager().dict()
     Pool().map(functools.partial(add_patient_dir_scores, all_dict), patient_dirs)
-    json.dump(all_dict, open(scores_file, 'w'))
+    dump_dict = dict()
+    dump_dict.update(all_dict)
+    json.dump(dump_dict, open(scores_file, 'w'))
 
 
 def add_patient_dir_scores(all_dict, patient_dir):

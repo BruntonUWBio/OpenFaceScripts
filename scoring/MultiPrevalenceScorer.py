@@ -136,7 +136,9 @@ if __name__ == '__main__':
         for i, _ in enumerate(Pool().imap(f, remaining), 1):
             bar.update(i)
         if len(out_dict) != original_len:
-            json.dump(out_dict, open(scores_file, 'w'))
+            dump_dict = dict()
+            dump_dict.update(out_dict)
+            json.dump(dump_dict, open(scores_file, 'w'))
     for patient_dir in (x for x in out_dict if out_dict[x]):
         # Maps frame to list if frame has been detected by OpenFace and it has been annotated
         out_scores[patient_dir] = {frame: score_list for frame, score_list in out_dict[patient_dir].items() if
