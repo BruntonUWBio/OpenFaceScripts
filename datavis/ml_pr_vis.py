@@ -264,18 +264,6 @@ def vis(short_patient, thresh_file=None):
             fig = plt.figure()
             ax = fig.gca()
             ax.plot(x_vals, y_vals, label='Substring')
-            # ml_dict = {
-            #     'GaussianNB': [.80, .69],
-            #     'QuadraticDiscriminantAnalysis': [.80, .76],
-            #     'AdaBoostClassifier': [.80, .73],
-            #     'MLPClassifier': [.88, .92],
-            #     'SVCLinear': [.87, .57],
-            #     'KNeighbors': [.89, .92],
-            #     'SVC': [.85, .83],
-            #     'KNeighborsSubstring': [.81, .64]
-            # }
-            # for label in ml_dict:
-            #     ax.plot(ml_dict[label][0], ml_dict[label][1], 'o', label=label)
 
             OpenDir = sys.argv[sys.argv.index('-d') + 1]
             os.chdir(OpenDir)
@@ -306,6 +294,7 @@ def vis(short_patient, thresh_file=None):
             ax.set_xlabel('Precision')
             ax.set_ylabel('Recall')
             ax.legend()
+            fig.tight_layout()
             plt.savefig(short_patient + '_{0}_pr_with_ML_and_pose'.format(emotion))
             plt.close()
 
@@ -345,19 +334,9 @@ if __name__ == '__main__':
         short_direc = direc[:direc.index('_')]
         short_patient_list.add(short_direc)
 
-    # to_remove = set()
-    # # For debugging
-    # for short_patient in short_patient_list:
-    #     for png in glob.glob(os.path.join(OpenDir, '*.png'), recursive=False):
-    #         if short_patient in png and short_patient in short_patient_list:
-    #             to_remove.add(short_patient)
-    # for to_r in to_remove:
-    #     short_patient_list.remove(to_r)
-
     vis('all', 'threshes.txt')
 
     bar = ProgressBar(max_value=len(short_patient_list))
     for i, short_patient in enumerate(short_patient_list, 1):
         vis(short_patient)
         bar.update(i)
-        # for i, _ in enumerate(Pool().imap(vis, short_patient_list)):

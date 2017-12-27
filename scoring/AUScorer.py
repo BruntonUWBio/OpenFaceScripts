@@ -49,14 +49,12 @@ class AUScorer:
     Main scorer
     """
 
-    def __init__(self, dir, au_thresh=0, include_eyebrows=True):
+    def __init__(self, dir, include_eyebrows=True):
         """
         Default constructor.
 
         :param dir: Directory with au files to score
         :type dir: str
-        :param au_thresh: Minimum threshold (0-5) for considering AUs to be present
-        :type au_thresh: float
         :param include_eyebrows: Whether eyebrows should be considered
         :type include_eyebrows: bool
         """
@@ -80,6 +78,7 @@ class AUScorer:
         self.presence_dict = defaultdict()
         for frame in range(len(open_face_arr)):
             if open_face_arr[frame][open_face_dict['success']]:
+                frame = str(frame)
                 self.presence_dict[frame] = defaultdict()
                 curr_frame = au_dict[frame]
                 for label in curr_frame:

@@ -73,7 +73,7 @@ classifier = joblib.load('Happy_trained_RandomForest_with_pose.pkl')
 def mark_vid_dir(out_q, vid_dir):
     if 'inter_out.avi' not in os.listdir(vid_dir):
         shutil.copy(get_vid_from_dir(vid_dir), os.path.join(vid_dir, 'inter_out.avi'))
-    vid = os.path.join(vid_dir, 'out.avi')
+    vid = os.path.join(vid_dir, 'inter_out.avi')
 
     emotion_data = []
     scores_dict = scores[os.path.basename(vid_dir)]
@@ -103,7 +103,7 @@ def mark_vid_dir(out_q, vid_dir):
 
     subprocess.Popen('ffmpeg -loglevel quiet -y -i {1} -i {2} -filter_complex "[0:v]pad=iw*2:ih[int];[int]['
                      '1:v]overlay=W/2:0[vid]" -map [vid] -c:v libx264 -crf 23 -preset veryfast {0}'.format(
-        os.path.join(vid_dir, 'combined_out.avi'), vid, os.path.join(vid_dir, 'inter_out.avi')), shell=True).wait()
+        os.path.join(vid_dir, 'combined_out.avi'), vid, os.path.join(vid_dir, 'out.avi')), shell=True).wait()
 
     bar_movie(os.path.join(vid_dir, 'combined_out.avi'), vid_dir, times, corr)
     if corr:

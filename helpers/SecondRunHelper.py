@@ -93,8 +93,8 @@ def throw_vid_in_reverse(vid: str, vid_dir: str, include_eyebrows: bool) -> None
     if 'au.txt' not in os.listdir(out_dir):
         CropAndOpenFace.run_open_face(out_dir, vid_mode=True, remove_intermediates=False)
     assert os.path.exists(os.path.join(out_dir, 'au.txt'))
-    old_scorer = AUScorer.AUScorer(vid_dir, 0, include_eyebrows)
-    new_scorer = AUScorer.AUScorer(out_dir, 0, include_eyebrows)
+    old_scorer = AUScorer.AUScorer(vid_dir, include_eyebrows)
+    new_scorer = AUScorer.AUScorer(out_dir, include_eyebrows)
     num_frames = int(VidCropper.duration(os.path.join(out_dir, 'inter_out.avi')) * 30)
     new_dict = None
     if len(old_scorer.presence_dict) > 0 or len(new_scorer.presence_dict) > 0:
@@ -177,7 +177,7 @@ def presence_bounds(vid: str, original_crop_coords, scorer: AUScorer.AUScorer) -
 
 def reverse_re_crop_vid_dir(vid: str, vid_dir: str, include_eyebrows: bool) -> dict:
     reverse_vid_dir = os.path.join(vid_dir, 'reverse')
-    scorer = AUScorer.AUScorer(reverse_vid_dir, 0, include_eyebrows)
+    scorer = AUScorer.AUScorer(reverse_vid_dir, include_eyebrows)
     if scorer.presence_dict:
         out_dir = os.path.join(vid_dir, 'reverse_re_crop')
         if not os.path.exists(out_dir):
@@ -188,7 +188,7 @@ def reverse_re_crop_vid_dir(vid: str, vid_dir: str, include_eyebrows: bool) -> d
 
 
 def re_crop_vid_dir(vid, vid_dir, include_eyebrows) -> dict:
-    scorer = AUScorer.AUScorer(vid_dir, 0, include_eyebrows)
+    scorer = AUScorer.AUScorer(vid_dir, include_eyebrows)
     if scorer.presence_dict:
         out_dir = os.path.join(vid_dir, 're_crop')
         if not os.path.exists(out_dir):

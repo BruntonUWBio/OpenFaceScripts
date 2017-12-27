@@ -50,8 +50,8 @@ def find_scores(out_q, eyebrow_dict, patient_dir):
                     annotated_ratio = 1
                 csv_dict = {i * annotated_ratio: c for i, c in csv_dict.items()}
                 for i in [x for x in csv_dict.keys() if 'None' not in csv_dict[x]]:
-                    if i in AU_presences:
-                        auDict = AU_presences[i]
+                    if str(i) in AU_presences:
+                        auDict = AU_presences[str(i)]
                         for au in aus_list:
                             if au not in auDict:
                                 auDict[str(au)] = 0
