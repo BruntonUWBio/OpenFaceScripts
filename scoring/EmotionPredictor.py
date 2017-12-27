@@ -5,8 +5,7 @@ import os
 import sys
 
 import numpy as np
-import progressbar
-from autosklearn.estimators import AutoSklearnClassifier
+# import progressbar
 from pathos.multiprocessing import ProcessingPool as Pool
 
 sys.path.append('/home/gvelchuru/')
@@ -14,8 +13,7 @@ from OpenFaceScripts.scoring import AUScorer
 from sklearn import metrics
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.externals import joblib
-from sklearn.model_selection import train_test_split, cross_val_score, ParameterGrid, GridSearchCV
-from sklearn.neighbors import KNeighborsClassifier
+from sklearn.model_selection import train_test_split, GridSearchCV
 
 
 def make_emotion_data(emotion):
@@ -60,7 +58,8 @@ def use_classifier(out_q, emotion: str,
     out_q.put(emotion + '\n')
     out_q.put('Best params \n')
     out_q.put(classifier.best_params_ + '\n')
-
+    out_q.put("Best f1 score \n")
+    out_q.put(classifier.best_score_ + '\n')
     au_data, target_data = make_emotion_data(emotion)
     # scores = cross_val_score(classifier, au_data, target_data, scoring='precision')
     # out_q.put(emotion + '\n')
@@ -84,21 +83,17 @@ os.chdir(OpenDir)
 
 def make_random_forest(emotion) -> GridSearchCV:
     param_grid = {
-        'n_estimators': np.arange(1, 20),
-        'criterion': ['gini', 'entropy'],
-        'max_features': ['auto'] + list(np.linspace(0, 1, 10)),
-        'max_depth': ['None'] + list(np.arange(1, 10)),
-        'min_samples_split': np.linspace(0, 1, 10),
+        'n_estimators': np.arange(1, 20, 5),
+        'max_features': ['auto'] + list(np.linspace(.1, 1, 5)),
+        'max_depth': [None] + list(np.arange(1, 10, 5)),
+        'min_samples_split': np.linspace(.1, 1, 5),
         'min_samples_leaf': np.linspace(.1, .5, 5),
-        'min_weight_fraction_leaf': np.linspace(0, 1, 10),
-        'max_leaf_nodes': [None] + list(np.arange(1, 100, 10)),
-        'min_impurity_split': np.linspace(0, 1, 10),  # Figure out what this does
+        'min_weight_fraction_leaf': np.linspace(0, .5, 5),
+        'max_leaf_nodes': [None] + list(np.arange(2, 100, 10)),
+        'min_impurity_decrease': np.linspace(0, 1, 5),  # Figure out what this does
         'bootstrap': [True, False],
-        'oob_score': [True, False]
     }
-    # param_grid = ParameterGrid(param_grid)
-    # list_grid = list(param_grid)
-    random_forest = GridSearchCV(RandomForestClassifier(), param_grid, scoring='f1', n_jobs=multiprocessing.cpu_count())
+    random_forest = GridSearchCV(RandomForestClassifier(), param_grid, scoring='f1', n_jobs=multiprocessing.cpu_count(), verbose=5)
     au_data, target_data = make_emotion_data(emotion)
     au_train, au_test, target_train, target_test = train_test_split(au_data, target_data, test_size=.1)
     random_forest.fit(au_train, target_train)
@@ -108,14 +103,14 @@ out_file = open('classifier_performance.txt', 'w')
 out_q = multiprocessing.Manager().Queue()
 
 index = 1
-bar = progressbar.ProgressBar(redirect_stdout=True, max_value=1 * len(AUScorer.emotion_list()))
+# bar = progressbar.ProgressBar(redirect_stdout=True, max_value=1 * len(AUScorer.emotion_list()))
 for emotion in AUScorer.emotion_list():
     classifiers = [
         make_random_forest(emotion),
     ]
-    f = functools.partial(use_classifier, out_q, emotion)
-    for i, _ in enumerate(Pool().imap(f, classifiers)):
-        bar.update(index)
+    for classfier in classifiers:
+        use_classifier(out_q, emotion, classfier)
+        # bar.update(index)
         index += 1
 
 while not out_q.empty():
