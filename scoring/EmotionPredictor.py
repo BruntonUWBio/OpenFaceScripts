@@ -57,9 +57,9 @@ def use_classifier(out_q, emotion: str,
                    classifier: GridSearchCV):
     out_q.put(emotion + '\n')
     out_q.put('Best params \n')
-    out_q.put(classifier.best_params_ + '\n')
+    out_q.put(str(classifier.best_params_) + '\n')
     out_q.put("Best f1 score \n")
-    out_q.put(classifier.best_score_ + '\n')
+    out_q.put(str(classifier.best_score_) + '\n')
     au_data, target_data = make_emotion_data(emotion)
     # scores = cross_val_score(classifier, au_data, target_data, scoring='precision')
     # out_q.put(emotion + '\n')
@@ -74,7 +74,6 @@ def use_classifier(out_q, emotion: str,
     out_q.put("Classification report for classifier %s:\n%s\n"
               % (classifier, metrics.classification_report(expected, predicted)))
     out_q.put("Confusion matrix:\n%s\n" % metrics.confusion_matrix(expected, predicted))
-    joblib.dump(classifier, '{0}_trained_RandomForest_with_pose.pkl'.format(emotion))
 
 
 OpenDir = sys.argv[sys.argv.index('-d') + 1]
@@ -90,13 +89,14 @@ def make_random_forest(emotion) -> GridSearchCV:
         'min_samples_leaf': np.linspace(.1, .5, 5),
         'min_weight_fraction_leaf': np.linspace(0, .5, 5),
         'max_leaf_nodes': [None] + list(np.arange(2, 100, 10)),
-        'min_impurity_decrease': np.linspace(0, 1, 5),  # Figure out what this does
+        'min_impurity_split': np.linspace(0, 1, 5),  # Figure out what this does
         'bootstrap': [True, False],
     }
     random_forest = GridSearchCV(RandomForestClassifier(), param_grid, scoring='f1', n_jobs=multiprocessing.cpu_count(), verbose=5)
     au_data, target_data = make_emotion_data(emotion)
     au_train, au_test, target_train, target_test = train_test_split(au_data, target_data, test_size=.1)
     random_forest.fit(au_train, target_train)
+    joblib.dump(random_forest, '{0}_trained_RandomForest_with_pose.pkl'.format(emotion))
     return random_forest
 
 out_file = open('classifier_performance.txt', 'w')
@@ -104,7 +104,7 @@ out_q = multiprocessing.Manager().Queue()
 
 index = 1
 # bar = progressbar.ProgressBar(redirect_stdout=True, max_value=1 * len(AUScorer.emotion_list()))
-for emotion in AUScorer.emotion_list():
+for emotion in ['Happy', 'Angry', 'Fear', 'Sad', 'Surprise', 'Disgust']:
     classifiers = [
         make_random_forest(emotion),
     ]

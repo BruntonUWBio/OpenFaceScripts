@@ -12,13 +12,11 @@ from pathos.multiprocessing import ProcessingPool as Pool
 sys.path.append('/home/gvelchuru/')
 from OpenFaceScripts.scoring import AUScorer
 from sklearn import metrics
-from sklearn.ensemble import RandomForestClassifier
 from sklearn.externals import joblib
 from sklearn.model_selection import train_test_split
 
 
 def make_emotion_data(emotion):
-    au_emote_dict = json.load(open('au_emotes.txt'))
     emotion_data = [item for sublist in
                     [b for b in [[a for a in x.values() if a] for x in json.load(open('au_emotes.txt')).values() if x]
                      if b]
@@ -81,7 +79,7 @@ out_q = multiprocessing.Manager().Queue()
 
 index = 1
 bar = progressbar.ProgressBar(redirect_stdout=True, max_value=len(classifiers) * len(AUScorer.emotion_list()))
-for emotion in ['Happy']:
+for emotion in ['Happy', 'Angry', 'Fear', 'Sad', 'Surprise', 'Disgust']:
     au_train, au_test, target_train, target_test = make_emotion_data(emotion)
     f = functools.partial(use_classifier, out_q, au_train, au_test, target_train, target_test, emotion)
     for i, _ in enumerate(Pool().imap(f, classifiers)):
