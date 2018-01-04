@@ -15,8 +15,9 @@ from OpenFaceScripts.scoring import OpenFaceScorer
 
 AUList = ['1', '2', '4', '5', '6', '7', '9', '10', '12', '14', '15', '17', '20', '23', '25', '26', '28', '45',
           'gaze_0_x', 'gaze_0_y', 'gaze_0_z',
-          'gaze_1_x', 'gaze_1_y', 'gaze_1_z', 'pose_Rx', 'pose_Ry', 'pose_Rz']
-LandmarkList = [x for x in AUList if 'gaze' not in x and 'pose' not in x]
+          'gaze_1_x', 'gaze_1_y', 'gaze_1_z', 'pose_Rx', 'pose_Ry', 'pose_Rz', 'confidence']
+LandmarkList = [x for x in AUList if 'gaze' not in x and 'pose' not in x and 'confidence' not in x]
+TrainList = [x for x in AUList if 'confidence' not in x]
 include_similar = False
 
 
@@ -44,6 +45,11 @@ def emotion_templates(include_similar: bool) -> dict:
 
     return emotion_templates
 
+
+def convert_dict_to_int(dict):
+    return {int(k): v for k, v in dict.items()}
+
+
 class AUScorer:
     """
     Main scorer
@@ -70,7 +76,7 @@ class AUScorer:
         # Creates a dictionary mapping each frame in the video to a dictionary containing the frame's action units
         # and their amounts
         au_dict = {frame: {label: open_face_arr[frame][num] for label, num in open_face_dict.items()
-                           if any(x in label for x in ['gaze', 'pose_R', 'AU'])} for frame in
+                           if any(x in label for x in ['gaze', 'pose_R', 'AU', 'confidence'])} for frame in
                    range(len(open_face_arr))}
         self.x_y_dict = {frame: {label: open_face_arr[frame][num] for label, num in open_face_dict.items()
                                  if 'x_' in label or 'y_' in label} for frame in range(len(open_face_arr))}
@@ -78,7 +84,6 @@ class AUScorer:
         self.presence_dict = defaultdict()
         for frame in range(len(open_face_arr)):
             if open_face_arr[frame][open_face_dict['success']]:
-                frame = str(frame)
                 self.presence_dict[frame] = defaultdict()
                 curr_frame = au_dict[frame]
                 for label in curr_frame:
@@ -94,8 +99,9 @@ class AUScorer:
                         c_label = label.replace('r', 'c')
                         if c_label not in curr_frame:
                             self.presence_dict[frame][str(return_num(label))] = str(curr_frame[label])
-                    elif 'pose_R' in label or 'gaze' in label:
+                    elif 'pose_R' in label or 'gaze' in label or 'confidence' in label:
                         self.presence_dict[frame][label] = curr_frame[label]
+
         self.emotions = make_frame_emotions(self.presence_dict)
         os.chdir(original_dir)
 

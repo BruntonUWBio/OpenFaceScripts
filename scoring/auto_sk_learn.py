@@ -23,7 +23,7 @@ def make_emotion_data(emotion):
 
     ck_dict = json.load(open('ck_dict.txt'))
     for patient_list in ck_dict.values():
-        to_add = AUScorer.AUList
+        to_add = AUScorer.TrainList
         au_dict = {str(int(float(x))): y for x, y in patient_list[0].items()}
         for add in to_add:
             if add not in au_dict:
@@ -32,7 +32,7 @@ def make_emotion_data(emotion):
 
     au_data = []
     target_data = []
-    aus_list = AUScorer.AUList
+    aus_list = AUScorer.TrainList
     for frame in emotion_data:
         aus = frame[0]
         if frame[1] == emotion:

@@ -244,7 +244,8 @@ def process_vid_dir(eyebrow_dict: dict, vid_dir: str) -> None:
     diff_dict = json.load(open(already_ran_file)) if os.path.exists(already_ran_file) else {}
     if vid_dir not in diff_dict:
         diff_dict[vid_dir] = {}
-    emotion_dict = json.load(open(all_dict_file)) if os.path.exists(all_dict_file) else AUScorer.AUScorer(
+    emotion_dict = AUScorer.convert_dict_to_int(json.load(open(all_dict_file))) if os.path.exists(
+        all_dict_file) else AUScorer.AUScorer(
         vid_dir).presence_dict
     if vid_dir in eyebrow_dict['Eyebrows']:
         include_eyebrows = True
@@ -291,7 +292,8 @@ def update_dicts(post_func_dict: dict, emotion_dict: dict, diff_dict: dict, vid_
     diff = len([x for x in post_func_dict if x not in emotion_dict]) if post_func_dict else 0
     if post_func_dict:
         for frame in post_func_dict:
-            if frame not in emotion_dict or not emotion_dict[frame]:
+            if frame not in emotion_dict or not emotion_dict[frame] or post_func_dict[frame]['confidence'] > \
+                    emotion_dict[frame]['confidence']:
                 emotion_dict[frame] = post_func_dict[frame]
     if name not in diff_dict[vid_dir]:
         diff_dict[vid_dir][name] = {}

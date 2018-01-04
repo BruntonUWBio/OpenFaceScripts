@@ -131,7 +131,7 @@ def make_emotion_data(emotion, short_patient):
 
         ck_dict = json.load(open('ck_dict.txt'))
         for patient_list in ck_dict.values():
-            to_add = AUScorer.AUList
+            to_add = AUScorer.TrainList
             au_dict = {str(int(float(x))): y for x, y in patient_list[0].items()}
             for add in to_add:
                 if add not in au_dict:
@@ -140,7 +140,7 @@ def make_emotion_data(emotion, short_patient):
 
         au_data = []
         target_data = []
-        aus_list = AUScorer.AUList
+        aus_list = AUScorer.TrainList
         for frame in emotion_data:
             aus = frame[0]
             if frame[1] == emotion:
@@ -169,7 +169,7 @@ def make_emotion_data(emotion, short_patient):
 
         ck_dict = json.load(open('ck_dict.txt'))
         for patient_list in ck_dict.values():
-            to_add = AUScorer.AUList
+            to_add = AUScorer.TrainList
             au_dict = {str(int(float(x))): y for x, y in patient_list[0].items()}
             for add in to_add:
                 if add not in au_dict:
@@ -178,7 +178,7 @@ def make_emotion_data(emotion, short_patient):
 
         au_data = []
         target_data = []
-        aus_list = AUScorer.AUList
+        aus_list = AUScorer.TrainList
         for frame in emotion_data:
             aus = frame[0]
             if frame[1] == emotion:
@@ -208,7 +208,7 @@ def make_emotion_data(emotion, short_patient):
                         for item in sublist]
         au_data = []
         target_data = []
-        aus_list = AUScorer.AUList
+        aus_list = AUScorer.TrainList
         for frame in emotion_data:
             aus = frame[0]
             if frame[1] == emotion:
@@ -311,7 +311,8 @@ def make_scores_file(scores_file):
 
 def add_patient_dir_scores(all_dict, patient_dir):
     if 'all_dict.txt' in os.listdir(patient_dir):
-        emotion_dict = AUScorer.make_frame_emotions(json.load(open(os.path.join(patient_dir, 'all_dict.txt'))))
+        emotion_dict = AUScorer.make_frame_emotions(
+            AUScorer.convert_dict_to_int(json.load(open(os.path.join(patient_dir, 'all_dict.txt')))))
     else:
         emotion_dict = AUScorer.AUScorer(patient_dir).emotions
     all_dict[patient_dir.replace('_cropped', '')] = emotion_dict

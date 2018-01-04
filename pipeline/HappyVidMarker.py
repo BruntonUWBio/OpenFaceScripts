@@ -83,7 +83,7 @@ def mark_vid_dir(out_q, vid_dir):
         else:
             emotion_data.append(None)
 
-    aus_list = AUScorer.AUList
+    aus_list = AUScorer.TrainList
 
     predicted_arr = []
     for frame in emotion_data:

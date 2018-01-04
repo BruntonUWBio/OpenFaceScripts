@@ -7,6 +7,7 @@ import sys
 import numpy as np
 # import progressbar
 from pathos.multiprocessing import ProcessingPool as Pool
+from sklearn.cross_validation import cross_val_score
 
 sys.path.append('/home/gvelchuru/')
 from OpenFaceScripts.scoring import AUScorer
@@ -24,7 +25,7 @@ def make_emotion_data(emotion):
 
     ck_dict = json.load(open('ck_dict.txt'))
     for patient_list in ck_dict.values():
-        to_add = AUScorer.AUList
+        to_add = AUScorer.TrainList
         au_dict = {str(int(float(x))): y for x, y in patient_list[0].items()}
         for add in to_add:
             if add not in au_dict:
@@ -33,7 +34,7 @@ def make_emotion_data(emotion):
 
     au_data = []
     target_data = []
-    aus_list = AUScorer.AUList
+    aus_list = AUScorer.TrainList
     for frame in emotion_data:
         aus = frame[0]
         if frame[1] == emotion:
@@ -55,17 +56,17 @@ def make_emotion_data(emotion):
 
 def use_classifier(out_q, emotion: str,
                    classifier: GridSearchCV):
-    out_q.put(emotion + '\n')
-    out_q.put('Best params \n')
-    out_q.put(str(classifier.best_params_) + '\n')
-    out_q.put("Best f1 score \n")
-    out_q.put(str(classifier.best_score_) + '\n')
-    au_data, target_data = make_emotion_data(emotion)
-    # scores = cross_val_score(classifier, au_data, target_data, scoring='precision')
     # out_q.put(emotion + '\n')
-    # out_q.put("Cross val precision for classifier {0}:\n{1}\n".format(classifier, scores.mean()))
-    # scores = cross_val_score(classifier, au_data, target_data, scoring='recall')
-    # out_q.put("Cross val recall for classifier {0}:\n{1}\n".format(classifier, scores.mean()))
+    # out_q.put('Best params \n')
+    # out_q.put(str(classifier.best_params_) + '\n')
+    # out_q.put("Best f1 score \n")
+    # out_q.put(str(classifier.best_score_) + '\n')
+    au_data, target_data = make_emotion_data(emotion)
+    scores = cross_val_score(classifier, au_data, target_data, scoring='precision')
+    out_q.put(emotion + '\n')
+    out_q.put("Cross val precision for classifier {0}:\n{1}\n".format(classifier, scores.mean()))
+    scores = cross_val_score(classifier, au_data, target_data, scoring='recall')
+    out_q.put("Cross val recall for classifier {0}:\n{1}\n".format(classifier, scores.mean()))
     au_train, au_test, target_train, target_test = train_test_split(au_data, target_data, test_size=.1)
 
     expected = target_test
@@ -79,37 +80,36 @@ def use_classifier(out_q, emotion: str,
 OpenDir = sys.argv[sys.argv.index('-d') + 1]
 os.chdir(OpenDir)
 
-
-def make_random_forest(emotion) -> GridSearchCV:
-    param_grid = {
-        'n_estimators': np.arange(1, 20, 5),
-        'max_features': ['auto'] + list(np.linspace(.1, 1, 5)),
-        'max_depth': [None] + list(np.arange(1, 10, 5)),
-        'min_samples_split': np.linspace(.1, 1, 5),
-        'min_samples_leaf': np.linspace(.1, .5, 5),
-        'min_weight_fraction_leaf': np.linspace(0, .5, 5),
-        'max_leaf_nodes': [None] + list(np.arange(2, 100, 10)),
-        'min_impurity_split': np.linspace(0, 1, 5),  # Figure out what this does
-        'bootstrap': [True, False],
-    }
-    random_forest = GridSearchCV(RandomForestClassifier(), param_grid, scoring='f1', n_jobs=multiprocessing.cpu_count(), verbose=5)
-    au_data, target_data = make_emotion_data(emotion)
-    au_train, au_test, target_train, target_test = train_test_split(au_data, target_data, test_size=.1)
-    random_forest.fit(au_train, target_train)
-    joblib.dump(random_forest, '{0}_trained_RandomForest_with_pose.pkl'.format(emotion))
-    return random_forest
+# def make_random_forest(emotion) -> GridSearchCV:
+#     param_grid = {
+#         'n_estimators': np.arange(1, 20, 5),
+#         'max_features': ['auto'] + list(np.linspace(.1, 1, 5)),
+#         'max_depth': [None] + list(np.arange(1, 10, 5)),
+#         'min_samples_split': np.linspace(.1, 1, 5),
+#         'min_samples_leaf': np.linspace(.1, .5, 5),
+#         'min_weight_fraction_leaf': np.linspace(0, .5, 5),
+#         'max_leaf_nodes': [None] + list(np.arange(2, 100, 10)),
+#         'min_impurity_split': np.linspace(0, 1, 5),  # Figure out what this does
+#         'bootstrap': [True, False],
+#     }
+#     random_forest = GridSearchCV(RandomForestClassifier(), param_grid, scoring='f1', n_jobs=multiprocessing.cpu_count(), verbose=5)
+#     au_data, target_data = make_emotion_data(emotion)
+#     au_train, au_test, target_train, target_test = train_test_split(au_data, target_data, test_size=.1)
+#     random_forest.fit(au_train, target_train)
+#     joblib.dump(random_forest, '{0}_trained_RandomForest_with_pose.pkl'.format(emotion))
+#     return random_forest
 
 out_file = open('classifier_performance.txt', 'w')
 out_q = multiprocessing.Manager().Queue()
 
 index = 1
 # bar = progressbar.ProgressBar(redirect_stdout=True, max_value=1 * len(AUScorer.emotion_list()))
-for emotion in ['Happy', 'Angry', 'Fear', 'Sad', 'Surprise', 'Disgust']:
+for emotion in AUScorer.emotion_list():
     classifiers = [
         make_random_forest(emotion),
     ]
-    for classfier in classifiers:
-        use_classifier(out_q, emotion, classfier)
+    for classifier in classifiers:
+        use_classifier(out_q, emotion, classifier)
         # bar.update(index)
         index += 1
 

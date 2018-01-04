@@ -40,7 +40,7 @@ def find_scores(out_q, eyebrow_dict, patient_dir):
 
         csv_path = join(patient_dir, os.path.basename(patient_dir).replace('_cropped', '') + '_emotions.csv')
         num_frames = int(VidCropper.duration(get_vid_from_dir(patient_dir)) * 30)
-        aus_list = AUScorer.AUList
+        aus_list = AUScorer.TrainList
 
         if os.path.exists(csv_path):
             csv_dict = AUGui.csv_emotion_reader(csv_path)
@@ -52,11 +52,12 @@ def find_scores(out_q, eyebrow_dict, patient_dir):
                 for i in [x for x in csv_dict.keys() if 'None' not in csv_dict[x]]:
                     if str(i) in AU_presences:
                         auDict = AU_presences[str(i)]
+                        for key in auDict:
+                            if key not in aus_list:
+                                auDict.pop(key, None)
                         for au in aus_list:
                             if au not in auDict:
                                 auDict[str(au)] = 0
-                        if len(auDict) != len(aus_list):
-                            print('kurwa')
                         to_write = csv_dict[i]
                         if to_write == 'Surprised':
                             to_write = 'Surprise'
