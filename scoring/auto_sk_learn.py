@@ -4,7 +4,6 @@ import multiprocessing
 import os
 import sys
 
-import numpy as np
 import progressbar
 from autosklearn.estimators import AutoSklearnClassifier
 from pathos.multiprocessing import ProcessingPool as Pool
