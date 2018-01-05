@@ -1,12 +1,13 @@
-import functools
 import json
 import multiprocessing
 import os
 import sys
 
+import autosklearn
 import progressbar
 from autosklearn.estimators import AutoSklearnClassifier
-from pathos.multiprocessing import ProcessingPool as Pool
+from autosklearn.metrics import make_scorer
+from sklearn.metrics import f1_score
 
 sys.path.append('/home/gvelchuru/')
 from OpenFaceScripts.scoring import AUScorer
@@ -55,7 +56,7 @@ def make_emotion_data(emotion):
 
 def use_classifier(out_q, au_train: list, au_test: list, target_train: list, target_test: list, emotion: str,
                    classifier):
-    classifier.fit(au_train, target_train)
+    classifier.fit(au_train, target_train, metric=make_scorer('f1_scorer', f1_score))
 
     expected = target_test
     predicted = classifier.predict(au_test)
@@ -80,8 +81,8 @@ index = 1
 bar = progressbar.ProgressBar(redirect_stdout=True, max_value=len(classifiers) * len(AUScorer.emotion_list()))
 for emotion in ['Happy', 'Angry', 'Fear', 'Sad', 'Surprise', 'Disgust']:
     au_train, au_test, target_train, target_test = make_emotion_data(emotion)
-    f = functools.partial(use_classifier, out_q, au_train, au_test, target_train, target_test, emotion)
-    for i, _ in enumerate(Pool().imap(f, classifiers)):
+    for classifier in classifiers:
+        use_classifier(out_q, au_train, au_test, target_train, target_test, emotion, classifier)
         bar.update(index)
         index += 1
 

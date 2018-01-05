@@ -68,7 +68,7 @@ def forest_from_cfg(cfg, emotion):
 
     clf = RandomForestClassifier(**cfg, random_state=42)
     au_data, target_data = make_emotion_data(emotion)
-    scores = cross_val_score(clf, au_data, target_data, cv=5)
+    scores = cross_val_score(clf, au_data, target_data, n_jobs=-1, cv=5)
     return 1 - np.mean(scores)
 
 
