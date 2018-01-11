@@ -3,16 +3,13 @@ import multiprocessing
 import os
 import sys
 
-import autosklearn
+import numpy as np
 import progressbar
-from autosklearn.estimators import AutoSklearnClassifier
-from autosklearn.metrics import make_scorer
-from sklearn.metrics import f1_score
+from tpot import TPOTClassifier
 
 sys.path.append('/home/gvelchuru/')
 from OpenFaceScripts.scoring import AUScorer
 from sklearn import metrics
-from sklearn.externals import joblib
 from sklearn.model_selection import train_test_split
 
 
@@ -56,7 +53,7 @@ def make_emotion_data(emotion):
 
 def use_classifier(out_q, au_train: list, au_test: list, target_train: list, target_test: list, emotion: str,
                    classifier):
-    classifier.fit(au_train, target_train, metric=make_scorer('f1_scorer', f1_score))
+    classifier.fit(np.array(au_train), target_train)
 
     expected = target_test
     predicted = classifier.predict(au_test)
@@ -65,14 +62,14 @@ def use_classifier(out_q, au_train: list, au_test: list, target_train: list, tar
     out_q.put("Classification report for classifier %s:\n%s\n"
               % (classifier, metrics.classification_report(expected, predicted)))
     out_q.put("Confusion matrix:\n%s\n" % metrics.confusion_matrix(expected, predicted))
-    joblib.dump(classifier, '{0}_trained_auto_sk_learn_with_pose.pkl'.format(emotion))
+    classifier.export('{0}_trained_auto_sk_learn_with_pose.py'.format(emotion))
 
 
 OpenDir = sys.argv[sys.argv.index('-d') + 1]
 os.chdir(OpenDir)
 
 classifiers = [
-    AutoSklearnClassifier(),
+    TPOTClassifier(verbosity=3, n_jobs=-1, scoring='f1', memory='auto'),
 ]
 out_file = open('auto_classifier_performance.txt', 'w')
 out_q = multiprocessing.Manager().Queue()
