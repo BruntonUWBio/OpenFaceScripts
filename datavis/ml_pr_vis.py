@@ -160,6 +160,7 @@ def make_emotion_data(emotion, short_patient):
         au_train, au_test, target_train, target_test = train_test_split(au_data, target_data, test_size=.1)
         return au_train, au_test, target_train, target_test
     else:
+        au_emote_dict = json.load(open('au_emotes.txt'))
         keys = [x for x in au_emote_dict if short_patient not in x]
         values = [au_emote_dict[x] for x in keys if x]
         emotion_data = [item for sublist in
@@ -301,7 +302,7 @@ def vis(short_patient, thresh_file=None):
             # plt.show()
 
 
-def make_scores_file(scores_file):
+def make_scores_file(scores_file, patient_dirs):
     all_dict = multiprocessing.Manager().dict()
     Pool().map(functools.partial(add_patient_dir_scores, all_dict), patient_dirs)
     dump_dict = dict()
@@ -325,7 +326,7 @@ if __name__ == '__main__':
     scores = defaultdict()
     scores_file = 'predic_substring_dict.txt'
     if not os.path.exists(scores_file):
-        make_scores_file(scores_file)
+        make_scores_file(scores_file, patient_dirs)
     scores = json.load(open(scores_file))
     csv_file = json.load(open('scores.txt'))
     csv_file = clean_csv(csv_file)

@@ -53,11 +53,12 @@ def make_emotion_data(emotion):
 
 def use_classifier(out_q, au_train: list, au_test: list, target_train: list, target_test: list, emotion: str,
                    classifier):
-    classifier.fit(np.array(au_train), target_train)
+    training_data = np.array(au_train)
+    training_targets = np.array(au_test)
+    classifier.fit(np.array(au_train), np.array(target_train))
 
     expected = target_test
-    predicted = classifier.predict(au_test)
-
+    predicted = classifier.predict(np.array(au_test))
     out_q.put(emotion + '\n')
     out_q.put("Classification report for classifier %s:\n%s\n"
               % (classifier, metrics.classification_report(expected, predicted)))
