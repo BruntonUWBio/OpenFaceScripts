@@ -6,6 +6,7 @@ import os
 
 from collections import defaultdict
 
+import numpy as np
 from numpy import mean
 from progressbar import ProgressBar
 from sklearn.metrics import precision_score, recall_score
@@ -28,6 +29,10 @@ def vis(out_file, short_patient_list, emotion: str):
             continue
         pipeline = getattr(models.tpot, emotion.lower() + '_pipeline')
         classifier = pipeline()
+        au_train = np.array(au_train)
+        target_train = np.array(target_train)
+        au_test = np.array(au_test)
+        target_test = np.array(target_test)
         classifier.fit(au_train, target_train)
         predicted = classifier.predict(au_test)
         precisions.append(precision_score(target_test, predicted))
