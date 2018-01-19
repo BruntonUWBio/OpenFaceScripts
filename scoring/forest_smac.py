@@ -20,6 +20,7 @@ sys.path.append('/home/gvelchuru/OpenFaceScripts')
 from scoring.AUScorer import emotion_list
 from scoring.EmotionPredictor import make_emotion_data
 
+from pathos.multiprocessing import ProcessingPool as Pool
 
 def make_cs():
     cs = ConfigurationSpace()
@@ -67,26 +68,32 @@ def forest_from_cfg(cfg, emotion):
 
     clf = RandomForestClassifier(**cfg, random_state=42)
     au_data, target_data = make_emotion_data(emotion)
-    scores = cross_val_score(clf, au_data, target_data, cv=5)
+    scores = cross_val_score(clf, au_data, target_data, n_jobs=-1, cv=5)
     return 1 - np.mean(scores)
+
+
+def use_smac(emotion):
+    scenario = Scenario({'run_obj': 'quality',
+                         'runcount-limit': 200,
+                         "cs": make_cs(),
+                         "deterministic": "true",
+                         "shared_model": True,
+                         "input_psmac_dirs": "smac3-output*",
+                         "seed": np.random.RandomState()
+                         })
+    smac = SMAC(scenario=scenario, rng=np.random.RandomState(42), tae_runner=forest_from_cfg)
+    incumbent = smac.optimize()
+    # joblib.dump(RandomForestClassifier(**incumbent), '{0}_smac_optimized_random_forest.pkl'.format(emotion))
+    inc_value = forest_from_cfg(incumbent, emotion)
+    out_writer.write("Optimized Value for {0}: {1}".format(emotion, inc_value))
+    out_writer.write('\n' + '\n')
+    out_writer.write(incumbent)
 
 
 if __name__ == '__main__':
     OpenDir = sys.argv[sys.argv.index('-d') + 1]
     os.chdir(OpenDir)
-    scenario = Scenario({'run_obj': 'quality',
-                         'runcount-limit': 200,
-                         "cs": make_cs(),
-                         "deterministic": "true",
-                         })
     print("Optimizing")
     out_file = 'smac.txt'
     with open(out_file) as out_writer:
-        for emotion in emotion_list():
-            smac = SMAC(scenario=scenario, rng=np.random.RandomState(42), tae_runner=forest_from_cfg)
-            incumbent = smac.optimize()
-            # joblib.dump(RandomForestClassifier(**incumbent), '{0}_smac_optimized_random_forest.pkl'.format(emotion))
-            inc_value = forest_from_cfg(incumbent, emotion)
-            out_writer.write("Optimized Value for {0}: {1}".format(emotion, inc_value))
-            out_writer.write('\n' + '\n')
-            out_writer.write(incumbent)
+        Pool(len(emotion_list())).map(use_smac, emotion_list())

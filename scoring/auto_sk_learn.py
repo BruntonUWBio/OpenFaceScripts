@@ -1,17 +1,15 @@
-import functools
 import json
 import multiprocessing
 import os
 import sys
 
+import numpy as np
 import progressbar
-from autosklearn.estimators import AutoSklearnClassifier
-from pathos.multiprocessing import ProcessingPool as Pool
+from tpot import TPOTClassifier
 
 sys.path.append('/home/gvelchuru/')
 from OpenFaceScripts.scoring import AUScorer
 from sklearn import metrics
-from sklearn.externals import joblib
 from sklearn.model_selection import train_test_split
 
 
@@ -55,23 +53,24 @@ def make_emotion_data(emotion):
 
 def use_classifier(out_q, au_train: list, au_test: list, target_train: list, target_test: list, emotion: str,
                    classifier):
-    classifier.fit(au_train, target_train)
+    training_data = np.array(au_train)
+    training_targets = np.array(au_test)
+    classifier.fit(np.array(au_train), np.array(target_train))
 
     expected = target_test
-    predicted = classifier.predict(au_test)
-
+    predicted = classifier.predict(np.array(au_test))
     out_q.put(emotion + '\n')
     out_q.put("Classification report for classifier %s:\n%s\n"
               % (classifier, metrics.classification_report(expected, predicted)))
     out_q.put("Confusion matrix:\n%s\n" % metrics.confusion_matrix(expected, predicted))
-    joblib.dump(classifier, '{0}_trained_auto_sk_learn_with_pose.pkl'.format(emotion))
+    classifier.export('{0}_trained_auto_sk_learn_with_pose.py'.format(emotion))
 
 
 OpenDir = sys.argv[sys.argv.index('-d') + 1]
 os.chdir(OpenDir)
 
 classifiers = [
-    AutoSklearnClassifier(),
+    TPOTClassifier(verbosity=3, n_jobs=-1, scoring='f1', memory='auto'),
 ]
 out_file = open('auto_classifier_performance.txt', 'w')
 out_q = multiprocessing.Manager().Queue()
@@ -80,8 +79,8 @@ index = 1
 bar = progressbar.ProgressBar(redirect_stdout=True, max_value=len(classifiers) * len(AUScorer.emotion_list()))
 for emotion in ['Happy', 'Angry', 'Fear', 'Sad', 'Surprise', 'Disgust']:
     au_train, au_test, target_train, target_test = make_emotion_data(emotion)
-    f = functools.partial(use_classifier, out_q, au_train, au_test, target_train, target_test, emotion)
-    for i, _ in enumerate(Pool().imap(f, classifiers)):
+    for classifier in classifiers:
+        use_classifier(out_q, au_train, au_test, target_train, target_test, emotion, classifier)
         bar.update(index)
         index += 1
 
