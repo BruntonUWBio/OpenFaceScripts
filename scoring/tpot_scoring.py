@@ -6,6 +6,7 @@ import os
 
 from collections import defaultdict
 
+import joblib
 import numpy as np
 from numpy import mean
 from progressbar import ProgressBar
@@ -22,13 +23,14 @@ def vis(out_file, short_patient_list, emotion: str):
     precisions = []
     recalls = []
     for short_patient in short_patient_list:
-        OpenDir = sys.argv[sys.argv.index('-d') + 1]
-        os.chdir(OpenDir)
+        # OpenDir = sys.argv[sys.argv.index('-d') + 1]
+        # os.chdir(OpenDir)
         au_train, au_test, target_train, target_test = make_emotion_data(emotion, short_patient)
-        if not au_test:
+        if not au_train or not au_test or not target_train or not target_test:
             continue
-        pipeline = getattr(models.tpot, emotion.lower() + '_pipeline')
-        classifier = pipeline()
+        # pipeline = getattr(models.tpot, emotion.lower() + '_pipeline')
+        # classifier = pipeline()
+        classifier = joblib.load(emotion + '_trained_RandomForest_with_pose.pkl')
         au_train = np.array(au_train)
         target_train = np.array(target_train)
         au_test = np.array(au_test)
@@ -38,9 +40,9 @@ def vis(out_file, short_patient_list, emotion: str):
         precisions.append(precision_score(target_test, predicted))
         recalls.append(recall_score(target_test, predicted))
     out_file.write(str(precisions) + '\n')
-    out_file.write('Average precision score' + str(mean(precisions)))
+    out_file.write('Average precision score \n' + str(mean(precisions)) + '\n')
     out_file.write(str(recalls) + '\n')
-    out_file.write('Average recall score' + str(mean(recalls)))
+    out_file.write('Average recall score \n' + str(mean(recalls)) + '\n')
 
 
 if __name__ == '__main__':
@@ -59,7 +61,7 @@ if __name__ == '__main__':
     for direc in csv_file:
         short_direc = direc[:direc.index('_')]
         short_patient_list.add(short_direc)
-    out_file = open('tpot_scores.txt', 'w')
+    out_file = open('sklearn_scores.txt', 'w')
     out_file.write(str(short_patient_list) + '\n')
     emotion_list = emotion_list()
     bar = ProgressBar(max_value=len(emotion_list))
