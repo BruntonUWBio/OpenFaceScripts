@@ -7,7 +7,7 @@ import sys
 import numpy as np
 # import progressbar
 from pathos.multiprocessing import ProcessingPool as Pool
-from sklearn.cross_validation import cross_val_score
+from sklearn.model_selection import cross_val_score
 
 sys.path.append('/home/gvelchuru/')
 from OpenFaceScripts.scoring import AUScorer
@@ -55,7 +55,7 @@ def make_emotion_data(emotion):
 
 
 def use_classifier(out_q, emotion: str,
-                   classifier: GridSearchCV):
+                   classifier):
     # out_q.put(emotion + '\n')
     # out_q.put('Best params \n')
     # out_q.put(str(classifier.best_params_) + '\n')
@@ -68,6 +68,7 @@ def use_classifier(out_q, emotion: str,
     scores = cross_val_score(classifier, au_data, target_data, scoring='recall')
     out_q.put("Cross val recall for classifier {0}:\n{1}\n".format(classifier, scores.mean()))
     au_train, au_test, target_train, target_test = train_test_split(au_data, target_data, test_size=.1)
+    classifier.fit(au_train, target_train)
 
     expected = target_test
     predicted = classifier.predict(au_test)
@@ -75,6 +76,7 @@ def use_classifier(out_q, emotion: str,
     out_q.put("Classification report for classifier %s:\n%s\n"
               % (classifier, metrics.classification_report(expected, predicted)))
     out_q.put("Confusion matrix:\n%s\n" % metrics.confusion_matrix(expected, predicted))
+    joblib.dump(classifier, '{0}_trained_RandomForest_with_pose.pkl'.format(emotion))
 
 
 OpenDir = sys.argv[sys.argv.index('-d') + 1]
@@ -96,7 +98,6 @@ os.chdir(OpenDir)
 #     au_data, target_data = make_emotion_data(emotion)
 #     au_train, au_test, target_train, target_test = train_test_split(au_data, target_data, test_size=.1)
 #     random_forest.fit(au_train, target_train)
-#     joblib.dump(random_forest, '{0}_trained_RandomForest_with_pose.pkl'.format(emotion))
 #     return random_forest
 
 out_file = open('classifier_performance.txt', 'w')
@@ -106,7 +107,7 @@ index = 1
 # bar = progressbar.ProgressBar(redirect_stdout=True, max_value=1 * len(AUScorer.emotion_list()))
 for emotion in AUScorer.emotion_list():
     classifiers = [
-        make_random_forest(emotion),
+        RandomForestClassifier(),
     ]
     for classifier in classifiers:
         use_classifier(out_q, emotion, classifier)

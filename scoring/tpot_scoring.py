@@ -10,12 +10,15 @@ import joblib
 import numpy as np
 from numpy import mean
 from progressbar import ProgressBar
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import precision_score, recall_score
 
 sys.path.append('/home/gvelchuru/OpenFaceScripts')
 from datavis.ml_pr_vis import make_scores_file, clean_csv, make_emotion_data
 from scoring.AUScorer import emotion_list
-import models.tpot
+
+
+# import models.tpot
 
 
 def vis(out_file, short_patient_list, emotion: str):
@@ -30,7 +33,7 @@ def vis(out_file, short_patient_list, emotion: str):
             continue
         # pipeline = getattr(models.tpot, emotion.lower() + '_pipeline')
         # classifier = pipeline()
-        classifier = joblib.load(emotion + '_trained_RandomForest_with_pose.pkl')
+        classifier = RandomForestClassifier()
         au_train = np.array(au_train)
         target_train = np.array(target_train)
         au_test = np.array(au_test)
