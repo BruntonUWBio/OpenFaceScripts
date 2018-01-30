@@ -3,9 +3,11 @@ import os
 import shutil
 
 import math
-from runners import CropAndOpenFace
-from runners.VidCropper import duration
-from scoring import AUScorer
+
+sys.path.append('/home/gvelchuru')
+from OpenFaceScripts.runners import CropAndOpenFace
+from OpenFaceScripts.runners.VidCropper import duration
+from OpenFaceScripts.scoring import AUScorer
 
 if __name__ == '__main__':
     vid = sys.argv[sys.argv.index('-v') + 1]
@@ -33,4 +35,4 @@ if __name__ == '__main__':
                     out.write(str(start_frame) + '\t' + str(frame - 1) + '\t' + curr_string + '\n')
                 start_frame = frame
                 curr_string = temp_string
-        # shutil.rmtree(working_directory)
+        shutil.rmtree(working_directory)
