@@ -1,6 +1,8 @@
 import sys
 import os
 import shutil
+
+import math
 from runners import CropAndOpenFace
 from runners.VidCropper import duration
 from scoring import AUScorer
@@ -18,17 +20,17 @@ if __name__ == '__main__':
         presences = AUScorer.AUScorer(working_directory).presence_dict
         start_frame = 0
         curr_string = None
-        for frame in range(duration(vid) * 30):
+        for frame in range(int(math.ceil(duration(vid) * 30))):
             if frame not in presences:
                 temp_string = "not recognized"
             else:
-                if presences[frame][25] or presences[frame][26]:  # can set to specific vals as well
+                if '25' in presences[frame] or '26' in presences[frame]:  # can set to specific vals as well
                     temp_string = "open mouth"
                 else:
                     temp_string = "closed mouth"
             if not curr_string or curr_string != temp_string:
                 if curr_string:
-                    out.write(str(start_frame) + '\t' + str(frame - 1) + '\t' + curr_string)
+                    out.write(str(start_frame) + '\t' + str(frame - 1) + '\t' + curr_string + '\n')
                 start_frame = frame
                 curr_string = temp_string
         # shutil.rmtree(working_directory)
