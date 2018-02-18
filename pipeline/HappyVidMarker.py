@@ -67,7 +67,7 @@ def bar_movie(vid, vid_dir, times, corr):
 
 scores_file = 'au_emotes.txt'
 scores = json.load(open(scores_file))
-classifier = joblib.load('Happy_trained_RandomForest_with_pose.pkl')
+classifier = joblib.load('Happy_trained_RandomForest_with_pose.gz')
 
 
 def mark_vid_dir(out_q, vid_dir):
@@ -112,22 +112,23 @@ def mark_vid_dir(out_q, vid_dir):
         out_q.put({vid_dir: 0})
 
 
-vids_file = 'happy_predic_vids.txt'
-vids_done = {}
-original_len = len(vids_done)
-files = [x for x in (os.path.join(OpenDir, vid_dir) for vid_dir in os.listdir(OpenDir)) if
-         (os.path.isdir(x) and 'au.txt' in os.listdir(x))]
-if os.path.exists(vids_file):
-    vids_done = json.load(vids_file)
-remaining = [x for x in files if x not in vids_done]
-out_q = multiprocessing.Manager().Queue()
-# f = functools.partial(mark_vid_dir, out_q)
-bar = progressbar.ProgressBar(redirect_stdout=True, max_value=len(remaining))
-# for i, _ in enumerate(Pool().imap(f, remaining), 1):
-for i, remain in enumerate(remaining, 1):
-    mark_vid_dir(out_q, remain)
-    bar.update(i)
-while not out_q.empty():
-    vids_done.update(out_q.get())
-if len(vids_done) != original_len:
-    json.dump(vids_done, open(scores_file, 'w'))
+if __name__ == '__main__':
+    vids_file = 'happy_predic_vids.txt'
+    vids_done = {}
+    original_len = len(vids_done)
+    files = [x for x in (os.path.join(OpenDir, vid_dir) for vid_dir in os.listdir(OpenDir)) if
+             (os.path.isdir(x) and 'au.txt' in os.listdir(x))]
+    if os.path.exists(vids_file):
+        vids_done = json.load(vids_file)
+    remaining = [x for x in files if x not in vids_done]
+    out_q = multiprocessing.Manager().Queue()
+    # f = functools.partial(mark_vid_dir, out_q)
+    bar = progressbar.ProgressBar(redirect_stdout=True, max_value=len(remaining))
+    # for i, _ in enumerate(Pool().imap(f, remaining), 1):
+    for i, remain in enumerate(remaining, 1):
+        mark_vid_dir(out_q, remain)
+        bar.update(i)
+    while not out_q.empty():
+        vids_done.update(out_q.get())
+    if len(vids_done) != original_len:
+        json.dump(vids_done, open(scores_file, 'w'))
