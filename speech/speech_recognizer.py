@@ -10,7 +10,15 @@ from OpenFaceScripts.runners.VidCropper import duration
 from OpenFaceScripts.scoring import AUScorer
 
 
-def curr_lip_pos(moves, frame):
+def curr_lip_pos(mouth_points, moves, frame):
+    # ret_list = []
+    # try:
+    #     for point in mouth_points:
+    #         if 'x_{0}'.format(point) in moves[frame]:
+    #             ret_list.append((moves[frame]['x_{0}'.format(point)], moves[frame]['y_{0}'.format(point)]))
+    #     return ret_list
+    # except KeyError as e:
+    #     print('kurwa')
     return [(moves[frame]['x_{0}'.format(point)], moves[frame]['y_{0}'.format(point)]) for point in mouth_points
             if 'x_{0}'.format(point) in moves[frame]]
 
@@ -49,15 +57,18 @@ if __name__ == '__main__':
                 #     temp_string = "open mouth"
                 # else:
                 #     temp_string = "closed mouth"
-                curr_lip_coords = curr_lip_pos(moves, frame)
-                curr_aspect = aspect_ratio(curr_lip_coords)
-                prev_lip_coords = curr_lip_pos(moves, last_frame)
-                prev_aspect = aspect_ratio(prev_lip_coords)
-                tol = 10 ** -2  # Change for  performance
-                if abs(prev_aspect - curr_aspect) >= tol:
-                    temp_string = "open mouth"
+                if last_frame:
+                    curr_lip_coords = curr_lip_pos(mouth_points, moves, frame)
+                    curr_aspect = aspect_ratio(curr_lip_coords)
+                    prev_lip_coords = curr_lip_pos(mouth_points, moves, last_frame)
+                    prev_aspect = aspect_ratio(prev_lip_coords)
+                    tol = 10 ** -2  # Change for  performance
+                    if abs(prev_aspect - curr_aspect) >= tol:
+                        temp_string = "open mouth"
+                    else:
+                        temp_string = "closed mouth"
                 else:
-                    temp_string = "closed mouth"
+                    temp_string = "no previous data"
                 last_frame = frame
             if not curr_string or curr_string != temp_string:
                 if curr_string:
