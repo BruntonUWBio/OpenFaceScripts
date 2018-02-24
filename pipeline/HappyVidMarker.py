@@ -23,11 +23,8 @@ from sklearn.externals import joblib
 
 from pathos.multiprocessing import ProcessingPool as Pool
 
-OpenDir = sys.argv[sys.argv.index('-d') + 1]
-os.chdir(OpenDir)
 
-
-def bar_movie(vid, vid_dir, times, corr):
+def bar_movie(vid, vid_dir, times, corr, replace_input=True):
     FFMpegWriter = manimation.writers['ffmpeg']
     metadata = dict(title='Movie Test', artist='Matplotlib',
                     comment='Movie support!')
@@ -36,7 +33,7 @@ def bar_movie(vid, vid_dir, times, corr):
     test_line = os.path.join(vid_dir, 'writer_test_line.mp4')
 
     norm = plt.Normalize()
-    colors = plt.cm.jet(norm(corr))
+    plt.cm.jet(norm(corr))
 
     fig = plt.figure(figsize=(14, 2))
     ax = fig.add_subplot(111)
@@ -46,9 +43,6 @@ def bar_movie(vid, vid_dir, times, corr):
 
     with writer.saving(fig, test_line, 100):
         for i in range(len(times)):
-            # sys.stdout.write('{:.2f} {}/{}\r'.format(100 * i / len(times), i, len(times)))
-            # sys.stdout.flush()
-
             low = max(i - 50, 0)
             high = min(i + 51, len(times) - 1)
             vl.set_segments([[[times[i], 0], [times[i], 1]]])
@@ -56,19 +50,17 @@ def bar_movie(vid, vid_dir, times, corr):
             writer.grab_frame()
     orig = .269
     width = height_width(vid)[1]
+    if replace_input:
+        out_vid_name = pathos.
     subprocess.Popen('ffmpeg -loglevel quiet -y -i {0} -vf "movie={1}, '
-                     'scale={width}:-1, format=argb, colorchannelmixer=aa=.75 [inner]; [in][inner] overlay=.269 [out]" '
+                     'scale={width}:-1, format=argb, colorchannelmixer=aa=.75
+                     [inner]; [in][inner] overlay={orig} [out]" '
                      '-strict -2 {2}'.format(vid, test_line, os.path.join(vid_dir, 'completed_{0}.mp4'.format(
         os.path.basename(vid).replace('.avi', ''))),
-                                             width=width),
+                                             width=width, orig=orig),
                      shell=True).wait()
     plt.close()
-
-
-scores_file = 'au_emotes.txt'
-scores = json.load(open(scores_file))
-classifier = joblib.load('Happy_trained_RandomForest_with_pose.gz')
-
+    shutil.rmtree(test_line)
 
 def mark_vid_dir(out_q, vid_dir):
     if 'inter_out.avi' not in os.listdir(vid_dir):
@@ -113,6 +105,12 @@ def mark_vid_dir(out_q, vid_dir):
 
 
 if __name__ == '__main__':
+    OpenDir = sys.argv[sys.argv.index('-d') + 1]
+    os.chdir(OpenDir)
+    scores_file = 'au_emotes.txt'
+    scores = json.load(open(scores_file))
+    classifier = joblib.load('Happy_trained_RandomForest_with_pose.gz')
+
     vids_file = 'happy_predic_vids.txt'
     vids_done = {}
     original_len = len(vids_done)
