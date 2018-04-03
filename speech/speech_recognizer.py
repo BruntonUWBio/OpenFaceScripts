@@ -1,7 +1,6 @@
 import sys
 import os
 import shutil
-import subprocess
 
 import math
 
@@ -44,5 +43,4 @@ if __name__ == '__main__':
                 out.write('{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\n'.format(frame, au25_c, au26_c, au25_r, au26_r, confidence, prediction))
         except FileNotFoundError as e:
             print('{0} vid cannot be processed!'.format(vid))
-        #shutil.rmtree(working_directory)
-        subprocess.call('rm -rf %s' %(working_directory), shell=True)
+        shutil.rmtree(working_directory)
