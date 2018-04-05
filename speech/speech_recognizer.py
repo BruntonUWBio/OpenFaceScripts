@@ -4,6 +4,7 @@ import shutil
 
 import math
 
+sys.path.append('/home/jeffery')
 sys.path.append('/home/gvelchuru')
 from OpenFaceScripts.runners import CropAndOpenFace
 from OpenFaceScripts.runners.VidCropper import duration
