@@ -1,8 +1,11 @@
+import os
+import shutil
 import torch
 import numpy as np
 import torch.nn as nn
 from torch.autograd import Variable
 from torch.utils.data import DataLoader, TensorDataset
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
 class Speech_RNN(nn.Module):
@@ -51,7 +54,15 @@ class Video_CNN(nn.Module):
 
 
 def make_video_training_data(videos) -> np.ndarray:
-    pass
+    out_data = []
+    out_labels = []
+    working_dir = 'video_intermediate_data'
+
+    if os.path.exists(working_dir):
+        shutil.rmtree(working_dir)
+        os.mkdir(working_dir)
+
+    for video in videos:
 
 
 def make_speech_training_data(speech) -> np.ndarray:
@@ -66,7 +77,7 @@ def train_NN(NN: nn.Module, dataset: TensorDataset, loss_func,
     best_epoch = None
     best_train_loss = None
 
-    for epoch in num_epochs:
+    for epoch in range(num_epochs):
         for sample in DataLoader:
             train_x = sample[0]
             train_y = sample[1]
@@ -84,13 +95,13 @@ def train_NN(NN: nn.Module, dataset: TensorDataset, loss_func,
 if __name__ == "__main__":
     videos = []
     speech = []
-    video_data = make_video_training_data(videos)
-    speech_data = make_speech_training_data(speech)
+    video_data = torch.Tensor(make_video_training_data(videos))
+    speech_data = torch.Tensor(make_speech_training_data(speech))
     labels = []
     n_hidden = 128
     speech_rnn = Speech_RNN(13, n_hidden, 2).cuda()
     video_cnn = Video_CNN().cuda()
-    video_dataset = TensorDataset(video_data, labels).cuda()
+    video_dataset = TensorDataset(video_data, labels)
     speech_dataset = TensorDataset(speech_data, labels)
     train_NN(video_cnn, video_dataset, nn.MSELoss(), 'video_cnn_stats.txt')
     train_NN(speech_rnn, speech_dataset, nn.NLLLoss(), 'speech_cnn_stats.txt')
