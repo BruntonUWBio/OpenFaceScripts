@@ -1,10 +1,12 @@
 import sys
 import os
 import shutil
+import json
 
 sys.path.append((os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 from OpenFaceScripts.runners import CropAndOpenFace
 from OpenFaceScripts.scoring import AUScorer
+from OpenFaceScripts.runners import SecondRunOpenFace
 
 if __name__ == '__main__':
     vid = sys.argv[sys.argv.index('-v') + 1]
@@ -22,8 +24,10 @@ if __name__ == '__main__':
         if 'au.csv' not in os.listdir(working_directory):
             CropAndOpenFace.run_open_face(working_directory, True)
         try:
-            scorer = AUScorer.AUScorer(working_directory)
-            presences = scorer.presence_dict
+            SecondRunOpenFace.do_second_run(
+                os.path.dirname(os.path.abspath(working_directory)))
+            presences = json.load(
+                open(os.path.join(working_directory, 'all_dict.txt')))
 
             for frame in presences:
                 au25_c = 1 if '25' in presences[frame] else 0
