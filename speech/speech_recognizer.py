@@ -2,12 +2,8 @@ import sys
 import os
 import shutil
 
-import math
-
-sys.path.append('/home/jeffery')
-sys.path.append('/home/gvelchuru')
+sys.path.append((os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 from OpenFaceScripts.runners import CropAndOpenFace
-from OpenFaceScripts.runners.VidCropper import duration
 from OpenFaceScripts.scoring import AUScorer
 
 if __name__ == '__main__':
@@ -28,8 +24,6 @@ if __name__ == '__main__':
         try:
             scorer = AUScorer.AUScorer(working_directory)
             presences = scorer.presence_dict
-            out.write('frame\t' + 'au25_c\t' + 'au26_c\t' +
-                      'au25_r\t' + 'au26_r\t' + 'confidence\t' + 'prediction\n')
 
             for frame in presences:
                 au25_c = 1 if '25' in presences[frame] else 0
@@ -38,22 +32,23 @@ if __name__ == '__main__':
                 au26_r = presences[frame]['26'] if au26_c else 'N/A'
                 confidence = presences[frame]['confidence']
 
-                if au25_c or au26_c:
+                if confidence >= .95 and ((au25_c == 1 and au25_r >= 1) or
+                                          (au26_c == 1 and au26_r >= 1)):
                     predicDic[frame] = "speaking"
                 else:
                     predicDic[frame] = "not speaking"
 
                 # out.write('{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\n'.format(
-                    # frame, au25_c, au26_c, au25_r, au26_r, confidence,
-                    # prediction))
-            predic_frames = sorted(list(predicDic.keys()))
+                # frame, au25_c, au26_c, au25_r, au26_r, confidence,
+                # prediction))
 
             for frame in predicDic:
-                prev_frame = predic_frames[predic_frames.index(frame) - 1]
-                if abs(prev_frame - frame) >= 5:
-                    prev_frame = None
-                next_frame = predic_frames[predic_frames.index(frame) + 1]
+                for frame_to_look in range(frame - 5, frame + 6):
+                    if frame_to_look in predicDic and predicDic[frame] == "speaking":
+                        predicDic[frame] = "speaking"
 
+            for frame in predicDic:
+                out.write(frame + '\t' + predicDic[frame])
 
         except FileNotFoundError as e:
             print('{0} vid cannot be processed!'.format(vid))
