@@ -8,6 +8,12 @@ from OpenFaceScripts.runners import CropAndOpenFace
 from OpenFaceScripts.scoring import AUScorer
 from OpenFaceScripts.runners import SecondRunOpenFace
 
+
+def applySlidingWindow(predicDic: dict) -> dict:
+    startFrame = 0
+    endFrame = duration(vid) * 30
+
+
 if __name__ == '__main__':
     vid = sys.argv[sys.argv.index('-v') + 1]
     out_file = sys.argv[sys.argv.index('-t') + 1]
@@ -38,18 +44,15 @@ if __name__ == '__main__':
 
                 if confidence >= .95 and ((au25_c == 1 and au25_r >= 1) or
                                           (au26_c == 1 and au26_r >= 1)):
-                    predicDic[frame] = "speaking"
+                    predicDic[frame] = True
                 else:
-                    predicDic[frame] = "not speaking"
+                    predicDic[frame] = False
 
                 # out.write('{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\n'.format(
                 # frame, au25_c, au26_c, au25_r, au26_r, confidence,
                 # prediction))
 
-            for frame in predicDic:
-                for frame_to_look in range(frame - 5, frame + 6):
-                    if frame_to_look in predicDic and predicDic[frame] == "speaking":
-                        predicDic[frame] = "speaking"
+            predicDic = applySlidingWindow(predicDic)
 
             for frame in predicDic:
                 out.write(frame + '\t' + predicDic[frame])
