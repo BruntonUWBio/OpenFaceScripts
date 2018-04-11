@@ -9,6 +9,8 @@ if __name__ == '__main__':
     audio = sys.argv[sys.argv.index('-a') + 1]
     out_dir = sys.argv[sys.argv.index('-od') + 1]
     filename = path.splitext(path.basename(audio))[0]
+    
+    print('Extracting MFCCs from ' + filename + '.wav')
 
     rate, signal = wav.read(audio)
     mfcc_feats = mfcc(signal, samplerate=rate, winlen=1/30, nfft=512, numcep=26, winstep=1/30)
