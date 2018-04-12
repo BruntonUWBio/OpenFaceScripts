@@ -19,8 +19,8 @@ def auditok_oscillating_predictions(predicDic: dict, vid: str,
     with open(auditok_file) as audi_data:
         for line in audi_data.readlines():
             audi_line_info = line.split()
-            starting_frame = int(int(audi_line_info[1]) / 30)
-            ending_frame = int(int(audi_line_info[2]) / 30)
+            starting_frame = int(float(audi_line_info[1]) / 30)
+            ending_frame = int(float(audi_line_info[2]) / 30)
             open_sections = []  # type: List[List[int]]
             closed_sections = []  # type: List[List[int]]
             start_frame = 0
@@ -87,8 +87,8 @@ if __name__ == '__main__':
             for frame in presences:
                 au25_c = 1 if '25' in presences[frame] else 0
                 au26_c = 1 if '26' in presences[frame] else 0
-                au25_r = presences[frame]['25'] if au25_c else 'N/A'
-                au26_r = presences[frame]['26'] if au26_c else 'N/A'
+                au25_r = float(presences[frame]['25']) if au25_c else 'N/A'
+                au26_r = float(presences[frame]['26']) if au26_c else 'N/A'
                 confidence = presences[frame]['confidence']
 
                 PREDIC_DIC[frame] = bool(confidence >= .95
