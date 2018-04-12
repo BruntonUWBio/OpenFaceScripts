@@ -23,6 +23,7 @@ def make_vids(path):
     :return: list of vids to do
     """
     folder_components = set(os.path.join(path, x) for x in os.listdir(path))
+
     return [x for x in glob.glob(os.path.join(path, '*.avi')) if (
         os.path.splitext(x)[0] + '_cropped' not in folder_components or 'au.txt' not in os.listdir(
             os.path.join(path, os.path.splitext(x)[0] + '_cropped')))]
@@ -53,6 +54,7 @@ if __name__ == '__main__':
     num_GPUs = 2
     processes = []
     indices = np.linspace(0, len(vids), num=num_GPUs + 1)
+
     for index in range(len(indices) - 1):
         processes.append(subprocess.Popen(
             ['python3', '/home/gvelchuru/OpenFaceScripts/helpers/HalfCropper.py', '-id', path, '-vl',

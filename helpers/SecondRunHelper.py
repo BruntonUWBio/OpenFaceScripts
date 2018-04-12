@@ -9,7 +9,8 @@ import sys
 import cv2
 import numpy as np
 
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.append(
+    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 from OpenFaceScripts.runners import VidCropper, CropAndOpenFace
 from OpenFaceScripts.scoring import AUScorer
 
@@ -113,6 +114,7 @@ def throw_vid_in_reverse(vid: str, vid_dir: str,
     if len(old_scorer.presence_dict) > 0 or len(new_scorer.presence_dict) > 0:
         new_dict = {
             num_frames - i: k
+
             for i, k in new_scorer.presence_dict.items()
         }
         old_dict = copy.copy(old_scorer.presence_dict)
@@ -311,7 +313,7 @@ def process_vid_dir(eyebrow_dict: dict, vid_dir: str) -> None:
         json.load(open(all_dict_file))) if os.path.exists(
             all_dict_file) else AUScorer.AUScorer(vid_dir).presence_dict
 
-    if vid_dir in eyebrow_dict['Eyebrows']:
+    if eyebrow_dict and vid_dir in eyebrow_dict['Eyebrows']:
         include_eyebrows = True
     else:
         include_eyebrows = False
@@ -421,6 +423,7 @@ def process_eyebrows(dir: str, file) -> dict:
                 if eyebrow_mode:
                     exact_dict['Eyebrows'] += [
                         x for x in os.listdir(dir)
+
                         if os.path.isdir(os.path.join(dir, x)) and line in x
                         and os.path.join(dir,
                                          x) not in exact_dict['No Eyebrows']
@@ -428,6 +431,7 @@ def process_eyebrows(dir: str, file) -> dict:
                 else:
                     exact_dict['No Eyebrows'] += [
                         x for x in os.listdir(dir)
+
                         if os.path.isdir(os.path.join(dir, x)) and line in x
                         and os.path.join(dir,
                                          x) not in exact_dict['No Eyebrows']
@@ -446,6 +450,7 @@ if __name__ == '__main__':
     files = [
         x for x in (os.path.join(patient_directory, vid_dir)
                     for vid_dir in os.listdir(patient_directory))
+
         if (os.path.isdir(x) and 'au.csv' in os.listdir(x))
     ]
     left = sys.argv[sys.argv.index('-vl') + 1]

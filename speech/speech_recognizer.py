@@ -76,13 +76,14 @@ if __name__ == '__main__':
 
         if 'au.csv' not in os.listdir(WORKING_DIR):
             CropAndOpenFace.run_open_face(WORKING_DIR, True)
-        
+
         try:
-            SecondRunOpenFace.do_second_run(
-                os.path.dirname(os.path.abspath(WORKING_DIR)))
-            presences = json.load(
-                open(os.path.join(WORKING_DIR, 'all_dict.txt')))
-            
+            # SecondRunOpenFace.do_second_run(
+                # os.path.dirname(os.path.abspath(WORKING_DIR)))
+            # presences = json.load(
+                # open(os.path.join(WORKING_DIR, 'all_dict.txt')))
+            presences = AUScorer.AUScorer(WORKING_DIR, False).presence_dict
+
             for frame in presences:
                 au25_c = 1 if '25' in presences[frame] else 0
                 au26_c = 1 if '26' in presences[frame] else 0
@@ -94,7 +95,8 @@ if __name__ == '__main__':
                                          and ((au25_c == 1 and au25_r >= 1) or
                                               (au26_c == 1 and au26_r >= 1)))
 
-                predicDic = auditok_oscillating_predictions(PREDIC_DIC, VID, AUDI_FILE)
+                predicDic = auditok_oscillating_predictions(
+                    PREDIC_DIC, VID, AUDI_FILE)
 
             for frame in predicDic:
                 out.write(frame + '\t' + predicDic[frame])
