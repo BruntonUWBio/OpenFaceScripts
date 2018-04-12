@@ -5,6 +5,7 @@ import json
 from typing import List
 import numpy as np
 
+sys.path.append('/home/jeffery/')
 sys.path.append((os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 from OpenFaceScripts.runners import CropAndOpenFace
 from OpenFaceScripts.scoring import AUScorer
@@ -62,6 +63,7 @@ def auditok_oscillating_predictions(predicDic: dict, vid: str,
 if __name__ == '__main__':
     VID = sys.argv[sys.argv.index('-v') + 1]
     OUT_FILE = sys.argv[sys.argv.index('-t') + 1]
+    AUDI_FILE = sys.argv[sys.argv.index('-a') + 1]
     PREDIC_DIC = {}
     with open(OUT_FILE, 'w') as out:
         OUT_PARENT_DIR = os.path.dirname(OUT_FILE)
@@ -74,12 +76,13 @@ if __name__ == '__main__':
 
         if 'au.csv' not in os.listdir(WORKING_DIR):
             CropAndOpenFace.run_open_face(WORKING_DIR, True)
+        
         try:
             SecondRunOpenFace.do_second_run(
                 os.path.dirname(os.path.abspath(WORKING_DIR)))
             presences = json.load(
                 open(os.path.join(WORKING_DIR, 'all_dict.txt')))
-
+            
             for frame in presences:
                 au25_c = 1 if '25' in presences[frame] else 0
                 au26_c = 1 if '26' in presences[frame] else 0
@@ -91,11 +94,11 @@ if __name__ == '__main__':
                                          and ((au25_c == 1 and au25_r >= 1) or
                                               (au26_c == 1 and au26_r >= 1)))
 
-                predicDic = auditok_oscillating_predictions(PREDIC_DIC)
+                predicDic = auditok_oscillating_predictions(PREDIC_DIC, VID, AUDI_FILE)
 
             for frame in predicDic:
                 out.write(frame + '\t' + predicDic[frame])
 
         except FileNotFoundError as e:
             print('{0} vid cannot be processed!'.format(VID))
-        shutil.rmtree(WORKING_DIR)
+        # shutil.rmtree(WORKING_DIR)
