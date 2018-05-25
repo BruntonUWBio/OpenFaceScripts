@@ -6,8 +6,8 @@ import shutil
 import subprocess
 import sys
 
-sys.path.append('/home/gvelchuru/')
-
+sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+print(sys.path)
 from OpenFaceScripts.runners.VidCropper import duration
 from OpenFaceScripts.scoring import AUScorer
 from OpenFaceScripts.helpers.SecondRunHelper import height_width, get_vid_from_dir
@@ -51,16 +51,26 @@ def bar_movie(vid, vid_dir, times, corr, replace_input=True):
     orig = .269
     width = height_width(vid)[1]
     if replace_input:
-        out_vid_name = pathos.
+        out_vid_name = vid
+    else:
+        out_vid_name = 'completed_{0}'.format(os.path.basename(vid))
+        # movie_string = ('"movie={1}, scale={width}:-1, format=argb, \
+        #       colorchannelmixer=aa=.75[inner]; [in][inner] \
+        #       overlay={orig}[out]"'.format(test_line, os.path.join(vid_dir,
+        #                                    out_vid_name), width=width, orig=orig))
+        # ffmpeg_pipe = ['ffmpeg', '-loglevel', 'quiet', '-y', '-i', vid, '-vf',
+        #                movie_string, '-strict', '-2', os.path.join(vid_dir, out_vid_name)]
     subprocess.Popen('ffmpeg -loglevel quiet -y -i {0} -vf "movie={1}, '
-                     'scale={width}:-1, format=argb, colorchannelmixer=aa=.75
-                     [inner]; [in][inner] overlay={orig} [out]" '
-                     '-strict -2 {2}'.format(vid, test_line, os.path.join(vid_dir, 'completed_{0}.mp4'.format(
-        os.path.basename(vid).replace('.avi', ''))),
+                     'scale={width}:-1, format=argb, colorchannelmixer=aa=.75'
+                     '[inner]; [in][inner] overlay={orig} [out]" '
+                     '-strict -2 {2}'.format(vid, test_line,
+                                             os.path.join(vid_dir, out_vid_name),
                                              width=width, orig=orig),
                      shell=True).wait()
+        # subprocess.Popen(ffmpeg_pipe).wait()
     plt.close()
-    shutil.rmtree(test_line)
+    os.remove(test_line)
+
 
 def mark_vid_dir(out_q, vid_dir):
     if 'inter_out.avi' not in os.listdir(vid_dir):

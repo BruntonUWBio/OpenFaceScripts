@@ -1,0 +1,3 @@
+[submodule "speech/preprocessing/rnnoise"]
+	path = speech/preprocessing/rnnoise
+	url = https://github.com/xiph/rnnoise.git

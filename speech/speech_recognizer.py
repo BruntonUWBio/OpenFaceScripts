@@ -1,77 +1,106 @@
 import sys
 import os
 import shutil
+import json
+from typing import List
+import numpy as np
 
-import math
-
-sys.path.append('/home/gvelchuru')
+sys.path.append('/home/jeffery/')
+sys.path.append((os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 from OpenFaceScripts.runners import CropAndOpenFace
-from OpenFaceScripts.runners.VidCropper import duration
 from OpenFaceScripts.scoring import AUScorer
+from OpenFaceScripts.runners import SecondRunOpenFace
 
 
-def curr_lip_pos(mouth_points, moves, frame):
-    # ret_list = []
-    # try:
-    #     for point in mouth_points:
-    #         if 'x_{0}'.format(point) in moves[frame]:
-    #             ret_list.append((moves[frame]['x_{0}'.format(point)], moves[frame]['y_{0}'.format(point)]))
-    #     return ret_list
-    # except KeyError as e:
-    #     print('kurwa')
-    return [(moves[frame]['x_{0}'.format(point)], moves[frame]['y_{0}'.format(point)]) for point in mouth_points
-            if 'x_{0}'.format(point) in moves[frame]]
+def auditok_oscillating_predictions(predicDic: dict, vid: str,
+                                    auditok_file: str) -> dict:
+    FRAMES_PER_STATE_THRESH = 10
+    out_dict = {}
+    with open(auditok_file) as audi_data:
+        for line in audi_data.readlines():
+            audi_line_info = line.split()
+            starting_frame = int(float(audi_line_info[1]) / 30)
+            ending_frame = int(float(audi_line_info[2]) / 30)
+            open_sections = []  # type: List[List[int]]
+            closed_sections = []  # type: List[List[int]]
+            start_frame = 0
+            curr_string = None
 
+            for frame in range(starting_frame, ending_frame + 1):
+                if frame not in presences:
+                    temp_string = None
+                else:
+                    if predicDic[frame]:
+                        temp_string = True
+                    else:
+                        temp_string = False
 
-def aspect_ratio(curr_lip_coords):
-    min_x = min([x[0] for x in curr_lip_coords])
-    min_y = min([x[1] for x in curr_lip_coords])
-    max_x = max([x[0] for x in curr_lip_coords])
-    max_y = max([x[1] for x in curr_lip_coords])
-    return (max_y - min_y) / (max_x - min_x)
+                if curr_string is None or curr_string != temp_string:
+                    if temp_string is not None:
+                        if temp_string:
+                            open_sections.append([start_frame, frame - 1])
+                        else:
+                            closed_sections.append([start_frame, frame - 1])
+                    start_frame = frame
+                    curr_string = temp_string
+
+            average_open_fps = np.average([x[1] - x[0] for x in open_sections])
+            average_close_fps = np.average(
+                [x[1] - x[0] for x in closed_sections])
+
+            for frame in range(starting_frame, ending_frame + 1):
+                if frame in predicDic:
+                    if np.average(
+                            average_open_fps,
+                            average_close_fps) <= FRAMES_PER_STATE_THRESH:
+                        out_dict[frame] = "speaking"
+                    else:
+                        out_dict[frame] = "not speaking"
+
+            return out_dict
 
 
 if __name__ == '__main__':
-    vid = sys.argv[sys.argv.index('-v') + 1]
-    out_file = sys.argv[sys.argv.index('-t') + 1]
-    with open(out_file, 'w') as out:
-        out_parent_dir = os.path.dirname(out_file)
-        working_directory = os.path.join(out_parent_dir, '{0}_speech_recognizer'.format(out_file))
-        if not os.path.exists(working_directory):  # remove for faster debugging
-            # shutil.rmtree(working_directory)
-            os.mkdir(working_directory)
-            shutil.copy(vid, os.path.join(working_directory, 'inter_out.avi'))
-            CropAndOpenFace.run_open_face(working_directory, True)
-        scorer = AUScorer.AUScorer(working_directory)
-        moves = scorer.x_y_dict
-        # presences = AUScorer.AUScorer(working_directory).presence_dict
-        start_frame = 0
-        curr_string = None
-        mouth_points = list(range(49, 69))
-        last_frame = None
-        for frame in range(int(math.ceil(duration(vid) * 30))):
-            if frame not in moves:
-                temp_string = "not recognized"
-            else:
-                # if '25' in presences[frame] or '26' in presences[frame]:  # can set to specific vals as well
-                #     temp_string = "open mouth"
-                # else:
-                #     temp_string = "closed mouth"
-                if last_frame:
-                    curr_lip_coords = curr_lip_pos(mouth_points, moves, frame)
-                    curr_aspect = aspect_ratio(curr_lip_coords)
-                    prev_lip_coords = curr_lip_pos(mouth_points, moves, last_frame)
-                    prev_aspect = aspect_ratio(prev_lip_coords)
-                    tol = 10 ** -2  # Change for  performance
-                    if abs(prev_aspect - curr_aspect) >= tol:
-                        temp_string = "open mouth"
-                    else:
-                        temp_string = "closed mouth"
-                else:
-                    temp_string = "no previous data"
-                last_frame = frame
-            if not curr_string or curr_string != temp_string:
-                if curr_string:
-                    out.write(str(start_frame) + '\t' + str(frame - 1) + '\t' + curr_string + '\n')
-                start_frame = frame
-                curr_string = temp_string
+    VID = sys.argv[sys.argv.index('-v') + 1]
+    OUT_FILE = sys.argv[sys.argv.index('-t') + 1]
+    AUDI_FILE = sys.argv[sys.argv.index('-a') + 1]
+    PREDIC_DIC = {}
+    with open(OUT_FILE, 'w') as out:
+        OUT_PARENT_DIR = os.path.dirname(OUT_FILE)
+        WORKING_DIR = os.path.join(OUT_PARENT_DIR,
+                                   '{0}_speech_recognizer'.format(OUT_FILE))
+
+        if not os.path.exists(WORKING_DIR):
+            os.mkdir(WORKING_DIR)
+            shutil.copy(VID, os.path.join(WORKING_DIR, 'inter_out.avi'))
+
+        if 'au.csv' not in os.listdir(WORKING_DIR):
+            CropAndOpenFace.run_open_face(WORKING_DIR, True)
+
+        try:
+            # SecondRunOpenFace.do_second_run(
+                # os.path.dirname(os.path.abspath(WORKING_DIR)))
+            # presences = json.load(
+                # open(os.path.join(WORKING_DIR, 'all_dict.txt')))
+            presences = AUScorer.AUScorer(WORKING_DIR, False).presence_dict
+
+            for frame in presences:
+                au25_c = 1 if '25' in presences[frame] else 0
+                au26_c = 1 if '26' in presences[frame] else 0
+                au25_r = float(presences[frame]['25']) if au25_c else 'N/A'
+                au26_r = float(presences[frame]['26']) if au26_c else 'N/A'
+                confidence = presences[frame]['confidence']
+
+                PREDIC_DIC[frame] = bool(confidence >= .95
+                                         and ((au25_c == 1 and au25_r >= 1) or
+                                              (au26_c == 1 and au26_r >= 1)))
+
+                predicDic = auditok_oscillating_predictions(
+                    PREDIC_DIC, VID, AUDI_FILE)
+
+            for frame in predicDic:
+                out.write(frame + '\t' + predicDic[frame])
+
+        except FileNotFoundError as e:
+            print('{0} vid cannot be processed!'.format(VID))
+        # shutil.rmtree(WORKING_DIR)
