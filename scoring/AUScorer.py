@@ -7,7 +7,7 @@ import os
 import re
 import sys
 from collections import defaultdict
-
+from dask import dataframe as df
 import numpy as np
 
 sys.path.append(
@@ -217,6 +217,10 @@ def convert_aus_to_scores(arr: list, frame: int,
 
 def return_num(string: str) -> int:
     return int(re.findall("\d+", string)[0])
+
+
+def au_data_frame(directory: str) -> df:
+    return df.read_hdf(os.path.join(directory, 'hdfs', 'au_*.hdf'), '/data')
 
 
 def emotion_list() -> list:

@@ -9,9 +9,11 @@ import json
 import os
 import subprocess
 import sys
-
-sys.path.append('/home/gvelchuru')
-from OpenFaceScripts.runners import ImageCropper, VidCropper
+from dask import dataframe as df
+import pandas as pd
+# print(sys.path)
+import ImageCropper
+import VidCropper
 
 
 def run_open_face(im_dir, vid_mode=False, remove_intermediates=False):
@@ -26,10 +28,13 @@ def run_open_face(im_dir, vid_mode=False, remove_intermediates=False):
     executable = '/home/gvelchuru/OpenFace/build/bin/FeatureExtraction'  # Change to location of OpenFace
 
     if not vid_mode:
-        subprocess.Popen("ffmpeg -y -r 30 -f image2 -pattern_type glob -i '{0}' -b:v 7000k {1}".format(
-            os.path.join(im_dir, '*.png'),
-            os.path.join(im_dir,
-                         'inter_out.mp4')), shell=True).wait()
+        subprocess.Popen(
+            "ffmpeg -y -r 30 -f image2 -pattern_type glob -i '{0}' -b:v 7000k {1}".
+
+            format(
+                os.path.join(im_dir, '*.png'),
+                os.path.join(im_dir, 'inter_out.mp4')),
+            shell=True).wait()
         vid_name = 'inter_out.mp4'
         out_name = 'out.mp4'
     else:
@@ -38,11 +43,28 @@ def run_open_face(im_dir, vid_mode=False, remove_intermediates=False):
 
     subprocess.Popen(
         '{0} -f {1} -of {2} -ov {3} -q -wild -multi-view 1'.format(
-            executable,
-            os.path.join(im_dir,
-                         vid_name),
+            executable, os.path.join(im_dir, vid_name),
             os.path.join(im_dir, 'au.csv'), os.path.join(im_dir, out_name)),
         shell=True).wait()
+
+    vid_name = os.path.basename(im_dir).replace('_cropped', '')
+    vid_name_parts = vid_name.split('_')
+    patient_name = vid_name_parts[0]
+    day_num = vid_name_parts[1]
+    session_num = vid_name_parts[2]
+
+    au_dataframe = df.read_csv(os.path.join(im_dir, 'au.csv'))
+    sLength = len(au_dataframe['frame'])
+    au_dataframe = au_dataframe.assign(patient=lambda x: patient_name)
+    au_dataframe = au_dataframe.assign(day=lambda x: day_num)
+    au_dataframe = au_dataframe.assign(session=lambda x: session_num)
+    au_dataframe = au_dataframe.compute()
+    # au_dataframe = au_dataframe.assign(
+    df_dir = os.path.join(im_dir, 'hdfs')
+
+    if not os.path.exists(df_dir):
+        os.mkdir(df_dir)
+    au_dataframe.to_hdf(os.path.join(df_dir, 'au_*.hdf'), '/data')
 
     if remove_intermediates:
         os.remove(os.path.join(im_dir, vid_name))
@@ -51,12 +73,17 @@ def run_open_face(im_dir, vid_mode=False, remove_intermediates=False):
 
 
 class VideoImageCropper:
-    def __init__(self, vid=None, im_dir=None, already_cropped=None,
-                 already_detected=None, crop_txt_files=None, nose_txt_files = None, vid_mode = False):
+    def __init__(self,
+                 vid=None,
+                 im_dir=None,
+                 already_cropped=None,
+                 already_detected=None,
+                 crop_txt_files=None,
+                 nose_txt_files=None,
+                 vid_mode=False):
         self.already_cropped = already_cropped
         self.already_detected = already_detected
         self.im_dir = im_dir
-        out_name = 'out.mp4'
 
         if not self.already_cropped and not self.already_detected:
             if crop_txt_files:
@@ -64,7 +91,10 @@ class VideoImageCropper:
             else:
                 try:
                     self.crop_txt_files = json.load(
-                        open(os.path.join(os.path.dirname(vid), 'crop_files_list.txt'), mode='r'))
+                        open(
+                            os.path.join(
+                                os.path.dirname(vid), 'crop_files_list.txt'),
+                            mode='r'))
                 except IOError:
                     self.crop_txt_files = find_txt_files(crop_path)
 
@@ -73,7 +103,10 @@ class VideoImageCropper:
             else:
                 try:
                     self.nose_txt_files = json.load(
-                        open(os.path.join(os.path.dirname(vid), 'nose_files_list.txt'), mode='r'))
+                        open(
+                            os.path.join(
+                                os.path.dirname(vid), 'nose_files_list.txt'),
+                            mode='r'))
                 except IOError:
                     self.nose_txt_files = find_txt_files(nose_path)
 
@@ -81,21 +114,33 @@ class VideoImageCropper:
                 os.mkdir(self.im_dir)
 
         if not vid_mode:
-            subprocess.Popen('ffmpeg -y -i "{0}" -vf fps=30 "{1}"'.format(vid, os.path.join(self.im_dir, (
-                os.path.basename(vid) + '_out%04d.png'))), shell=True).wait()
-            ImageCropper.CropImages(self.im_dir, self.crop_txt_files, self.nose_txt_files, save=True)
+            subprocess.Popen(
+                'ffmpeg -y -i "{0}" -vf fps=30 "{1}"'.format(
+                    vid,
+                    os.path.join(self.im_dir,
+                                 (os.path.basename(vid) + '_out%04d.png'))),
+                shell=True).wait()
+            ImageCropper.CropImages(
+                self.im_dir,
+                self.crop_txt_files,
+                self.nose_txt_files,
+                save=True)
 
             if len(glob.glob(os.path.join(self.im_dir, '*.png'))) > 0:
                 if not self.already_detected:
                     run_open_face(self.im_dir)
         else:
-            VidCropper.CropVid(vid, self.im_dir, self.crop_txt_files, self.nose_txt_files)
+            VidCropper.CropVid(vid, self.im_dir, self.crop_txt_files,
+                               self.nose_txt_files)
             run_open_face(self.im_dir, vid_mode=True)
 
 
 def find_txt_files(path):
-    return {os.path.splitext(os.path.basename(v))[0]: v for v in
-            glob.iglob(os.path.join(path + '/**/*.txt'), recursive=True)}
+    return {
+        os.path.splitext(os.path.basename(v))[0]: v
+
+        for v in glob.iglob(os.path.join(path + '/**/*.txt'), recursive=True)
+    }
 
 
 if __name__ == '__main__':
@@ -112,4 +157,12 @@ if __name__ == '__main__':
         im_dir = sys.argv[sys.argv.index('-id') + 1]
     else:
         im_dir = os.path.splitext(vid)[0] + '_cropped'
-    crop = VideoImageCropper(vid, im_dir, crop_path, nose_path, already_cropped, already_detected, vid_mode=True)
+    crop = VideoImageCropper(
+        vid,
+        im_dir,
+        crop_path,
+        nose_path,
+        already_cropped,
+        already_detected,
+        vid_mode=True)
+        vid_mode = True)

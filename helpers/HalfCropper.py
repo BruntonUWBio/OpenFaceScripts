@@ -1,10 +1,10 @@
 import os
 import sys
 
-sys.path.append('/home/gvelchuru')
-from OpenFaceScripts.runners.MultiCropAndOpenFace import make_vids, make_crop_and_nose_files
-from OpenFaceScripts.runners import CropAndOpenFace, VidCropper
-from OpenFaceScripts.runners.VidCropper import DurationException
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from runners.MultiCropAndOpenFace import make_vids, make_crop_and_nose_files
+from runners import CropAndOpenFace, VidCropper
+from runners.VidCropper import DurationException
 
 
 def run():
@@ -21,9 +21,12 @@ def crop_image(i):
 def try_cropping(vid, im_dir):
     try:
         VidCropper.duration(vid)
-        CropAndOpenFace.VideoImageCropper(vid=vid, im_dir=im_dir,
-                                          crop_txt_files=crop_txt_files, nose_txt_files=nose_txt_files,
-                                          vid_mode=True)
+        CropAndOpenFace.VideoImageCropper(
+            vid=vid,
+            im_dir=im_dir,
+            crop_txt_files=crop_txt_files,
+            nose_txt_files=nose_txt_files,
+            vid_mode=True)
     except DurationException as e:
         print(e + '\t' + vid)
 
