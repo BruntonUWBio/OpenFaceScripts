@@ -5,10 +5,11 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from runners.MultiCropAndOpenFace import make_vids, make_crop_and_nose_files
 from runners import CropAndOpenFace, VidCropper
 from runners.VidCropper import DurationException
+from tqdm import tqdm
 
 
 def run():
-    for vid in range(vid_left, vid_right):
+    for vid in tqdm(range(vid_left, vid_right + 1)):
         crop_image(vid)
 
 
@@ -28,7 +29,7 @@ def try_cropping(vid, im_dir):
             nose_txt_files=nose_txt_files,
             vid_mode=True)
     except DurationException as e:
-        print(e + '\t' + vid)
+        print(str(e) + '\t' + vid)
 
 
 if __name__ == '__main__':

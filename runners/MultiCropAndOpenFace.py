@@ -26,7 +26,7 @@ def make_vids(path):
     return [
         x for x in glob.glob(os.path.join(path, '*.avi'))
         if (os.path.splitext(x)[0] + '_cropped' not in folder_components
-            or 'au.txt' not in os.listdir(
+            or 'hdfs' not in os.listdir(
                 os.path.join(path,
                              os.path.splitext(x)[0] + '_cropped')))
     ]
@@ -54,21 +54,24 @@ if __name__ == '__main__':
     path = sys.argv[sys.argv.index('-id') + 1]
 
     vids = make_vids(path)
-    num_GPUs = 2
+    num_GPUs = 1
     processes = []
     indices = np.linspace(0, len(vids), num=num_GPUs + 1)
 
+    # TODO: make this a cmd-line arg
+    CONDA_ENV = '/home/gvelchuru/miniconda3/envs/OpenFace/bin/python'
+
     for index in range(len(indices) - 1):
+        cmd = [
+            CONDA_ENV,
+            os.path.join(
+                os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                'helpers', 'HalfCropper.py'), '-id', path, '-vl',
+            str(int(indices[index])), '-vr',
+            str(int(indices[index + 1]))
+        ]
         processes.append(
             subprocess.Popen(
-                [
-                    'python3',
-                    os.path.join(
-                        os.path.dirname(
-                            os.path.dirname(os.path.abspath(__file__))),
-                        'helpers', 'HalfCropper.py'), '-id', path, '-vl',
-                    str(int(indices[index])), '-vr',
-                    str(int(indices[index + 1]))
-                ],
-                env={'CUDA_VISIBLE_DEVICES': '{0}'.format(str(index))}))
+                cmd, env={'CUDA_VISIBLE_DEVICES': '{0}'.format(str(index))}))
+
     [p.wait() for p in processes]

@@ -16,7 +16,7 @@ import ImageCropper
 import VidCropper
 
 
-def run_open_face(im_dir, vid_mode=False, remove_intermediates=False):
+def run_open_face(im_dir, vid_mode=False, remove_intermediates=False) -> str:
     """
     Runs OpenFace
 
@@ -30,7 +30,6 @@ def run_open_face(im_dir, vid_mode=False, remove_intermediates=False):
     if not vid_mode:
         subprocess.Popen(
             "ffmpeg -y -r 30 -f image2 -pattern_type glob -i '{0}' -b:v 7000k {1}".
-
             format(
                 os.path.join(im_dir, '*.png'),
                 os.path.join(im_dir, 'inter_out.mp4')),
@@ -41,11 +40,14 @@ def run_open_face(im_dir, vid_mode=False, remove_intermediates=False):
         vid_name = 'inter_out.avi'
         out_name = 'out.avi'
 
+    FNULL = open(os.devnull, 'w')
     subprocess.Popen(
         '{0} -f {1} -of {2} -ov {3} -q -wild -multi-view 1'.format(
             executable, os.path.join(im_dir, vid_name),
             os.path.join(im_dir, 'au.csv'), os.path.join(im_dir, out_name)),
-        shell=True).wait()
+        shell=True,
+        stdout=FNULL,
+        stderr=subprocess.STDOUT).wait()
 
     vid_name = os.path.basename(im_dir).replace('_cropped', '')
     vid_name_parts = vid_name.split('_')
@@ -53,18 +55,19 @@ def run_open_face(im_dir, vid_mode=False, remove_intermediates=False):
     day_num = vid_name_parts[1]
     session_num = vid_name_parts[2]
 
-    au_dataframe = df.read_csv(os.path.join(im_dir, 'au.csv'))
-    sLength = len(au_dataframe['frame'])
-    au_dataframe = au_dataframe.assign(patient=lambda x: patient_name)
-    au_dataframe = au_dataframe.assign(day=lambda x: day_num)
-    au_dataframe = au_dataframe.assign(session=lambda x: session_num)
-    au_dataframe = au_dataframe.compute()
-    # au_dataframe = au_dataframe.assign(
-    df_dir = os.path.join(im_dir, 'hdfs')
+    if 'au.csv' in os.listdir(im_dir):
+        au_dataframe = df.read_csv(os.path.join(im_dir, 'au.csv'))
+        sLength = len(au_dataframe['frame'])
+        au_dataframe = au_dataframe.assign(patient=lambda x: patient_name)
+        au_dataframe = au_dataframe.assign(day=lambda x: day_num)
+        au_dataframe = au_dataframe.assign(session=lambda x: session_num)
+        au_dataframe = au_dataframe.compute()
+        # au_dataframe = au_dataframe.assign(
+        df_dir = os.path.join(im_dir, 'hdfs')
 
-    if not os.path.exists(df_dir):
-        os.mkdir(df_dir)
-    au_dataframe.to_hdf(os.path.join(df_dir, 'au_*.hdf'), '/data')
+        if not os.path.exists(df_dir):
+            os.mkdir(df_dir)
+        au_dataframe.to_hdf(os.path.join(df_dir, 'au_*.hdf'), '/data')
 
     if remove_intermediates:
         os.remove(os.path.join(im_dir, vid_name))
@@ -138,7 +141,6 @@ class VideoImageCropper:
 def find_txt_files(path):
     return {
         os.path.splitext(os.path.basename(v))[0]: v
-
         for v in glob.iglob(os.path.join(path + '/**/*.txt'), recursive=True)
     }
 
@@ -165,4 +167,3 @@ if __name__ == '__main__':
         already_cropped,
         already_detected,
         vid_mode=True)
-        vid_mode = True)
