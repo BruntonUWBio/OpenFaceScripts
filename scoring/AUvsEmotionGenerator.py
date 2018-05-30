@@ -6,101 +6,99 @@ import os
 import sys
 from collections import defaultdict
 from os.path import join
-
+from dask import dataframe as df
 import progressbar
 from pathos.multiprocessing import ProcessingPool as Pool
-
-sys.path.append('/home/gvelchuru/')
+from multiprocessing import cpu_count
+sys.path.append(
+    os.path.dirname(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 from OpenFaceScripts.helpers.SecondRunHelper import process_eyebrows, get_vid_from_dir
 from OpenFaceScripts import AUGui
 from OpenFaceScripts.scoring import AUScorer
 from OpenFaceScripts.runners import VidCropper
+from OpenFaceScripts.helpers.patient_info import patient_day_session, get_patient_names
+from tqdm import tqdm
 
 
-def find_scores(out_q, eyebrow_dict, patient_dir):
+def clean_to_write(to_write: str) -> str:
+    if to_write == 'Surprised':
+        to_write = 'Surprise'
+    elif to_write == 'Disgusted':
+        to_write = 'Disgust'
+    elif to_write == 'Afraid':
+        to_write = 'Fear'
+
+    return to_write
+
+
+def find_scores(patient_dir: str):
     """
     Finds the scores for a specific patient directory
-    :param out_q: Queue to output results to (for multiprocessing)
     :param patient_dir: Directory to look in
     """
-    patient_dir_scores = {patient_dir: defaultdict()}
     try:
-        if patient_dir in eyebrow_dict['Eyebrows']:
-            include_eyebrows = True
-        else:
-            include_eyebrows = False
+        patient, day, session = patient_day_session(patient_dir)
+        au_frame = df.read_hdf(
+            os.path.join('all_' + patient, '*.hdf'), '/data')
 
-        second_runner_file = os.path.join(patient_dir, 'all_dict.txt')
-        if os.path.exists(second_runner_file):
-            presence_dict = json.load(open(second_runner_file))
-        else:
-            presence_dict = AUScorer.AUScorer(patient_dir).presence_dict
+        # Restrict to a subset of frames which are relevant
+        au_frame = au_frame[au_frame.patient == patient and au_frame.day == day
+                            and au_frame.session == session]
 
-        AU_presences = presence_dict
-
-        csv_path = join(patient_dir, os.path.basename(patient_dir).replace('_cropped', '') + '_emotions.csv')
-        num_frames = int(VidCropper.duration(get_vid_from_dir(patient_dir)) * 30)
-        aus_list = AUScorer.TrainList
+        csv_path = join(patient_dir,
+                        os.path.basename(patient_dir).replace('_cropped', '') +
+                        '_emotions.csv')
+        num_frames = int(
+            VidCropper.duration(get_vid_from_dir(patient_dir)) * 30)
 
         if os.path.exists(csv_path):
             csv_dict = AUGui.csv_emotion_reader(csv_path)
+
             if csv_dict:
                 annotated_ratio = int(num_frames / len(csv_dict))
+
                 if annotated_ratio == 0:
                     annotated_ratio = 1
-                csv_dict = {i * annotated_ratio: c for i, c in csv_dict.items()}
-                for i in [x for x in csv_dict.keys() if 'None' not in csv_dict[x]]:
-                    if str(i) in AU_presences:
-                        auDict = AU_presences[str(i)]
-                        for key in auDict:
-                            if key not in aus_list:
-                                auDict.pop(key, None)
-                        for au in aus_list:
-                            if au not in auDict:
-                                auDict[str(au)] = 0
-                        to_write = csv_dict[i]
-                        if to_write == 'Surprised':
-                            to_write = 'Surprise'
-                        elif to_write == 'Disgusted':
-                            to_write = 'Disgust'
-                        elif to_write == 'Afraid':
-                            to_write = 'Fear'
-                        patient_dir_scores[patient_dir][i] = [auDict, to_write]
-                    else:
-                        patient_dir_scores[patient_dir][i] = None
-        else:
-            for i in range(num_frames):
-                if i in AU_presences:
-                    auDict = AU_presences[i]
-                    for au in aus_list:
-                        if au not in auDict:
-                            auDict[str(au)] = 0
-                    patient_dir_scores[patient_dir][i] = [auDict, None]
-        out_q.put(patient_dir_scores)
-    except FileNotFoundError as e:
-        print(e)
-        pass
+                csv_dict = {
+                    i * annotated_ratio: c
+                    for i, c in csv_dict.items()
+                }
+
+                for i in [
+                        x for x in csv_dict.keys() if 'None' not in csv_dict[x]
+                ]:
+                    curr_au_frame = au_frame[au_frame.frame == i]
+
+                    if curr_au_frame:
+                        to_write = clean_to_write(csv_dict[i])
+                        curr_au_frame['annotated'] = to_write
+    except FileNotFoundError as not_found_error:
+        print(not_found_error)
+
+
+def find_one_patient_scores(patient_dirs: List[str], patient: str):
+    """Finds the annotated emotions for a single patient and adds to overall patient DataFrame.
+    :param patient_dirs: All directories ran through OpenFace.
+    :param patient: Patient to find annotated emotions for
+    """
+    tqdm_position, patient = patient
+
+    for patient_dir in tqdm(patient_dirs, position=tqdm_position):
+        if patient in patient_dir:
+            find_scores(patient_dir)
 
 
 if __name__ == '__main__':
-    OpenDir = sys.argv[sys.argv.index('-d') + 1]
-    os.chdir(OpenDir)
-    patient_dirs = glob.glob('*cropped')  # Directories have been previously cropped by CropAndOpenFace
-    scores = defaultdict()
-    scores_file = 'au_emotes.txt'
-    if os.path.exists(scores_file):
-        scores = json.load(open(scores_file))
-    original_len = len(scores)
-    remaining = [x for x in patient_dirs if x not in scores]
-    if len(remaining) > 0:
-        patient_dirs.sort()
-        out_q = multiprocessing.Manager().Queue()
-        eyebrow_dict = process_eyebrows(OpenDir, open(join(OpenDir, 'eyebrows.txt')))
-        f = functools.partial(find_scores, out_q, eyebrow_dict)
-        bar = progressbar.ProgressBar(redirect_stdout=True, max_value=len(remaining))
-        for i, _ in enumerate(Pool().imap(f, remaining), 1):
-            bar.update(i)
-        while not out_q.empty():
-            scores.update(out_q.get())
-        if len(scores) != original_len:
-            json.dump(scores, open(scores_file, 'w'))
+    OPEN_DIR = sys.argv[sys.argv.index('-d') + 1]
+    os.chdir(OPEN_DIR)
+    # Directories have been previously cropped by CropAndOpenFace
+    PATIENT_DIRS = [
+        x for x in glob.glob('*cropped') if 'hdfs' in os.listdir(x)
+    ]
+    PATIENTS = get_patient_names(PATIENT_DIRS)
+    # EYEBROW_DICT = process_eyebrows(OPEN_DIR,
+    # open(join(OPEN_DIR, 'eyebrows.txt')))
+    PARTIAL_FIND_FUNC = functools.partial(find_scores)
+    TUPLE_PATIENTS = [((i % cpu_count()), x) for i, x in enumerate(PATIENTS)]
+    Pool().map(PARTIAL_FIND_FUNC, TUPLE_PATIENTS)
