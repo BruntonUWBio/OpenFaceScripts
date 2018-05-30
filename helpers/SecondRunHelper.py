@@ -16,6 +16,7 @@ sys.path.append(
     os.path.dirname(
         os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 from OpenFaceScripts.runners import VidCropper, CropAndOpenFace
+from patient_info import patient_day_session
 from OpenFaceScripts.scoring import AUScorer
 
 
@@ -430,13 +431,6 @@ def update_frames(post_func_frame: df.DataFrame, emotion_frame: df.DataFrame,
         diff_dict[vid_dir][name][func_name] = -1  # TODO: FIX THIS
 
 
-def patient_day_session(vid_dir: str):
-    split_name = vid_dir.split('_')
-    patient = split_name[0]
-    day = split_name[1]
-    session = split_name[2]
-
-    return patient, day, session
 
 
 def get_vid_from_dir(vid_dir: str) -> str:

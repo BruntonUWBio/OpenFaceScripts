@@ -8,6 +8,8 @@ import subprocess
 import sys
 from collections import defaultdict
 import numpy as np
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from helpers import patient_info
 
 
 def do_second_run(patient_directory):
@@ -18,19 +20,14 @@ def do_second_run(patient_directory):
         if (os.path.isdir(x) and 'au.csv' in os.listdir(x))
     ]
 
-    num_GPUs = 2
+    num_gpus = 1
     processes = []
-    # TODO: Separate by patient
-    patient_map = set()
 
-    for vid_dir in files:
-        patient = vid_dir.split('_')[0]
-        patient_map.add(patient)
+    patient_map = patient_info(files)
 
-    # indices = list(map(int, np.linspace(0, len(files), num=num_GPUs + 1)))
-    split_patients = np.array_split(list(patient_map), 2)
+    split_patients = np.array_split(patient_map, num_gpus)
 
-    for index in range(2):
+    for index in range(num_gpus):
         curr_split_patients = split_patients[index]
         cli_command = [
             'python3',
