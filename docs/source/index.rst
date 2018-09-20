@@ -10,10 +10,12 @@ Contents:
     AUScorer
     MultiPrevalenceScorer
     ImageCropper
-            MultiCropAndOpenFace
+    MultiCropper
     VidCropper
     SecondRunOpenFace
-            CropAndOpenFace
+    CropAndOpenFace
+    heatmap_data_vis
+    ml_pr_vis
 
 
 

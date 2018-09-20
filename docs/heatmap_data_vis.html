@@ -1,0 +1,151 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>heatmap_data_vis &#8212; OpenFace 1 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="ml_pr_vis" href="ml_pr_vis.html" />
+    <link rel="prev" title="CropAndOpenFace" href="CropAndOpenFace.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="module-datavis.heatmap_data_vis">
+<span id="heatmap-data-vis"></span><h1>heatmap_data_vis<a class="headerlink" href="#module-datavis.heatmap_data_vis" title="Permalink to this headline">¶</a></h1>
+<span class="target" id="module-heatmap_data_vis"></span><dl class="function">
+<dt id="datavis.heatmap_data_vis.combine_scores">
+<code class="descclassname">datavis.heatmap_data_vis.</code><code class="descname">combine_scores</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#datavis.heatmap_data_vis.combine_scores" title="Permalink to this definition">¶</a></dt>
+<dd><p>Combine the scores from all patients and dump into all_dict.txt.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="datavis.heatmap_data_vis.make_scatter_data">
+<code class="descclassname">datavis.heatmap_data_vis.</code><code class="descname">make_scatter_data</code><span class="sig-paren">(</span><em>patient</em><span class="sig-paren">)</span><a class="headerlink" href="#datavis.heatmap_data_vis.make_scatter_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create scatter plot for the given patient.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>patient</strong> (<a class="reference external" href="https://docs.python.org/3.4/library/stdtypes.html#str" title="(in Python v3.4)"><em>str</em></a>) – patient directory containing plot_dict.txt</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="datavis.heatmap_data_vis.scores_and_duration_dict">
+<code class="descclassname">datavis.heatmap_data_vis.</code><code class="descname">scores_and_duration_dict</code><span class="sig-paren">(</span><em>all_dict_q</em>, <em>duration_dict_q</em>, <em>dir</em><span class="sig-paren">)</span><a class="headerlink" href="#datavis.heatmap_data_vis.scores_and_duration_dict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates all_dict and duration_dict for the given dir and adds them to each queue.
+Queues must be threadsafe.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>all_dict_q</strong> (<em>Queue</em>) – Queue for all_dict</li>
+<li><strong>duration_dict_q</strong> (<em>Queue</em>) – Queue for duration_dict</li>
+<li><strong>dir</strong> (<a class="reference external" href="https://docs.python.org/3.4/library/stdtypes.html#str" title="(in Python v3.4)"><em>str</em></a>) – Directory</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">OpenFace</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="AUGui.html">AUGui</a></li>
+<li class="toctree-l1"><a class="reference internal" href="AUScorer.html">AUScorer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MultiPrevalenceScorer.html">MultiPrevalenceScorer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ImageCropper.html">ImageCropper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MultiCropper.html">MultiCropAndOpenFace</a></li>
+<li class="toctree-l1"><a class="reference internal" href="VidCropper.html">VidCropper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="SecondRunOpenFace.html">SecondRunOpenFace</a></li>
+<li class="toctree-l1"><a class="reference internal" href="CropAndOpenFace.html">CropAndOpenFace</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">heatmap_data_vis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ml_pr_vis.html">ml_pr_vis</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="CropAndOpenFace.html" title="previous chapter">CropAndOpenFace</a></li>
+      <li>Next: <a href="ml_pr_vis.html" title="next chapter">ml_pr_vis</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Gautham Velchuru.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.9</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.11</a>
+      
+      |
+      <a href="_sources/heatmap_data_vis.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

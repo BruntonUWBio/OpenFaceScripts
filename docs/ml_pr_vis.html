@@ -1,0 +1,222 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>ml_pr_vis &#8212; OpenFace 1 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="heatmap_data_vis" href="heatmap_data_vis.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="module-datavis.ml_pr_vis">
+<span id="ml-pr-vis"></span><h1>ml_pr_vis<a class="headerlink" href="#module-datavis.ml_pr_vis" title="Permalink to this headline">¶</a></h1>
+<span class="target" id="module-ml_pr_vis"></span><dl class="function">
+<dt id="datavis.ml_pr_vis.clean_csv">
+<code class="descclassname">datavis.ml_pr_vis.</code><code class="descname">clean_csv</code><span class="sig-paren">(</span><em>csv_file</em><span class="sig-paren">)</span><a class="headerlink" href="#datavis.ml_pr_vis.clean_csv" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert dictionary from directory keys to multi-level dictionary</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>csv_file</strong> (<a class="reference external" href="https://docs.python.org/3.4/library/stdtypes.html#dict" title="(in Python v3.4)"><em>dict</em></a>) – Dictionary with directory keys</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">out_dict, with patient and directory_number keys</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="datavis.ml_pr_vis.make_emotion_data">
+<code class="descclassname">datavis.ml_pr_vis.</code><code class="descname">make_emotion_data</code><span class="sig-paren">(</span><em>emotion</em>, <em>short_patient</em><span class="sig-paren">)</span><a class="headerlink" href="#datavis.ml_pr_vis.make_emotion_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Loads emotions and AUs from au_emotes.txt and spits out training/testing data for classification</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>emotion</strong> (<a class="reference external" href="https://docs.python.org/3.4/library/stdtypes.html#str" title="(in Python v3.4)"><em>str</em></a>) – Emotion for training</li>
+<li><strong>short_patient</strong> (<a class="reference external" href="https://docs.python.org/3.4/library/stdtypes.html#str" title="(in Python v3.4)"><em>str</em></a>) – Patient identifier</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>:returns au training/testing data, emotion training/testing</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="datavis.ml_pr_vis.thresh_calc">
+<code class="descclassname">datavis.ml_pr_vis.</code><code class="descname">thresh_calc</code><span class="sig-paren">(</span><em>out_q</em>, <em>short_patient</em>, <em>thresh</em><span class="sig-paren">)</span><a class="headerlink" href="#datavis.ml_pr_vis.thresh_calc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate, based on probabilities in scores dict, confusion matrix for each emotion</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>out_q</strong> (<em>Queue</em>) – Queue to put confusion matrix dictionaries in</li>
+<li><strong>short_patient</strong> (<a class="reference external" href="https://docs.python.org/3.4/library/stdtypes.html#str" title="(in Python v3.4)"><em>str</em></a>) – Patient identifier</li>
+<li><strong>thresh</strong> (<a class="reference external" href="https://docs.python.org/3.4/library/functions.html#int" title="(in Python v3.4)"><em>int</em></a>) – Threshold for emotion recognition</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="datavis.ml_pr_vis.use_classifier">
+<code class="descclassname">datavis.ml_pr_vis.</code><code class="descname">use_classifier</code><span class="sig-paren">(</span><em>classifier</em>, <em>au_train</em>, <em>au_test</em>, <em>target_train</em>, <em>target_test</em><span class="sig-paren">)</span><a class="headerlink" href="#datavis.ml_pr_vis.use_classifier" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fit the classifier on the training AUs and predict emotions</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>classifier</strong> – Classifier</li>
+<li><strong>au_train</strong> – Training action units</li>
+<li><strong>au_test</strong> – Testing action units</li>
+<li><strong>target_train</strong> – Training emotions</li>
+<li><strong>target_test</strong> – Testing emotions</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">Testing emotions, predicted probabilities</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="datavis.ml_pr_vis.validate_thresh_dict">
+<code class="descclassname">datavis.ml_pr_vis.</code><code class="descname">validate_thresh_dict</code><span class="sig-paren">(</span><em>thresh_dict</em><span class="sig-paren">)</span><a class="headerlink" href="#datavis.ml_pr_vis.validate_thresh_dict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Helper function to validate that the thresh_dict has the correct ratio of true_post, false_pos, etc</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>thresh_dict</strong> (<a class="reference external" href="https://docs.python.org/3.4/library/stdtypes.html#dict" title="(in Python v3.4)"><em>dict</em></a>) – Dict to validate</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body">AssertionError</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="datavis.ml_pr_vis.vis">
+<code class="descclassname">datavis.ml_pr_vis.</code><code class="descname">vis</code><span class="sig-paren">(</span><em>short_patient</em>, <em>thresh_file=None</em><span class="sig-paren">)</span><a class="headerlink" href="#datavis.ml_pr_vis.vis" title="Permalink to this definition">¶</a></dt>
+<dd><p>Visualize patient classification results for different classifiers</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>short_patient</strong> (<a class="reference external" href="https://docs.python.org/3.4/library/stdtypes.html#str" title="(in Python v3.4)"><em>str</em></a>) – Patient to visualize</li>
+<li><strong>thresh_file</strong> (<a class="reference external" href="https://docs.python.org/3.4/library/stdtypes.html#str" title="(in Python v3.4)"><em>str</em></a>) – Optional, txt file containing thresh data</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>:returns None, saves output in the format short_patient + ‘_{0}_pr_with_ML_and_pose’.format(emotion)</p>
+</dd></dl>
+
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">OpenFace</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="AUGui.html">AUGui</a></li>
+<li class="toctree-l1"><a class="reference internal" href="AUScorer.html">AUScorer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MultiPrevalenceScorer.html">MultiPrevalenceScorer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ImageCropper.html">ImageCropper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MultiCropper.html">MultiCropAndOpenFace</a></li>
+<li class="toctree-l1"><a class="reference internal" href="VidCropper.html">VidCropper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="SecondRunOpenFace.html">SecondRunOpenFace</a></li>
+<li class="toctree-l1"><a class="reference internal" href="CropAndOpenFace.html">CropAndOpenFace</a></li>
+<li class="toctree-l1"><a class="reference internal" href="heatmap_data_vis.html">heatmap_data_vis</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">ml_pr_vis</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="heatmap_data_vis.html" title="previous chapter">heatmap_data_vis</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Gautham Velchuru.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.9</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.11</a>
+      
+      |
+      <a href="_sources/ml_pr_vis.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

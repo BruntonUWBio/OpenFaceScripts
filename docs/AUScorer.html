@@ -4,20 +4,12 @@
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <title>AUScorer &#8212; OpenFace 1 documentation</title>
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <script type="text/javascript">
-      var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    './',
-        VERSION:     '1',
-        COLLAPSE_INDEX: false,
-        FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true,
-        SOURCELINK_SUFFIX: '.txt'
-      };
-    </script>
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
@@ -31,32 +23,25 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
-  </head>
-  <body>
+  </head><body>
   
 
     <div class="document">
       <div class="documentwrapper">
         <div class="bodywrapper">
-          <div class="body" role="main">
+          
 
-              <div class="section" id="module-scoring.AUScorer">
-                  <span id="auscorer"></span>
-                  <h1>AUScorer<a class="headerlink" href="#module-scoring.AUScorer"
-                                 title="Permalink to this headline">¶</a></h1>
+          <div class="body" role="main">
+            
+  <div class="section" id="module-scoring.AUScorer">
+<span id="auscorer"></span><h1>AUScorer<a class="headerlink" href="#module-scoring.AUScorer" title="Permalink to this headline">¶</a></h1>
 <span class="target" id="module-AUScorer"></span><dl class="class">
-                  <dt id="scoring.AUScorer.AUScorer">
-                      <em class="property">class </em><code class="descclassname">scoring.AUScorer.</code><code
-                          class="descname">AUScorer</code><span class="sig-paren">(</span><em>dir</em>,
-                      <em>au_thresh=0</em>, <em>include_eyebrows=True</em><span class="sig-paren">)</span><a
-                          class="headerlink" href="#scoring.AUScorer.AUScorer"
-                          title="Permalink to this definition">¶</a></dt>
+<dt id="scoring.AUScorer.AUScorer">
+<em class="property">class </em><code class="descclassname">scoring.AUScorer.</code><code class="descname">AUScorer</code><span class="sig-paren">(</span><em>dir</em>, <em>include_eyebrows=True</em><span class="sig-paren">)</span><a class="headerlink" href="#scoring.AUScorer.AUScorer" title="Permalink to this definition">¶</a></dt>
 <dd><p>Main scorer</p>
 <dl class="method">
-    <dt id="scoring.AUScorer.AUScorer.get_emotions">
-        <code class="descname">get_emotions</code><span class="sig-paren">(</span><em>index: int</em><span
-            class="sig-paren">)</span><a class="headerlink" href="#scoring.AUScorer.AUScorer.get_emotions"
-                                         title="Permalink to this definition">¶</a></dt>
+<dt id="scoring.AUScorer.AUScorer.get_emotions">
+<code class="descname">get_emotions</code><span class="sig-paren">(</span><em>index: int</em><span class="sig-paren">)</span><a class="headerlink" href="#scoring.AUScorer.AUScorer.get_emotions" title="Permalink to this definition">¶</a></dt>
 <dd><p>Gets the emotions at a specific index.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -73,12 +58,8 @@
 </dd></dl>
 
 <dl class="function">
-    <dt id="scoring.AUScorer.emotion_list">
-        <code class="descclassname">scoring.AUScorer.</code><code class="descname">emotion_list</code><span
-            class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; list<a class="headerlink"
-                                                                                       href="#scoring.AUScorer.emotion_list"
-                                                                                       title="Permalink to this definition">¶</a>
-    </dt>
+<dt id="scoring.AUScorer.emotion_list">
+<code class="descclassname">scoring.AUScorer.</code><code class="descname">emotion_list</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; list<a class="headerlink" href="#scoring.AUScorer.emotion_list" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create standard emotion list.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -91,11 +72,8 @@
 </dd></dl>
 
 <dl class="function">
-    <dt id="scoring.AUScorer.replace">
-        <code class="descclassname">scoring.AUScorer.</code><code class="descname">replace</code><span
-            class="sig-paren">(</span><em>arr: list</em>, <em>num: int</em>, <em>other_num: int</em><span
-            class="sig-paren">)</span><a class="headerlink" href="#scoring.AUScorer.replace"
-                                         title="Permalink to this definition">¶</a></dt>
+<dt id="scoring.AUScorer.replace">
+<code class="descclassname">scoring.AUScorer.</code><code class="descname">replace</code><span class="sig-paren">(</span><em>arr: list</em>, <em>num: int</em>, <em>other_num: int</em><span class="sig-paren">)</span><a class="headerlink" href="#scoring.AUScorer.replace" title="Permalink to this definition">¶</a></dt>
 <dd><p>Remove an element from an array and add another one.
 :param arr: Array.
 :param num: Element to remove.
@@ -104,18 +82,14 @@
 </dd></dl>
 
 <dl class="function">
-    <dt id="scoring.AUScorer.reverse_emotions">
-        <code class="descclassname">scoring.AUScorer.</code><code class="descname">reverse_emotions</code><span
-            class="sig-paren">(</span><em>emotionDict</em><span class="sig-paren">)</span><a class="headerlink"
-                                                                                             href="#scoring.AUScorer.reverse_emotions"
-                                                                                             title="Permalink to this definition">¶</a>
-    </dt>
+<dt id="scoring.AUScorer.reverse_emotions">
+<code class="descclassname">scoring.AUScorer.</code><code class="descname">reverse_emotions</code><span class="sig-paren">(</span><em>emotionDict</em><span class="sig-paren">)</span><a class="headerlink" href="#scoring.AUScorer.reverse_emotions" title="Permalink to this definition">¶</a></dt>
 <dd><p>Creates a dictionary mapping between the values of emotions and all the emotions with that value.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>emotionDict</strong> (<a class="reference external" href="https://docs.python.org/2/library/stdtypes.html#dict" title="(in Python v2.7)"><em>dict</em></a>) – Mapping between emotions and their scores</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>emotionDict</strong> (<a class="reference external" href="https://docs.python.org/3.4/library/stdtypes.html#dict" title="(in Python v3.4)"><em>dict</em></a>) – Mapping between emotions and their scores</td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">Reverse mapped dictionary</td>
 </tr>
@@ -127,10 +101,34 @@
 
 
           </div>
+          
         </div>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
-        <div class="sphinxsidebarwrapper"><div class="relations">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">OpenFace</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="AUGui.html">AUGui</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">AUScorer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MultiPrevalenceScorer.html">MultiPrevalenceScorer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ImageCropper.html">ImageCropper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MultiCropper.html">MultiCropAndOpenFace</a></li>
+<li class="toctree-l1"><a class="reference internal" href="VidCropper.html">VidCropper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="SecondRunOpenFace.html">SecondRunOpenFace</a></li>
+<li class="toctree-l1"><a class="reference internal" href="CropAndOpenFace.html">CropAndOpenFace</a></li>
+<li class="toctree-l1"><a class="reference internal" href="heatmap_data_vis.html">heatmap_data_vis</a></li>
+</ul>
+
+<div class="relations">
 <h3>Related Topics</h3>
 <ul>
   <li><a href="index.html">Documentation overview</a><ul>
@@ -139,21 +137,16 @@
   </ul></li>
 </ul>
 </div>
-  <div role="note" aria-label="source link">
-    <h3>This Page</h3>
-    <ul class="this-page-menu">
-      <li><a href="_sources/AUScorer.rst.txt"
-            rel="nofollow">Show Source</a></li>
-    </ul>
-   </div>
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
+    <div class="searchformwrapper">
     <form class="search" action="search.html" method="get">
-      <div><input type="text" name="q" /></div>
-      <div><input type="submit" value="Go" /></div>
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
+    </div>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
@@ -164,8 +157,8 @@
       &copy;2017, Gautham Velchuru.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.3</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.9</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.11</a>
       
       |
       <a href="_sources/AUScorer.rst.txt"

@@ -9,14 +9,14 @@ from dask import dataframe as df
 import cv2
 import numpy as np
 
-import numexpr
-numexpr.set_nthreads(1)
+# import numexpr
+# numexpr.set_nthreads(1)
 
 sys.path.append(
     os.path.dirname(
         os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 from OpenFaceScripts.runners import VidCropper, CropAndOpenFace
-from patient_info import patient_day_session
+from OpenFaceScripts.helpers.patient_info import patient_day_session
 from OpenFaceScripts.scoring import AUScorer
 
 
@@ -75,7 +75,8 @@ def get_dimensions(vid_dir: str):
     with open(os.path.join(vid_dir, 'bb_arr.txt')) as bb_file:
         lines = bb_file.readlines()
 
-        if lines[0] == 'None\n' and lines[1] == 'None\n' and lines[2] == 'None\n' and lines[3] == 'None\n':
+        if lines[0] == 'None\n' and lines[1] == 'None\n' and lines[
+                2] == 'None\n' and lines[3] == 'None\n':
             return [None, None, None, None, int(lines[5])]
 
         return {
@@ -339,8 +340,8 @@ def process_vid_dir(eyebrow_dict: dict, vid_dir: str) -> None:
     # all_dict_file) else AUScorer.AUScorer(vid_dir).presence_dict
 
     include_eyebrows = eyebrow_dict and vid_dir in eyebrow_dict['Eyebrows']
-    pre_func_list = [(re_crop_vid_dir, 're_crop'), (throw_vid_in_reverse,
-                                                    'reverse'),
+    pre_func_list = [(re_crop_vid_dir, 're_crop'),
+                     (throw_vid_in_reverse, 'reverse'),
                      (reverse_re_crop_vid_dir, 'reverse_re_crop')]
 
     post_func_list = [(invert_colors, 'invert_colors'),
@@ -431,8 +432,6 @@ def update_frames(post_func_frame: df.DataFrame, emotion_frame: df.DataFrame,
         diff_dict[vid_dir][name][func_name] = -1  # TODO: FIX THIS
 
 
-
-
 def get_vid_from_dir(vid_dir: str) -> str:
     """
     Returns the full path to a video associated with a crop directory.
@@ -515,10 +514,9 @@ if __name__ == '__main__':
         open(eyebrow_file)) if os.path.exists(eyebrow_file) else {}
 
     if eyebrow_dict:
-        json.dump(eyebrow_dict,
-                  open(
-                      os.path.join(patient_directory, 'eyebrow_dict.txt'),
-                      'w'))
+        json.dump(
+            eyebrow_dict,
+            open(os.path.join(patient_directory, 'eyebrow_dict.txt'), 'w'))
 
     # TODO: better multiprocessing on this
 

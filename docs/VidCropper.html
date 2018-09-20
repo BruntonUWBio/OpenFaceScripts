@@ -4,64 +4,51 @@
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <title>VidCropper &#8212; OpenFace 1 documentation</title>
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <script type="text/javascript">
-      var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    './',
-        VERSION:     '1',
-        COLLAPSE_INDEX: false,
-        FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true,
-        SOURCELINK_SUFFIX: '.txt'
-      };
-    </script>
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="SecondRunOpenFace" href="SecondRunOpenFace.html" />
-    <link rel="prev" title="MultiCropper" href="MultiCropper.html" />
+    <link rel="prev" title="MultiCropAndOpenFace" href="MultiCropper.html" />
    
   <link rel="stylesheet" href="_static/custom.css" type="text/css" />
   
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
-  </head>
-  <body>
+  </head><body>
   
 
     <div class="document">
       <div class="documentwrapper">
         <div class="bodywrapper">
-          <div class="body" role="main">
+          
 
-              <div class="section" id="module-runners.VidCropper">
-                  <span id="vidcropper"></span>
-                  <h1>VidCropper<a class="headerlink" href="#module-runners.VidCropper"
-                                   title="Permalink to this headline">¶</a></h1>
+          <div class="body" role="main">
+            
+  <div class="section" id="module-runners.VidCropper">
+<span id="vidcropper"></span><h1>VidCropper<a class="headerlink" href="#module-runners.VidCropper" title="Permalink to this headline">¶</a></h1>
 <span class="target" id="module-VidCropper"></span><dl class="class">
-                  <dt id="runners.VidCropper.CropVid">
-                      <em class="property">class </em><code class="descclassname">runners.VidCropper.</code><code
-                          class="descname">CropVid</code><span class="sig-paren">(</span><em>vid</em>,
-                      <em>directory</em>, <em>crop_txt_files</em>, <em>nose_txt_files</em><span
-                          class="sig-paren">)</span><a class="headerlink" href="#runners.VidCropper.CropVid"
-                                                       title="Permalink to this definition">¶</a></dt>
+<dt id="runners.VidCropper.CropVid">
+<em class="property">class </em><code class="descclassname">runners.VidCropper.</code><code class="descname">CropVid</code><span class="sig-paren">(</span><em>vid</em>, <em>directory</em>, <em>crop_txt_files</em>, <em>nose_txt_files</em><span class="sig-paren">)</span><a class="headerlink" href="#runners.VidCropper.CropVid" title="Permalink to this definition">¶</a></dt>
 <dd><p>Main cropper class</p>
 </dd></dl>
 
+<dl class="exception">
+<dt id="runners.VidCropper.DurationException">
+<em class="property">exception </em><code class="descclassname">runners.VidCropper.</code><code class="descname">DurationException</code><span class="sig-paren">(</span><em>string</em><span class="sig-paren">)</span><a class="headerlink" href="#runners.VidCropper.DurationException" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
 <dl class="function">
-    <dt id="runners.VidCropper.crop_and_resize">
-        <code class="descclassname">runners.VidCropper.</code><code class="descname">crop_and_resize</code><span
-            class="sig-paren">(</span><em>vid</em>, <em>width</em>, <em>height</em>, <em>x_min</em>, <em>y_min</em>,
-        <em>directory</em>, <em>resize_factor</em><span class="sig-paren">)</span><a class="headerlink"
-                                                                                     href="#runners.VidCropper.crop_and_resize"
-                                                                                     title="Permalink to this definition">¶</a>
-    </dt>
+<dt id="runners.VidCropper.crop_and_resize">
+<code class="descclassname">runners.VidCropper.</code><code class="descname">crop_and_resize</code><span class="sig-paren">(</span><em>vid</em>, <em>width</em>, <em>height</em>, <em>x_min</em>, <em>y_min</em>, <em>directory</em>, <em>resize_factor</em><span class="sig-paren">)</span><a class="headerlink" href="#runners.VidCropper.crop_and_resize" title="Permalink to this definition">¶</a></dt>
 <dd><p>Crops a video and then resizes it</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -69,10 +56,10 @@
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
 <li><strong>vid</strong> – Video to crop</li>
-<li><strong>width</strong> – Width of crop</li>
-<li><strong>height</strong> – Height of crop</li>
-<li><strong>x_min</strong> – x-coordinate of top-left corner</li>
-<li><strong>y_min</strong> – y-coordinate of top-left corner</li>
+<li><strong>width</strong> (<em>Union</em><em>[</em><a class="reference external" href="https://docs.python.org/3.4/library/functions.html#int" title="(in Python v3.4)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3.4/library/functions.html#float" title="(in Python v3.4)"><em>float</em></a><em>]</em>) – Width of crop</li>
+<li><strong>height</strong> (<em>Union</em><em>[</em><a class="reference external" href="https://docs.python.org/3.4/library/functions.html#int" title="(in Python v3.4)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3.4/library/functions.html#float" title="(in Python v3.4)"><em>float</em></a><em>]</em>) – Height of crop</li>
+<li><strong>x_min</strong> (<em>Union</em><em>[</em><a class="reference external" href="https://docs.python.org/3.4/library/functions.html#int" title="(in Python v3.4)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3.4/library/functions.html#float" title="(in Python v3.4)"><em>float</em></a><em>]</em>) – x-coordinate of top-left corner</li>
+<li><strong>y_min</strong> (<em>Union</em><em>[</em><a class="reference external" href="https://docs.python.org/3.4/library/functions.html#int" title="(in Python v3.4)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3.4/library/functions.html#float" title="(in Python v3.4)"><em>float</em></a><em>]</em>) – y-coordinate of top-left corner</li>
 <li><strong>directory</strong> – Directory to output files to</li>
 <li><strong>resize_factor</strong> – Factor by which to resize the cropped video</li>
 </ul>
@@ -83,57 +70,69 @@
 </dd></dl>
 
 <dl class="function">
-    <dt id="runners.VidCropper.duration">
-        <code class="descclassname">runners.VidCropper.</code><code class="descname">duration</code><span
-            class="sig-paren">(</span><em>vid_file_path</em><span class="sig-paren">)</span><a class="headerlink"
-                                                                                               href="#runners.VidCropper.duration"
-                                                                                               title="Permalink to this definition">¶</a>
-    </dt>
+<dt id="runners.VidCropper.duration">
+<code class="descclassname">runners.VidCropper.</code><code class="descname">duration</code><span class="sig-paren">(</span><em>vid_file_path</em><span class="sig-paren">)</span><a class="headerlink" href="#runners.VidCropper.duration" title="Permalink to this definition">¶</a></dt>
 <dd><p>Video’s duration in seconds, return a float number</p>
 </dd></dl>
 
 <dl class="function">
-    <dt id="runners.VidCropper.probe">
-        <code class="descclassname">runners.VidCropper.</code><code class="descname">probe</code><span
-            class="sig-paren">(</span><em>vid_file_path</em><span class="sig-paren">)</span><a class="headerlink"
-                                                                                               href="#runners.VidCropper.probe"
-                                                                                               title="Permalink to this definition">¶</a>
-    </dt>
+<dt id="runners.VidCropper.probe">
+<code class="descclassname">runners.VidCropper.</code><code class="descname">probe</code><span class="sig-paren">(</span><em>vid_file_path</em><span class="sig-paren">)</span><a class="headerlink" href="#runners.VidCropper.probe" title="Permalink to this definition">¶</a></dt>
 <dd><p>Give a json from ffprobe command line</p>
-<p>&#64;vid_file_path : The absolute (full) path of the video file, string.</p>
+<p>:param vid_file_path : The absolute (full) path of the video file
+:type vid_file_path : str</p>
 </dd></dl>
 
 </div>
 
 
           </div>
+          
         </div>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
-        <div class="sphinxsidebarwrapper"><div class="relations">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">OpenFace</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="AUGui.html">AUGui</a></li>
+<li class="toctree-l1"><a class="reference internal" href="AUScorer.html">AUScorer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MultiPrevalenceScorer.html">MultiPrevalenceScorer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ImageCropper.html">ImageCropper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MultiCropper.html">MultiCropAndOpenFace</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">VidCropper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="SecondRunOpenFace.html">SecondRunOpenFace</a></li>
+<li class="toctree-l1"><a class="reference internal" href="CropAndOpenFace.html">CropAndOpenFace</a></li>
+<li class="toctree-l1"><a class="reference internal" href="heatmap_data_vis.html">heatmap_data_vis</a></li>
+</ul>
+
+<div class="relations">
 <h3>Related Topics</h3>
 <ul>
   <li><a href="index.html">Documentation overview</a><ul>
-      <li>Previous: <a href="MultiCropper.html" title="previous chapter">MultiCropper</a></li>
+      <li>Previous: <a href="MultiCropper.html" title="previous chapter">MultiCropAndOpenFace</a></li>
       <li>Next: <a href="SecondRunOpenFace.html" title="next chapter">SecondRunOpenFace</a></li>
   </ul></li>
 </ul>
 </div>
-  <div role="note" aria-label="source link">
-    <h3>This Page</h3>
-    <ul class="this-page-menu">
-      <li><a href="_sources/VidCropper.rst.txt"
-            rel="nofollow">Show Source</a></li>
-    </ul>
-   </div>
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
+    <div class="searchformwrapper">
     <form class="search" action="search.html" method="get">
-      <div><input type="text" name="q" /></div>
-      <div><input type="submit" value="Go" /></div>
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
+    </div>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
@@ -144,8 +143,8 @@
       &copy;2017, Gautham Velchuru.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.3</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.9</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.11</a>
       
       |
       <a href="_sources/VidCropper.rst.txt"

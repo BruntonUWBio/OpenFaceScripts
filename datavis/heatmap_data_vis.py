@@ -1,3 +1,9 @@
+"""
+.. module:: heatmap_data_vis
+    :synopsis: A script with functions for creating a emotion heatmap.
+"""
+
+import matplotlib
 import json
 import os
 
@@ -5,12 +11,11 @@ import sys
 
 import progressbar
 
-sys.path.append('/home/gvelchuru/OpenFaceScripts')
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import AUGui
 import functools
 from scoring import AUScorer
 import numpy as np
-import matplotlib
 
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -21,61 +26,90 @@ import seaborn as sns
 
 import multiprocessing
 from pathos.multiprocessing import ProcessingPool as Pool
-from runners import VidCropper, SecondRunOpenFace
 
-patient_dir = "/data2/OpenFaceTests"
-os.chdir(patient_dir)
+# from runners import VidCropper, SecondRunOpenFace TODO: Figure out why this
+# won't import
 
 
 def combine_scores():
+    """Combine the scores from all patients and dump into all_dict.txt.
+    """
+
     all_dicts = {}
     duration_dict = {}
     all_dict_q = multiprocessing.Manager().Queue()
     duration_dict_q = multiprocessing.Manager().Queue()
-    dirs = [y for y in os.listdir(patient_dir) if os.path.isdir(os.path.join(patient_dir, y))]
+    dirs = [
+        y for y in os.listdir(patient_dir)
+        if os.path.isdir(os.path.join(patient_dir, y))
+    ]
     bar = progressbar.ProgressBar(redirect_stdout=True, max_value=len(dirs))
-    f = functools.partial(scores_and_duration_dict, all_dict_q, duration_dict_q)
+    f = functools.partial(scores_and_duration_dict, all_dict_q,
+                          duration_dict_q)
     p = Pool()
+
     for i, _ in enumerate(p.imap(f, dirs, chunksize=50), 1):
         bar.update(i)
     p.close()
     p.join()
+
     while not all_dict_q.empty():
         patient_dict = all_dict_q.get()
         dur_dict = duration_dict_q.get()
+
         for i in patient_dict:
             print(i)
+
             if i not in all_dicts:
                 all_dicts[i] = patient_dict[i]
             else:
                 all_dicts[i].update(patient_dict[i])
+
         for i in dur_dict:
             print(i)
+
             if i not in duration_dict:
                 duration_dict[i] = dur_dict[i]
             else:
                 duration_dict[i].update(dur_dict[i])
     print('done combining scores, dumping...')
     json.dump(all_dicts, open(os.path.join(patient_dir, 'all_dict.txt'), 'w'))
-    json.dump(duration_dict, open(os.path.join(patient_dir, 'duration_dict.txt'), 'w'))
+    json.dump(duration_dict,
+              open(os.path.join(patient_dir, 'duration_dict.txt'), 'w'))
 
 
 def scores_and_duration_dict(all_dict_q, duration_dict_q, dir):
+    """Creates all_dict and duration_dict for the given dir and adds them to each queue.
+    Queues must be threadsafe.
+
+    :param all_dict_q: Queue for all_dict
+    :type all_dict_q: Queue
+    :param duration_dict_q: Queue for duration_dict
+    :type duration_dict_q: Queue
+    :param dir: Directory
+    :type dir: str
+    """
+
     if 'cropped' in dir:
         all_dicts = {}
         duration_dict = {}
         remove_crop = dir.replace('_cropped', '')
         dir_num = remove_crop[len(remove_crop) - 4:len(remove_crop)]
         patient_name = remove_crop.replace('_' + dir_num, '')
+
         if patient_name not in all_dicts:
             all_dicts[patient_name] = {}
+
         if patient_name not in duration_dict:
             duration_dict[patient_name] = {}
         all_dict_file = os.path.join(dir, 'all_dict.txt')
+
         if os.path.exists(all_dict_file):
-            all_dicts[patient_name][int(dir_num)] = json.load(open(all_dict_file))
+            all_dicts[patient_name][int(dir_num)] = json.load(
+                open(all_dict_file))
         else:
-            all_dicts[patient_name][int(dir_num)] = AUScorer.AUScorer(dir).emotions
+            all_dicts[patient_name][int(dir_num)] = AUScorer.AUScorer(
+                dir).emotions
         duration_dict[patient_name][int(dir_num)] = int(
             VidCropper.duration(SecondRunOpenFace.get_vid_from_dir(dir)) * 30)
         all_dict_q.put(all_dicts)
@@ -83,11 +117,18 @@ def scores_and_duration_dict(all_dict_q, duration_dict_q, dir):
 
 
 def make_scatter_data(patient):
+    """Create scatter plot for the given patient.
+
+    :param patient: patient directory containing plot_dict.txt
+    :type patient: str
+    """
     patient_scores_dir = patient
     plot_dict_file = os.path.join(patient_scores_dir, 'plot_dict.txt')
+
     if os.path.exists(patient_scores_dir):
         try:
-            temp_plot_dict = json.load(open(plot_dict_file)) if os.path.exists(plot_dict_file) else None
+            temp_plot_dict = json.load(open(plot_dict_file)) if os.path.exists(
+                plot_dict_file) else None
         except:
             temp_plot_dict = None
     else:
@@ -100,6 +141,7 @@ def make_scatter_data(patient):
         emotions = AUScorer.emotion_list()
         emotions.append('Neutral')
         temp_data = {emotion: [] for emotion in emotions}
+
         for vid in sorted(plot_dict.keys()):
             for frame in sorted(plot_dict[vid].keys()):
                 for emotion in emotions:
@@ -117,11 +159,17 @@ def make_scatter_data(patient):
         #     temp_data[emotion] = z
 
         data = []
-        for index, emotion in enumerate(sorted(x for x in emotions if x != 'Neutral')):
-            data.append([x + 0.00000000000000000000000000000001 for x in temp_data[emotion]])
 
+        for index, emotion in enumerate(
+                sorted(x for x in emotions if x != 'Neutral')):
+            data.append([
+                x + 0.00000000000000000000000000000001
+                for x in temp_data[emotion]
+            ])
 
-        neutral_data = [0.00000000000000000000000000000001 for _ in range(len(data[0]))]
+        neutral_data = [
+            0.00000000000000000000000000000001 for _ in range(len(data[0]))
+        ]
 
         emotion_dict = {
             'Angry': .4,
@@ -134,6 +182,7 @@ def make_scatter_data(patient):
 
         for index, datum in enumerate(data):
             emotion = emotions[index]
+
             for index, val in enumerate(datum):
                 if val < emotion_dict[emotion]:
                     datum[index] = 0.00000000000000000000000000000001
@@ -155,6 +204,7 @@ def make_scatter_data(patient):
             #         else:
             #             contains = True
             # if contains:
+
             if not os.path.exists(patient):
                 os.mkdir(patient)
 
@@ -171,7 +221,13 @@ def make_scatter_data(patient):
             # }
             # test_colormap = matplotlib.colors.ListedColormap('test', cict)
 
-            ax = sns.heatmap(data, cbar_kws={'ticks': LogLocator()}, yticklabels=emotions, xticklabels=False, cmap='BuGn', norm=matplotlib.colors.LogNorm())
+            ax = sns.heatmap(
+                data,
+                cbar_kws={'ticks': LogLocator()},
+                yticklabels=emotions,
+                xticklabels=False,
+                cmap='BuGn',
+                norm=matplotlib.colors.LogNorm())
             # ax.set_clim(vmin=1.5, vmax=5)
             ax.set_title(patient)
             fig = ax.get_figure()
@@ -183,50 +239,71 @@ def make_scatter_data(patient):
 
 def make_scatter_plot_dict(patient_dict: dict) -> dict:
     scatter_plot_dict = {}
+
     for vid in patient_dict:
         for frame in patient_dict[vid]:
             if patient_dict[vid][frame]:
                 for emotion in patient_dict[vid][frame][0]:
                     if emotion not in scatter_plot_dict:
                         scatter_plot_dict[emotion] = {}
+
                     if vid not in scatter_plot_dict[emotion]:
                         scatter_plot_dict[emotion][vid] = {}
-                    scatter_plot_dict[emotion][vid][frame] = patient_dict[vid][frame][1]
+                    scatter_plot_dict[emotion][vid][frame] = patient_dict[vid][
+                        frame][1]
+
     return scatter_plot_dict
 
 
-if not (os.path.exists('all_dict.txt') and os.path.exists('duration_dict.txt')):
-    combine_scores()
-all_dicts = json.load(open('all_dict.txt'))
-duration_dicts = json.load(open('duration_dict.txt'))
-scores_dir = 'Scores'
-if not os.path.exists(scores_dir):
-    os.mkdir(scores_dir)
-os.chdir(scores_dir)
-scores_file = 'no_csv_scores.txt'
-# TODO: Parallelize
+if __name__ == "__main__":
+    patient_dir = "/data2/OpenFaceTests"
+    os.chdir(patient_dir)
 
+    if not (os.path.exists('all_dict.txt')
+            and os.path.exists('duration_dict.txt')):
+        combine_scores()
+    all_dicts = json.load(open('all_dict.txt'))
+    duration_dicts = json.load(open('duration_dict.txt'))
+    scores_dir = 'Scores'
 
-if not os.path.exists(scores_file):
-    print('making scores file')
-    scores_dict = {}
-    for patient in all_dicts:
-        scores_dict[patient] = {}
-        currPatientDict = all_dicts[patient]
-        for vid in currPatientDict:
-            scores_dict[patient][vid] = {}
-            for frame in currPatientDict[vid]:
-                emotionDict = currPatientDict[vid][frame]
-                if emotionDict:
-                    reverse_emotions = AUScorer.reverse_emotions(emotionDict)
-                    max_value = max(reverse_emotions.keys())
-                    max_emotions = reverse_emotions[max_value]
-                    prevalence_score = AUGui.prevalence_score(emotionDict)
-                    scores_dict[patient][vid][frame] = [max_emotions, prevalence_score]
-    json.dump(scores_dict, open(scores_file, 'w'))
-else:
-    scores_dict = json.load(open(scores_file))
-print('making scatters...')
-bar = progressbar.ProgressBar(redirect_stdout=True, max_value=len(scores_dict.keys()))
-for i, _ in enumerate(Pool().imap(make_scatter_data, sorted(scores_dict.keys()), chunksize=10), 1):
-    bar.update(i)
+    if not os.path.exists(scores_dir):
+        os.mkdir(scores_dir)
+    os.chdir(scores_dir)
+    scores_file = 'no_csv_scores.txt'
+    # TODO: Parallelize
+
+    if not os.path.exists(scores_file):
+        print('making scores file')
+        scores_dict = {}
+
+        for patient in all_dicts:
+            scores_dict[patient] = {}
+            currPatientDict = all_dicts[patient]
+
+            for vid in currPatientDict:
+                scores_dict[patient][vid] = {}
+
+                for frame in currPatientDict[vid]:
+                    emotionDict = currPatientDict[vid][frame]
+
+                    if emotionDict:
+                        reverse_emotions = AUScorer.reverse_emotions(
+                            emotionDict)
+                        max_value = max(reverse_emotions.keys())
+                        max_emotions = reverse_emotions[max_value]
+                        prevalence_score = AUGui.prevalence_score(emotionDict)
+                        scores_dict[patient][vid][frame] = [
+                            max_emotions, prevalence_score
+                        ]
+        json.dump(scores_dict, open(scores_file, 'w'))
+    else:
+        scores_dict = json.load(open(scores_file))
+    print('making scatters...')
+    bar = progressbar.ProgressBar(
+        redirect_stdout=True, max_value=len(scores_dict.keys()))
+
+    for i, _ in enumerate(
+            Pool().imap(
+                make_scatter_data, sorted(scores_dict.keys()), chunksize=10),
+            1):
+        bar.update(i)

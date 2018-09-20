@@ -17,13 +17,13 @@ from os.path import join
 import progressbar
 from pathos.multiprocessing import ProcessingPool as Pool
 
-sys.path.append('/home/gvelchuru/')
+sys.path.append(os.path.basename(os.path.abspath(__file__)))
 
-from OpenFaceScripts import AUGui
-from OpenFaceScripts.scoring.AUScorer import make_frame_emotions
-from OpenFaceScripts.scoring import AUScorer
-from OpenFaceScripts.helpers.SecondRunHelper import process_eyebrows, get_vid_from_dir
-from OpenFaceScripts.runners import VidCropper
+import AUGui
+from scoring.AUScorer import make_frame_emotions
+from scoring import AUScorer
+from helpers.SecondRunHelper import process_eyebrows, get_vid_from_dir
+from runners import VidCropper
 
 
 def find_scores(out_dict, eyebrow_dict, patient_dir):
@@ -39,39 +39,62 @@ def find_scores(out_dict, eyebrow_dict, patient_dir):
         else:
             include_eyebrows = False
         all_dict_file = join(patient_dir, 'all_dict.txt')
+
         if os.path.exists(all_dict_file):
-            patient_emotions = make_frame_emotions(json.load(open(all_dict_file)))
+            patient_emotions = make_frame_emotions(
+                json.load(open(all_dict_file)))
         else:
-            patient_emotions = AUScorer.AUScorer(patient_dir, include_eyebrows=include_eyebrows).emotions
-        csv_path = join(patient_dir, os.path.basename(patient_dir).replace('_cropped', '') + '_emotions.csv')
-        num_frames = int(VidCropper.duration(get_vid_from_dir(patient_dir)) * 30)
+            patient_emotions = AUScorer.AUScorer(
+                patient_dir, include_eyebrows=include_eyebrows).emotions
+        csv_path = join(
+            patient_dir,
+            os.path.basename(patient_dir).replace('_cropped', '') +
+            '_emotions.csv')
+        num_frames = int(
+            VidCropper.duration(get_vid_from_dir(patient_dir)) * 30)
 
         if os.path.exists(csv_path):
             csv_dict = AUGui.csv_emotion_reader(csv_path)
+
             if csv_dict:
                 annotated_ratio = int(num_frames / len(csv_dict))
+
                 if annotated_ratio == 0:
                     annotated_ratio = 1
-                csv_dict = {i * annotated_ratio: c for i, c in csv_dict.items()}
-                for i in [x for x in csv_dict.keys() if 'None' not in csv_dict[x]]:
+                csv_dict = {
+                    i * annotated_ratio: c
+                    for i, c in csv_dict.items()
+                }
+
+                for i in [
+                        x for x in csv_dict.keys() if 'None' not in csv_dict[x]
+                ]:
                     if i in patient_emotions:
                         emotionDict = patient_emotions[i]
+
                         if emotionDict:
-                            reverse_emotions = AUScorer.reverse_emotions(emotionDict)
+                            reverse_emotions = AUScorer.reverse_emotions(
+                                emotionDict)
                             max_value = max(reverse_emotions.keys())
                             max_emotions = {'Max': reverse_emotions[max_value]}
-                            prevalence_score = AUGui.prevalence_score(emotionDict)
+                            prevalence_score = AUGui.prevalence_score(
+                                emotionDict)
+
                             if 1 < len(reverse_emotions.keys()):
-                                second_prediction = reverse_emotions[sorted(reverse_emotions.keys(), reverse=True)[1]]
+                                second_prediction = reverse_emotions[sorted(
+                                    reverse_emotions.keys(), reverse=True)[1]]
                                 max_emotions['Second'] = second_prediction
                             to_write = csv_dict[i]
+
                             if to_write == 'Surprised':
                                 to_write = 'Surprise'
                             elif to_write == 'Disgusted':
                                 to_write = 'Disgust'
                             elif to_write == 'Afraid':
                                 to_write = 'Fear'
-                            patient_dir_scores[patient_dir][i] = [max_emotions, prevalence_score, to_write]
+                            patient_dir_scores[patient_dir][i] = [
+                                max_emotions, prevalence_score, to_write
+                            ]
                         else:
                             patient_dir_scores[patient_dir][i] = None
                     else:
@@ -86,10 +109,12 @@ def write_to_log(log):
     csv_writer = csv.writer(log)
     agreeing_scores = {}
     non_agreeing_scores = []
+
     for crop_dir in (x for x in out_scores if out_scores[x]):
         num_agree = 0
         secondary_agree = 0
         num_blanks = 0
+
         for frame in (frame for frame in out_scores[crop_dir] if frame):
             score_list = out_scores[crop_dir][frame]
 
@@ -97,20 +122,30 @@ def write_to_log(log):
                 emotionStrings = score_list[0]
                 prevalence_score = score_list[1]
                 annotated_string = score_list[2]
+
                 if annotated_string == '':
                     num_blanks += 1
                 else:
                     if annotated_string in emotionStrings['Max']:
                         num_agree += 1
-                    elif prevalence_score < 1.5 and (score_list[2] in ['Neutral', 'Sleeping']):
+                    elif prevalence_score < 1.5 and (score_list[2] in [
+                            'Neutral', 'Sleeping'
+                    ]):
                         num_agree += 1
-                    elif 'Second' in emotionStrings and annotated_string in emotionStrings['Second']:
+                    elif 'Second' in emotionStrings and annotated_string in emotionStrings[
+                            'Second']:
                         secondary_agree += 1
                     else:
                         non_agreeing_scores.append(score_list)
-        agreeing_scores[crop_dir] = [num_agree, secondary_agree, len(out_scores[crop_dir])]
-        csv_writer.writerow([crop_dir] + agreeing_scores[crop_dir] + [len(scores[crop_dir]) - num_blanks])
-    for vid_score in sorted(non_agreeing_scores, key=lambda score: score[0]['Max']):
+        agreeing_scores[crop_dir] = [
+            num_agree, secondary_agree,
+            len(out_scores[crop_dir])
+        ]
+        csv_writer.writerow([crop_dir] + agreeing_scores[crop_dir] +
+                            [len(scores[crop_dir]) - num_blanks])
+
+    for vid_score in sorted(
+            non_agreeing_scores, key=lambda score: score[0]['Max']):
         vid_score = [vid_score[0]['Max']] + [vid_score[1]] + [vid_score[2]]
         csv_writer.writerow(vid_score)
         print(vid_score)
@@ -119,30 +154,41 @@ def write_to_log(log):
 if __name__ == '__main__':
     OpenDir = sys.argv[sys.argv.index('-d') + 1]
     os.chdir(OpenDir)
-    patient_dirs = glob.glob('*cropped')  # Directories have been previously cropped by CropAndOpenFace
+    # Directories have been previously cropped by CropAndOpenFace
+    patient_dirs = glob.glob('*cropped')
     scores = defaultdict()
     out_scores = defaultdict()
     scores_file = 'scores.txt'
+
     if os.path.exists(scores_file):
         scores = json.load(open(scores_file))
     original_len = len(scores)
     remaining = [x for x in patient_dirs if x not in scores]
     out_dict = multiprocessing.Manager().dict()
     out_dict.update(scores)
+
     if len(remaining) > 0:
-        eyebrow_dict = process_eyebrows(OpenDir, open(join(OpenDir, 'eyebrows.txt')))
+        eyebrow_dict = process_eyebrows(OpenDir,
+                                        open(join(OpenDir, 'eyebrows.txt')))
         f = functools.partial(find_scores, out_dict, eyebrow_dict)
-        bar = progressbar.ProgressBar(redirect_stdout=True, max_value=len(remaining))
+        bar = progressbar.ProgressBar(
+            redirect_stdout=True, max_value=len(remaining))
+
         for i, _ in enumerate(Pool().imap(f, remaining), 1):
             bar.update(i)
+
         if len(out_dict) != original_len:
             dump_dict = dict()
             dump_dict.update(out_dict)
             json.dump(dump_dict, open(scores_file, 'w'))
+
     for patient_dir in (x for x in out_dict if out_dict[x]):
         # Maps frame to list if frame has been detected by OpenFace and it has been annotated
-        out_scores[patient_dir] = {frame: score_list for frame, score_list in out_dict[patient_dir].items() if
-                                   score_list}
+        out_scores[patient_dir] = {
+            frame: score_list
+            for frame, score_list in out_dict[patient_dir].items()
+            if score_list
+        }
 
     with open(join(OpenDir, 'OpenFaceScores.csv'), 'w') as log:
         write_to_log(log)

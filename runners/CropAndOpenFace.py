@@ -11,7 +11,7 @@ import subprocess
 import sys
 from dask import dataframe as df
 import pandas as pd
-# print(sys.path)
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 import ImageCropper
 import VidCropper
 
@@ -29,8 +29,8 @@ def run_open_face(im_dir, vid_mode=False, remove_intermediates=False) -> str:
 
     if not vid_mode:
         subprocess.Popen(
-            "ffmpeg -y -r 30 -f image2 -pattern_type glob -i '{0}' -b:v 7000k {1}".
-            format(
+            "ffmpeg -y -r 30 -f image2 -pattern_type glob -i '{0}' -b:v 7000k {1}"
+            .format(
                 os.path.join(im_dir, '*.png'),
                 os.path.join(im_dir, 'inter_out.mp4')),
             shell=True).wait()
