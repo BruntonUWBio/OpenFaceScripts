@@ -1,3 +1,9 @@
+"""
+.. module:: AUvsEmotionGenerator
+    :synopsis: Creates dataframe with action units for all patients, days, and sessions
+"""
+
+
 import functools
 import glob
 import json
@@ -19,6 +25,7 @@ from OpenFaceScripts.scoring import AUScorer
 from OpenFaceScripts.runners import VidCropper
 from OpenFaceScripts.helpers.patient_info import patient_day_session, get_patient_names
 from tqdm import tqdm
+from typing import List
 
 
 def clean_to_write(to_write: str) -> str:
@@ -35,6 +42,7 @@ def clean_to_write(to_write: str) -> str:
 def find_scores(patient_dir: str):
     """
     Finds the scores for a specific patient directory
+
     :param patient_dir: Directory to look in
     """
     try:
@@ -46,9 +54,10 @@ def find_scores(patient_dir: str):
         au_frame = au_frame[au_frame.patient == patient and au_frame.day == day
                             and au_frame.session == session]
 
-        csv_path = join(patient_dir,
-                        os.path.basename(patient_dir).replace('_cropped', '') +
-                        '_emotions.csv')
+        csv_path = join(
+            patient_dir,
+            os.path.basename(patient_dir).replace('_cropped', '') +
+            '_emotions.csv')
         num_frames = int(
             VidCropper.duration(get_vid_from_dir(patient_dir)) * 30)
 
@@ -79,6 +88,7 @@ def find_scores(patient_dir: str):
 
 def find_one_patient_scores(patient_dirs: List[str], patient: str):
     """Finds the annotated emotions for a single patient and adds to overall patient DataFrame.
+
     :param patient_dirs: All directories ran through OpenFace.
     :param patient: Patient to find annotated emotions for
     """

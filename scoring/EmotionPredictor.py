@@ -1,13 +1,19 @@
+"""
+.. module:: EmotionPredictor
+    :synopsis: Use this script to run classifiers on emotion data
+"""
+
 import json
 import multiprocessing
 import os
 import sys
 
-# import progressbar
 import pickle
 from sklearn.model_selection import cross_val_score
 
-sys.path.append('/home/gvelchuru/')
+sys.path.append(
+    os.path.dirname(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 from OpenFaceScripts.scoring import AUScorer
 from sklearn import metrics
 from sklearn.ensemble import RandomForestClassifier
@@ -16,18 +22,32 @@ from sklearn.model_selection import train_test_split
 
 
 def make_emotion_data(emotion: str, dict_to_use: dict = None, ck=True):
+    """
+    Make emotion data for classifiers
+
+    :param emotion: Emotion to classify
+    :param dict_to_use: Location of stored dict
+    :param ck: If ck dict exists
+    """
+
     if dict_to_use is None:
         dict_to_use = json.load(open('au_emotes.txt'))
-    emotion_data = [item for sublist in
-                    (b for b in ((a for a in x.values() if a) for x in dict_to_use.values() if x)
-                     if b)
-                    for item in sublist]
+    emotion_data = [
+        item for sublist in (b for b in ((a for a in x.values() if a)
+                                         for x in dict_to_use.values()
+                                         if x) if b) for item in sublist
+    ]
 
     if ck:
         ck_dict = json.load(open('ck_dict.txt'))
+
         for patient_list in ck_dict.values():
             to_add = AUScorer.TrainList
-            au_dict = {str(int(float(x))): y for x, y in patient_list[0].items()}
+            au_dict = {
+                str(int(float(x))): y
+                for x, y in patient_list[0].items()
+            }
+
             for add in to_add:
                 if add not in au_dict:
                     au_dict[add] = 0
@@ -36,49 +56,69 @@ def make_emotion_data(emotion: str, dict_to_use: dict = None, ck=True):
     au_data = []
     target_data = []
     aus_list = AUScorer.TrainList
+
     for frame in emotion_data:
         aus = frame[0]
+
         if frame[1] == emotion:
             au_data.append([float(aus[str(x)]) for x in aus_list])
             target_data.append(1)
     index = 0
     happy_len = len(target_data)
+
     for frame in emotion_data:
         aus = frame[0]
+
         if frame[1] and frame[1] != emotion:
             au_data.append([float(aus[str(x)]) for x in aus_list])
             target_data.append(0)
             index += 1
+
         if index == happy_len:
             break
 
     return au_data, target_data
 
 
-def use_classifier(out_q, emotion: str,
-                   classifier):
+def use_classifier(out_q, emotion: str, classifier):
+    """
+    Train an emotion classifier
+
+    :param out_q: Queue to put classification report in (for multiprocessing)
+    :param emotion: emotion to classify
+    :param classifier: classifier to train and dump
+    """
+
     # out_q.put(emotion + '\n')
     # out_q.put('Best params \n')
     # out_q.put(str(classifier.best_params_) + '\n')
     # out_q.put("Best f1 score \n")
     # out_q.put(str(classifier.best_score_) + '\n')
     au_data, target_data = make_emotion_data(emotion)
-    scores = cross_val_score(classifier, au_data, target_data, scoring='precision')
+    scores = cross_val_score(
+        classifier, au_data, target_data, scoring='precision')
     out_q.put(emotion + '\n')
-    out_q.put("Cross val precision for classifier {0}:\n{1}\n".format(classifier, scores.mean()))
-    scores = cross_val_score(classifier, au_data, target_data, scoring='recall')
-    out_q.put("Cross val recall for classifier {0}:\n{1}\n".format(classifier, scores.mean()))
-    au_train, au_test, target_train, target_test = train_test_split(au_data, target_data, test_size=.1)
+    out_q.put("Cross val precision for classifier {0}:\n{1}\n".format(
+        classifier, scores.mean()))
+    scores = cross_val_score(
+        classifier, au_data, target_data, scoring='recall')
+    out_q.put("Cross val recall for classifier {0}:\n{1}\n".format(
+        classifier, scores.mean()))
+    au_train, au_test, target_train, target_test = train_test_split(
+        au_data, target_data, test_size=.1)
     classifier.fit(au_train, target_train)
 
     expected = target_test
     predicted = classifier.predict(au_test)
 
-    out_q.put("Classification report for classifier %s:\n%s\n"
-              % (classifier, metrics.classification_report(expected, predicted)))
-    out_q.put("Confusion matrix:\n%s\n" % metrics.confusion_matrix(expected, predicted))
+    out_q.put("Classification report for classifier %s:\n%s\n" %
+              (classifier, metrics.classification_report(expected, predicted)))
+    out_q.put("Confusion matrix:\n%s\n" % metrics.confusion_matrix(
+        expected, predicted))
     # joblib.dump(classifier, '{0}_trained_RandomForest_with_pose'.format(emotion), compress=1)
-    pickle.dump(classifier, open('{0}_trained_RandomForest_with_pose.pkl'.format(emotion), 'wb'))
+    pickle.dump(
+        classifier,
+        open('{0}_trained_RandomForest_with_pose.pkl'.format(emotion), 'wb'))
 
 
 if __name__ == '__main__':
@@ -109,10 +149,12 @@ if __name__ == '__main__':
 
     index = 1
     # bar = progressbar.ProgressBar(redirect_stdout=True, max_value=1 * len(AUScorer.emotion_list()))
+
     for emotion in AUScorer.emotion_list():
         classifiers = [
             RandomForestClassifier(),
         ]
+
         for classifier in classifiers:
             use_classifier(out_q, emotion, classifier)
             # bar.update(index)

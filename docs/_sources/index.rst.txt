@@ -16,6 +16,9 @@ Contents:
     CropAndOpenFace
     heatmap_data_vis
     ml_pr_vis
+    HappyVidMarker
+    AUvsEmotionGenerator
+    EmotionPredictor
 
 
 

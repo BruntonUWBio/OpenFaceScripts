@@ -40,9 +40,11 @@
    <div class="modindex-jumpbox">
    <a href="#cap-a"><strong>a</strong></a> | 
    <a href="#cap-d"><strong>d</strong></a> | 
+   <a href="#cap-e"><strong>e</strong></a> | 
    <a href="#cap-h"><strong>h</strong></a> | 
    <a href="#cap-i"><strong>i</strong></a> | 
    <a href="#cap-m"><strong>m</strong></a> | 
+   <a href="#cap-p"><strong>p</strong></a> | 
    <a href="#cap-r"><strong>r</strong></a> | 
    <a href="#cap-s"><strong>s</strong></a> | 
    <a href="#cap-v"><strong>v</strong></a>
@@ -67,6 +69,11 @@
        <td>
        <a href="AUScorer.html#module-AUScorer"><code class="xref">AUScorer</code></a></td><td>
        <em>An action unit scorer</em></td></tr>
+     <tr>
+       <td></td>
+       <td>
+       <a href="AUvsEmotionGenerator.html#module-AUvsEmotionGenerator"><code class="xref">AUvsEmotionGenerator</code></a></td><td>
+       <em>Creates dataframe with action units for all patients, days, and sessions</em></td></tr>
      <tr class="pcap"><td></td><td>&#160;</td><td></td></tr>
      <tr class="cap" id="cap-d"><td></td><td>
        <strong>d</strong></td><td></td></tr>
@@ -87,8 +94,21 @@
        <a href="ml_pr_vis.html#module-datavis.ml_pr_vis"><code class="xref">datavis.ml_pr_vis</code></a></td><td>
        <em></em></td></tr>
      <tr class="pcap"><td></td><td>&#160;</td><td></td></tr>
+     <tr class="cap" id="cap-e"><td></td><td>
+       <strong>e</strong></td><td></td></tr>
+     <tr>
+       <td></td>
+       <td>
+       <a href="EmotionPredictor.html#module-EmotionPredictor"><code class="xref">EmotionPredictor</code></a></td><td>
+       <em>Use this script to run classifiers on emotion data</em></td></tr>
+     <tr class="pcap"><td></td><td>&#160;</td><td></td></tr>
      <tr class="cap" id="cap-h"><td></td><td>
        <strong>h</strong></td><td></td></tr>
+     <tr>
+       <td></td>
+       <td>
+       <a href="HappyVidMarker.html#module-HappyVidMarker"><code class="xref">HappyVidMarker</code></a></td><td>
+       <em>A script for marking all videos with happy graph</em></td></tr>
      <tr>
        <td></td>
        <td>
@@ -112,35 +132,49 @@ is much less performant than VidCropper, making a video is recommended.</em></td
        <a href="ml_pr_vis.html#module-ml_pr_vis"><code class="xref">ml_pr_vis</code></a></td><td>
        <em>A script with functions for doing ML and visualizing probability/recall graphs thereof</em></td></tr>
      <tr class="pcap"><td></td><td>&#160;</td><td></td></tr>
-     <tr class="cap" id="cap-r"><td></td><td>
-       <strong>r</strong></td><td></td></tr>
+     <tr class="cap" id="cap-p"><td></td><td>
+       <strong>p</strong></td><td></td></tr>
      <tr>
        <td><img src="_static/minus.png" class="toggler"
               id="toggle-2" style="display: none" alt="-" /></td>
        <td>
-       <code class="xref">runners</code></td><td>
+       <code class="xref">pipeline</code></td><td>
        <em></em></td></tr>
      <tr class="cg-2">
+       <td></td>
+       <td>&#160;&#160;&#160;
+       <a href="HappyVidMarker.html#module-pipeline.HappyVidMarker"><code class="xref">pipeline.HappyVidMarker</code></a></td><td>
+       <em></em></td></tr>
+     <tr class="pcap"><td></td><td>&#160;</td><td></td></tr>
+     <tr class="cap" id="cap-r"><td></td><td>
+       <strong>r</strong></td><td></td></tr>
+     <tr>
+       <td><img src="_static/minus.png" class="toggler"
+              id="toggle-3" style="display: none" alt="-" /></td>
+       <td>
+       <code class="xref">runners</code></td><td>
+       <em></em></td></tr>
+     <tr class="cg-3">
        <td></td>
        <td>&#160;&#160;&#160;
        <a href="CropAndOpenFace.html#module-runners.CropAndOpenFace"><code class="xref">runners.CropAndOpenFace</code></a></td><td>
        <em></em></td></tr>
-     <tr class="cg-2">
+     <tr class="cg-3">
        <td></td>
        <td>&#160;&#160;&#160;
        <a href="ImageCropper.html#module-runners.ImageCropper"><code class="xref">runners.ImageCropper</code></a></td><td>
        <em></em></td></tr>
-     <tr class="cg-2">
+     <tr class="cg-3">
        <td></td>
        <td>&#160;&#160;&#160;
        <a href="MultiCropper.html#module-runners.MultiCropAndOpenFace"><code class="xref">runners.MultiCropAndOpenFace</code></a></td><td>
        <em></em></td></tr>
-     <tr class="cg-2">
+     <tr class="cg-3">
        <td></td>
        <td>&#160;&#160;&#160;
        <a href="SecondRunOpenFace.html#module-runners.SecondRunOpenFace"><code class="xref">runners.SecondRunOpenFace</code></a></td><td>
        <em></em></td></tr>
-     <tr class="cg-2">
+     <tr class="cg-3">
        <td></td>
        <td>&#160;&#160;&#160;
        <a href="VidCropper.html#module-runners.VidCropper"><code class="xref">runners.VidCropper</code></a></td><td>
@@ -150,16 +184,26 @@ is much less performant than VidCropper, making a video is recommended.</em></td
        <strong>s</strong></td><td></td></tr>
      <tr>
        <td><img src="_static/minus.png" class="toggler"
-              id="toggle-3" style="display: none" alt="-" /></td>
+              id="toggle-4" style="display: none" alt="-" /></td>
        <td>
        <code class="xref">scoring</code></td><td>
        <em></em></td></tr>
-     <tr class="cg-3">
+     <tr class="cg-4">
        <td></td>
        <td>&#160;&#160;&#160;
        <a href="AUScorer.html#module-scoring.AUScorer"><code class="xref">scoring.AUScorer</code></a></td><td>
        <em></em></td></tr>
-     <tr class="cg-3">
+     <tr class="cg-4">
+       <td></td>
+       <td>&#160;&#160;&#160;
+       <a href="AUvsEmotionGenerator.html#module-scoring.AUvsEmotionGenerator"><code class="xref">scoring.AUvsEmotionGenerator</code></a></td><td>
+       <em></em></td></tr>
+     <tr class="cg-4">
+       <td></td>
+       <td>&#160;&#160;&#160;
+       <a href="EmotionPredictor.html#module-scoring.EmotionPredictor"><code class="xref">scoring.EmotionPredictor</code></a></td><td>
+       <em></em></td></tr>
+     <tr class="cg-4">
        <td></td>
        <td>&#160;&#160;&#160;
        <a href="MultiPrevalenceScorer.html#module-scoring.MultiPrevalenceScorer"><code class="xref">scoring.MultiPrevalenceScorer</code></a></td><td>
@@ -202,6 +246,9 @@ is much less performant than VidCropper, making a video is recommended.</em></td
 <li class="toctree-l1"><a class="reference internal" href="CropAndOpenFace.html">CropAndOpenFace</a></li>
 <li class="toctree-l1"><a class="reference internal" href="heatmap_data_vis.html">heatmap_data_vis</a></li>
 <li class="toctree-l1"><a class="reference internal" href="ml_pr_vis.html">ml_pr_vis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="HappyVidMarker.html">HappyVidMarker</a></li>
+<li class="toctree-l1"><a class="reference internal" href="AUvsEmotionGenerator.html">AUvsEmotionGenerator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="EmotionPredictor.html">EmotionPredictor</a></li>
 </ul>
 
 <div class="relations">

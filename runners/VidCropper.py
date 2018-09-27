@@ -7,10 +7,8 @@ import os
 import subprocess
 import sys
 import numpy as np
-# from OpenFaceScripts.runners import SecondRunOpenFace, CropAndOpenFace
-import SecondRunOpenFace
-import CropAndOpenFace
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from OpenFaceScripts.runners import SecondRunOpenFace, CropAndOpenFace
 from scoring.AUScorer import AUScorer
 
 
@@ -33,8 +31,9 @@ def crop_and_resize(vid, width, height, x_min, y_min, directory,
     """
     crop_vid = os.path.join(directory, 'cropped_out.avi')
     subprocess.Popen(
-        'ffmpeg -y -loglevel quiet -i {0} -filter:v \"crop={1}:{2}:{3}:{4}\" {5}'.
-        format(vid, str(width), str(height), str(x_min), str(y_min), crop_vid),
+        'ffmpeg -y -loglevel quiet -i {0} -filter:v \"crop={1}:{2}:{3}:{4}\" {5}'
+        .format(vid, str(width), str(height), str(x_min), str(y_min),
+                crop_vid),
         shell=True).wait()
     subprocess.Popen(
         'ffmpeg -y -loglevel quiet -i {0} -vf scale={2}*iw:{2}*ih {1}'.format(
