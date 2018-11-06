@@ -8,7 +8,7 @@ import subprocess
 import sys
 import numpy as np
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from OpenFaceScripts.runners import SecondRunOpenFace, CropAndOpenFace
+from runners import SecondRunOpenFace, CropAndOpenFace
 from scoring.AUScorer import AUScorer
 
 
@@ -224,11 +224,13 @@ class CropVid:
         if num_constraint:
             read_arr = [
                 read_arr[i].split(',')[0:num_constraint]
+
                 for i in range(0, len(read_arr), self.fps_fraction)
             ]
         else:
             read_arr = [
                 read_arr[i].split(',')
+
                 for i in range(0, len(read_arr), self.fps_fraction)
             ]
 
@@ -262,6 +264,7 @@ def normalize_to_camera(coords, crop_coord, scaled_width, scaled_height):
     norm_coords = [
         np.array((coord[0] * rescale_factor[0] + crop_coord[0],
                   coord[1] * rescale_factor[1] + crop_coord[2]))
+
         for coord in coords
     ]
 

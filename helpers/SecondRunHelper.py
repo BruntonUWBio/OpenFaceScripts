@@ -77,6 +77,7 @@ def get_dimensions(vid_dir: str):
 
         if lines[0] == 'None\n' and lines[1] == 'None\n' and lines[
                 2] == 'None\n' and lines[3] == 'None\n':
+
             return [None, None, None, None, int(lines[5])]
 
         return {
@@ -275,7 +276,7 @@ def invert(vid: str, out_dir: str) -> dict:
 
 
 # def change_gamma(vid: str, vid_dir: str, include_eyebrows: bool) -> dict:
-# # TODO: Keep going
+# TODO: Keep going
 
 # return_dict = {}
 
@@ -333,7 +334,7 @@ def process_vid_dir(eyebrow_dict: dict, vid_dir: str) -> None:
         diff_dict[vid_dir] = {}
 
     emotion_frame = df.read_hdf(
-        os.path.join(all_dict_folder, '*.hdf'), '/data') if os.path.exists(
+        os.path.join(all_dict_folder, 'hdfs' '*.hdf'), '/data') if os.path.exists(
             all_dict_folder) else AUScorer.au_data_frame(vid_dir)
     # emotion_dict = AUScorer.convert_dict_to_int(
     # json.load(open(all_dict_file))) if os.path.exists(
@@ -415,6 +416,7 @@ def update_frames(post_func_frame: df.DataFrame, emotion_frame: df.DataFrame,
         col: get_merged_value(emotion_frame[col + '_old'],
                               emotion_frame[col + '_new'], emotion_frame.B_old,
                               emotion_frame.B_new)
+
         for col in other_cols
     }
     # print(assign_dict)
@@ -477,6 +479,7 @@ def process_eyebrows(dir: str, file) -> dict:
                 if eyebrow_mode:
                     exact_dict['Eyebrows'] += [
                         x for x in os.listdir(dir)
+
                         if os.path.isdir(os.path.join(dir, x)) and line in x
                         and os.path.join(dir,
                                          x) not in exact_dict['No Eyebrows']
@@ -484,6 +487,7 @@ def process_eyebrows(dir: str, file) -> dict:
                 else:
                     exact_dict['No Eyebrows'] += [
                         x for x in os.listdir(dir)
+
                         if os.path.isdir(os.path.join(dir, x)) and line in x
                         and os.path.join(dir,
                                          x) not in exact_dict['No Eyebrows']
@@ -503,6 +507,7 @@ if __name__ == '__main__':
     files = [
         x for x in (os.path.join(patient_directory, vid_dir)
                     for vid_dir in os.listdir(patient_directory))
+
         if (os.path.isdir(x) and 'au.csv' in os.listdir(x) and any(
             patient in x for patient in patients))
     ]

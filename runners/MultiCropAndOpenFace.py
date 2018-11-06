@@ -14,7 +14,7 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 import CropAndOpenFace
 
 
-def make_vids(path):
+def make_vids(path, all = False):
     """
     Return list of vids not processed yet given a path
     :param path: Path to video directory
@@ -25,6 +25,7 @@ def make_vids(path):
 
     return [
         x for x in glob.glob(os.path.join(path, '*.avi'))
+
         if (os.path.splitext(x)[0] + '_cropped' not in folder_components
             or 'hdfs' not in os.listdir(
                 os.path.join(path,
@@ -62,14 +63,24 @@ if __name__ == '__main__':
     CONDA_ENV = '/home/gvelchuru/miniconda3/envs/OpenFace/bin/python'
 
     for index in range(len(indices) - 1):
-        cmd = [
-            CONDA_ENV,
-            os.path.join(
-                os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-                'helpers', 'HalfCropper.py'), '-id', path, '-vl',
-            str(int(indices[index])), '-vr',
-            str(int(indices[index + 1]))
-        ]
+        if '-c' not in sys.argv:
+            cmd = [
+                CONDA_ENV,
+                os.path.join(
+                    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                    'helpers', 'HalfCropper.py'), '-id', path, '-vl',
+                str(int(indices[index])), '-vr',
+                str(int(indices[index + 1]))
+            ]
+        else:
+            cmd = [
+                CONDA_ENV,
+                os.path.join(
+                    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                    'helpers', 'HalfCropper.py'), '-id', path, '-vl',
+                str(int(indices[index])), '-vr',
+                str(int(indices[index + 1])), '-c', sys.argv[sys.argv.index('-c') + 1], '-n', sys.argv[sys.argv.index('-n') + 1]
+            ]
         processes.append(
             subprocess.Popen(
                 cmd, env={'CUDA_VISIBLE_DEVICES': '{0}'.format(str(index))}))

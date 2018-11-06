@@ -67,7 +67,8 @@ def run_open_face(im_dir, vid_mode=False, remove_intermediates=False) -> str:
 
         if not os.path.exists(df_dir):
             os.mkdir(df_dir)
-        au_dataframe.to_hdf(os.path.join(df_dir, 'au_*.hdf'), '/data')
+        au_dataframe.to_hdf(os.path.join(df_dir, 'au_0.hdf'), '/data', format='table')
+        df.read_hdf(os.path.join(df_dir, 'au_0.hdf'), '/data') # assert saved correctly
 
     if remove_intermediates:
         os.remove(os.path.join(im_dir, vid_name))
@@ -141,6 +142,7 @@ class VideoImageCropper:
 def find_txt_files(path):
     return {
         os.path.splitext(os.path.basename(v))[0]: v
+
         for v in glob.iglob(os.path.join(path + '/**/*.txt'), recursive=True)
     }
 
