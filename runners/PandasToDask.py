@@ -6,7 +6,7 @@ from tqdm import tqdm
 from pathos.multiprocessing import ProcessingPool as Pool
 
 def pandasToDask(pdir):
-    hdf_lock = os.path.join(pdir, 'hdfs', 'au_*.hdf')
+    hdf_lock = os.path.join(pdir, 'hdfs', 'au_0.hdf')
 
     try:
         if os.path.exists(hdf_lock):

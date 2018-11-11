@@ -9,7 +9,7 @@ from tqdm import tqdm
 
 
 def run():
-    for vid in tqdm(range(vid_left, vid_right + 1)):
+    for vid in tqdm(range(vid_left, vid_right)):
         crop_image(vid)
 
 

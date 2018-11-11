@@ -13,12 +13,14 @@ from OpenFaceScripts.helpers.SecondRunHelper import process_eyebrows, get_vid_fr
 from multiprocessing import cpu_count
 from pathos.multiprocessing import ProcessingPool as Pool
 from dask import dataframe as df
+from dask import array as da
 from os.path import join
 from collections import defaultdict
 import multiprocessing
 import json
 import glob
 import functools
+import numpy as np
 """
 .. module:: AUvsEmotionGenerator
     :synopsis: Appends classified emotion to AU dataframe
@@ -36,7 +38,7 @@ def clean_to_write(to_write: str) -> str:
     return to_write
 
 
-def find_scores(patient_dir: str):
+def find_scores(patient_dir: str, refresh: bool):
     """
     Finds the scores for a specific patient directory
 
@@ -47,27 +49,37 @@ def find_scores(patient_dir: str):
         # au_frame = df.read_hdf(
         # os.path.join('all_' + patient, 'au_*.hdf'), '/data')
         # try:
-        au_frame = df.read_hdf(
-            os.path.join(patient_dir, 'hdfs', 'au_0.hdf'), '/data')
+        try:
+            au_frame = df.read_hdf(
+                os.path.join(patient_dir, 'hdfs', 'au.hdf'), '/data')
+        except ValueError as e:
+            print(e)
+
         # except ValueError as e:
             # print(e)
 
             # return
 
-        if 'annotated' in au_frame.columns:
+        if 'annotated' in au_frame.columns and not refresh:
             return
 
-        # Restrict to a subset of frames which are relevant
+        if 'frame' not in au_frame.columns:
+            return
+
+        # Restrict to a subset of frames which are relevant, currently
+        # unnecessary since we parse single directories
         # au_frame = au_frame[au_frame.patient == patient and au_frame.session == day
         # and au_frame.vid == session]
-        au_frame = au_frame[au_frame.patient == patient]
+        # au_frame = au_frame[au_frame.patient == patient]
         # try:
-        au_frame = au_frame[au_frame.session == day]
+        # au_frame = au_frame[au_frame.session == day]
         # except AttributeError as e:
             # print(e)
 
             # return
-        au_frame = au_frame[au_frame.vid == session]
+        # au_frame = au_frame[au_frame.vid == session]
+
+        annotated_values = ["N/A" for _ in range(len(au_frame.index) + 1)]
 
         csv_path = join(
             patient_dir,
@@ -93,22 +105,26 @@ def find_scores(patient_dir: str):
                 for i in [
                         x for x in csv_dict.keys() if 'None' not in csv_dict[x]
                 ]:
-                    curr_au_frame = au_frame[au_frame.frame == i]
-
-                    if not curr_au_frame.empty:
-                        print('hi!')
                         to_write = clean_to_write(csv_dict[i])
-                        curr_au_frame['annotated'] = to_write
-        df.to_hdf(
-            au_frame,
-            os.path.join(patient_dir, 'hdfs', 'au_*.hdf'),
+
+                        if i in range(len(annotated_values)):
+                            annotated_values[i] = to_write
+        # au_frame = au_frame.assign(annotated=annotated_values)
+        # au_frame = au_frame.set_index('frame')
+        # au_frame["annotated"] = df.from_array(da.from_array(annotated_values, chunks=5))
+        annotated_values = da.from_array(annotated_values, chunks='auto').compute()
+        au_frame = au_frame.assign(annotated=lambda x: annotated_values[x['frame']]).compute()
+        au_frame.to_hdf(
+            os.path.join(patient_dir, 'hdfs', 'au.hdf'),
             '/data',
             format='table')
     except FileNotFoundError as not_found_error:
         print(not_found_error)
+    except AttributeError as e:
+        print(e)
 
 
-def find_one_patient_scores(patient_dirs: List[str], patient: tuple):
+def find_one_patient_scores(patient_dirs: List[str], refresh: bool, patient: tuple):
     """Finds the annotated emotions for a single patient and adds to overall patient DataFrame.
 
     :param patient_dirs: All directories ran through OpenFace.
@@ -118,11 +134,12 @@ def find_one_patient_scores(patient_dirs: List[str], patient: tuple):
     curr_dirs = [x for x in patient_dirs if patient in x]
 
     for patient_dir in tqdm(curr_dirs, position=tqdm_position):
-        find_scores(patient_dir)
+        find_scores(patient_dir, refresh)
 
 
 if __name__ == '__main__':
     OPEN_DIR = sys.argv[sys.argv.index('-d') + 1]
+    refresh = '--refresh' in sys.argv
     os.chdir(OPEN_DIR)
     # Directories have been previously cropped by CropAndOpenFace
     PATIENT_DIRS = [
@@ -131,11 +148,11 @@ if __name__ == '__main__':
     PATIENTS = get_patient_names(PATIENT_DIRS)
     # EYEBROW_DICT = process_eyebrows(OPEN_DIR,
     # open(join(OPEN_DIR, 'eyebrows.txt')))
-    # PARTIAL_FIND_FUNC = functools.partial(find_one_patient_scores, PATIENT_DIRS)
-    # TUPLE_PATIENTS = [((i % cpu_count()), x) for i, x in enumerate(PATIENTS)]
-    # Pool().map(PARTIAL_FIND_FUNC, TUPLE_PATIENTS)
+    PARTIAL_FIND_FUNC = functools.partial(find_one_patient_scores, PATIENT_DIRS, refresh)
+    TUPLE_PATIENTS = [((i % 5), x) for i, x in enumerate(PATIENTS)]
+    Pool(5).map(PARTIAL_FIND_FUNC, TUPLE_PATIENTS)
     # Pool().map(find_scores, PATIENTS)
 
-    for i, x in enumerate(PATIENTS):
-        tuple_patient = (i % cpu_count(), x)
-        find_one_patient_scores(PATIENT_DIRS, tuple_patient)
+    # for i, x in enumerate(PATIENTS):
+        # tuple_patient = (i % cpu_count(), x)
+        # find_one_patient_scores(PATIENT_DIRS, tuple_patient)

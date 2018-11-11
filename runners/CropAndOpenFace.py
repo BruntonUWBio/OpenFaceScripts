@@ -57,7 +57,7 @@ def run_open_face(im_dir, vid_mode=False, remove_intermediates=False) -> str:
 
     if 'au.csv' in os.listdir(im_dir):
         au_dataframe = df.read_csv(os.path.join(im_dir, 'au.csv'))
-        sLength = len(au_dataframe['frame'])
+        # sLength = len(au_dataframe['frame'])
         au_dataframe = au_dataframe.assign(patient=lambda x: patient_name)
         au_dataframe = au_dataframe.assign(day=lambda x: day_num)
         au_dataframe = au_dataframe.assign(session=lambda x: session_num)
@@ -68,7 +68,7 @@ def run_open_face(im_dir, vid_mode=False, remove_intermediates=False) -> str:
         if not os.path.exists(df_dir):
             os.mkdir(df_dir)
         au_dataframe.to_hdf(os.path.join(df_dir, 'au_0.hdf'), '/data', format='table')
-        df.read_hdf(os.path.join(df_dir, 'au_0.hdf'), '/data') # assert saved correctly
+        # df.read_hdf(os.path.join(df_dir, 'au_0.hdf'), '/data') # assert saved correctly
 
     if remove_intermediates:
         os.remove(os.path.join(im_dir, vid_name))
