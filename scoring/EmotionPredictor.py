@@ -12,6 +12,7 @@ import os
 import gc
 import glob
 import pickle
+import pandas as pd
 import functools
 from tqdm import tqdm
 import sys
@@ -23,7 +24,12 @@ from dask_ml.model_selection import train_test_split
 from sklearn import metrics
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.externals import joblib
-from sklearn.model_selection import cross_val_score, train_test_split
+from sklearn.model_selection import cross_validate
+
+from dask.distributed import Client, LocalCluster
+
+from sklearn.externals.joblib import Parallel, parallel_backend
+from dask.diagnostics import ProgressBar
 
 sys.path.append(
     os.path.dirname(
@@ -31,36 +37,90 @@ sys.path.append(
 from OpenFaceScripts.scoring import AUScorer
 
 def use_dask_xgb(out_q, emotion, df: dd.DataFrame):
-    data_columns = [x for x in df.columns if 'annotated' not in x and 'predicted' not in x and 'patient' not in x]
-    data = df[data_columns]
+    # data_columns = [x for x in df.columns if 'annotated' not in x and 'predicted' not in x and 'patient' not in x]
+    # data = df[data_columns]
+    # # data.convert_objects(convert_numeric=True).dropna()
+    # data = data.apply(lambda x: pd.to_numeric(x, errors='coerce'),axis=1, meta={'x': 'f8', 'y': 'f8'})
+    # data = data.fillna(0)
 
-    labels = df[df['annotated'] != "N/A"]
-    labels = labels['annotated']
-    # labels = labels.assign(lambda x: 1 if x['annotated'] == emotion else 0)
-    labels = labels.apply(lambda x: 1 if x['annotated'] == emotion else 0)
-    # labels = labels.compute()
+    # labels = df[df['annotated'] != "N/A"]
+    # labels = labels['annotated']
+    # # labels = labels.assign(lambda x: 1 if x['annotated'] == emotion else 0)
+    # labels = labels.apply(lambda x: 1 if x == emotion else 0, meta={'x': 'f8', 'y': 'f8'})
+    # labels = labels.fillna(0)
+    # # labels = labels.compute()
 
+    # X_train, X_test, y_train, y_test = train_test_split(data.values, labels.values)
+
+    # classifier = XGBClassifier()
+    # scoring = ['precision', 'recall']
+    # scores = cross_val_score(
+        # classifier, X_train, y_train, scoring=scoring)
+    # out_q.put("Cross val precision for classifier {0}:\n{1}\n".format(
+        # classifier, scores['precision'].mean()))
+    # out_q.put("Cross val recall for classifier {0}:\n{1}\n".format(
+        # classifier, scores['recall'].mean()))
+
+    data_columns = [x for x in df.columns if 'predicted' not in x and 'patient' not in x and 'session' not in x and 'vid' not in x]
+    df = df[data_columns]
+    data = df[df['annotated'] != "" and df['annotated'] != "N/A"]
+    labels = (data['annotated'] == emotion)
+    del data['annotated']
+    print("PERSISTING DATA")
+    # data, labels = dask.persist(data, labels)
+    # data = client.compute(data)
+    # labels = client.compute(labels)
+    data = data.compute()
+    labels = labels.compute()
+    # df2 = dd.get_dummies(data.categorize()).persist()
+    # X_train, X_test, y_train, y_test = train_test_split(df2, labels)
     X_train, X_test, y_train, y_test = train_test_split(data, labels)
+    # X_train, X_test = data.random_split([.9,.1])
+    # y_train, y_test = labels.random_split([.9,.1])
 
-    classifier = XGBClassifier()
+    # cluster = LocalCluster(n_workers=16)
+    # cluster = LocalCluster()
+    # client = Client(cluster)
+    # client = Client('scheduler-address:8786', processes=False)
+    # classifier = XGBClassifier()
     scoring = ['precision', 'recall']
-    scores = cross_val_score(
-        classifier, X_train, y_train, scoring=scoring)
-    out_q.put("Cross val precision for classifier {0}:\n{1}\n".format(
-        classifier, scores['precision'].mean()))
-    out_q.put("Cross val recall for classifier {0}:\n{1}\n".format(
-        classifier, scores['recall'].mean()))
+    print("TRAINING")
+    # classifier.fit(X_train, y_train)
+    classifier = RandomForestClassifier(n_estimators=100)
 
-    expected = y_test
-    predicted = classifier.predict(X_test)
+    with parallel_backend('dask'):
+        # scores = cross_validate(
+            # classifier, X_train.values, y_train.values, scoring=scoring)
+        scores = cross_validate(
+            classifier, X_train, y_train, scoring=scoring, cv=5, return_train_score=True)
+    out_q.put("Scores for emotion {0}".format(emotion))
+    out_q.put("Cross val train precision for classifier {0}:\n{1}\n".format(
+        classifier, scores['train_precision'].mean()))
+    out_q.put("Cross val train recall for classifier {0}:\n{1}\n".format(
+        classifier, scores['train_recall'].mean()))
+    out_q.put("Cross val test precision for classifier {0}:\n{1}\n".format(
+        classifier, scores['test_precision'].mean()))
+    out_q.put("Cross val test recall for classifier {0}:\n{1}\n".format(
+        classifier, scores['test_recall'].mean()))
 
-    out_q.put("Classification report for classifier %s:\n%s\n" %
-              (classifier, metrics.classification_report(expected, predicted)))
-    out_q.put("Confusion matrix:\n%s\n" % metrics.confusion_matrix(
-        expected, predicted))
+    # expected = y_test.values
+    # predicted = classifier.predict(X_test.values)
+    print("PREDICTING")
+    expected= y_test
+    with parallel_backend('dask'):
+        classifier.fit(X_train, y_train)
+
+        predicted = classifier.predict(X_test)
+    # predicted = classifier.predict(X_test)
+
+        out_q.put("Classification report for classifier %s:\n%s\n" %
+                (classifier, metrics.classification_report(expected, predicted)))
+        out_q.put("Confusion matrix:\n%s\n" % metrics.confusion_matrix(
+            expected, predicted))
+    # classifier.save_model('{0}_trained_XGBoost_with_pose')
     pickle.dump(
         classifier,
-        open('{0}_trained_XGBoost_with_pose.pkl'.format(emotion), 'wb'))
+        open('{0}_trained_RandomForest_with_pose.pkl'.format(emotion), 'wb'))
 
 
 
@@ -294,6 +354,7 @@ def dump_queue(queue):
 
 if __name__ == '__main__':
     # dask.config.set(pool=ThreadPool(4))
+    # cluster = LocalCluster(silence_logs=0)
     parser = argparse.ArgumentParser()
     parser.add_argument("OpenDir", help="Path to OpenFaceTests directory")
     parser.add_argument("--refresh", help="Refresh DataFrame", action="store_true")
@@ -325,10 +386,20 @@ if __name__ == '__main__':
 
         # print(dd.stack(dfs))
         # df = df.compute()
-        df.to_hdf(au_path, '/data', format='table', scheduler='processes')
+        df.to_hdf(au_path, '/data', format='table', scheduler='processes') #need scheduler to avoid segfault
         print('DUMPED')
+        client = Client(processes=False)
+        print(client)
+
     else:
         # df = dd.read_hdf(os.path.join('all_aus', 'au_*.hdf'), '/data')
+        # client = Client('tcp://127.0.0.1:46619', processes=False)
+        # cluster = LocalCluster(n_workers=30, threads_per_worker=1)
+        # cluster = LocalCluster(processes=False)
+        # client = Client(cluster)
+        # print(client)
+        client = Client(processes=False)
+        print(client)
         df = dd.read_hdf(au_path, '/data')
 
     # print("NUM_FRAMES IS" + str(len(df.index)))
