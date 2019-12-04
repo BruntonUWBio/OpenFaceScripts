@@ -63,8 +63,19 @@ def use_dask_xgb(out_q, emotion, df: dd.DataFrame):
 
     data_columns = [x for x in df.columns if 'predicted' not in x and 'patient' not in x and 'session' not in x and 'vid' not in x]
     df = df[data_columns]
-    data = df[df['annotated'] != "" and df['annotated'] != "N/A"]
+    data = df[df['annotated'] != "N/A"]
+    data = data[data['annotated'] != ""]
+
+    emote_data = data[data['annotated'] == emotion]
+    non_emote_data = data[data['annotated'] != emotion]
+
+    non_emote_data = non_emote_data.sample(frac=len(emote_data)/len(non_emote_data))
+
+    data = dd.concat([emote_data, non_emote_data], interleave_partitions=True)
     labels = (data['annotated'] == emotion)
+
+    # print(labels.unique().compute())
+
     del data['annotated']
     print("PERSISTING DATA")
     # data, labels = dask.persist(data, labels)
@@ -93,7 +104,7 @@ def use_dask_xgb(out_q, emotion, df: dd.DataFrame):
             # classifier, X_train.values, y_train.values, scoring=scoring)
         scores = cross_validate(
             classifier, X_train, y_train, scoring=scoring, cv=5, return_train_score=True)
-    out_q.put("Scores for emotion {0}".format(emotion))
+    out_q.put("Scores for emotion {0} \n".format(emotion))
     out_q.put("Cross val train precision for classifier {0}:\n{1}\n".format(
         classifier, scores['train_precision'].mean()))
     out_q.put("Cross val train recall for classifier {0}:\n{1}\n".format(
