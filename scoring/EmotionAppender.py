@@ -20,6 +20,7 @@ from dask.distributed import Client, LocalCluster
 import numpy as np
 import glob
 from tqdm import tqdm
+import warnings
 
 
 def predict(x, classifier_function):
@@ -77,9 +78,17 @@ def add_classification(
                             n[1] for n in predict(x, classifier_path.predict_proba)
                         ],
                     }
-                    curr_df = curr_df.assign(**kwargs)
-                    curr_df.to_hdf(
-                        os.path.join(patient_dir, "hdfs", "au.hdf"),
+                    imp_columns=['patient','success','frame','timestamp','annotated','confidence','session','vid','datetime']
+                    
+                    #curr_df = curr_df.assign(**kwargs)
+                    emotion_df = curr_df[imp_columns]
+                    emotion_df = emotion_df.assign(**kwargs)
+                    # create name for new dataframe (using patient_session_frame)
+                    
+                    
+                    # store in the out_fullpath
+                    emotion_df.to_hdf(
+                        os.path.join(patient),
                         "/data",
                         format="table",
                         scheduler="processes",
@@ -105,6 +114,8 @@ if __name__ == "__main__":
     parser.add_argument("dataframe_folder", help="Path to DataFrame containing folder")
     parser.add_argument("classifier", help="Path to classifier")
     parser.add_argument("emotion", help="Emotion")
+    parser.add_argument("out_subfolder", help="Sub folder to store the emotion predictions (it will be stored under dataframe_folder directory)")
+    
 
     ARGS = parser.parse_args()
     classifier_path = pickle.load(open(ARGS.classifier, "rb"))
@@ -114,11 +125,23 @@ if __name__ == "__main__":
     # )
     emotion = ARGS.emotion
 
-    out_folder = os.path.join(
-        ARGS.dataframe_folder, "all_aus_with_{0}_predictions".format(emotion)
+    out_fullpath = os.path.join(
+        ARGS.daframe_folder, out_subfolder "all_aus_with_{0}_predictions".format(emotion)
     )
+    if ARGS.out_subfolder is not None:
+        out_fullpath = os.path.join(
+            ARGS.daframe_folder, out_subfolder )
+    else: 
+        out_fullpath = os.path.join(
+            ARGS.daframe_folder,"all_aus_with_{0}_predictions".format(emotion))
+    )
+    
 
-    if not os.path.exists(out_folder):
+    if os.path.exists(out_fullpath):
+        warnings.warn("You are going to overwrite the emotion dataframes in {0}".format(out_fullpath).)
+    else:
         os.mkdir(out_folder)
+        
+    
 
     add_classification(ARGS.dataframe_folder, classifier_path, emotion)
